@@ -1,16 +1,16 @@
 <script>
     function goBack() {
-      history.back();
+        history.back();
     }
 </script>
 
 <main class="flex h-screen">
-    <button 
-          on:click={goBack} 
-          class="absolute top-4 right-4 bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-full shadow-lg"
-      >
-          Back
-      </button>
+    <button
+        on:click={goBack}
+        class="absolute top-4 right-4 bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-full shadow-lg"
+    >
+        Back
+    </button>
     <div
         class="flex-1 bg-cover bg-center"
         style="background-image: url('https://scontent.fbkk6-2.fna.fbcdn.net/v/t39.30808-6/461275446_1082406396829060_2100932454648280842_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=8iH39aGh0owQ7kNvgE7LZym&_nc_oc=AdhPyTAyP7GBR4f71K9zanBIWbT1ILVJv1XmPOahTOy-awJme_X_HD0eKj8MpSfoAuw&_nc_zt=23&_nc_ht=scontent.fbkk6-2.fna&_nc_gid=AtFiFofr_aXyTNRmmsU0bLc&oh=00_AYBen4USCQgwE2wxET38tWG8jBF3WJTpQEB85tE9-X2ZKg&oe=67A10A7F');"
@@ -24,7 +24,9 @@
                     alt="Logo"
                     class="w-24 h-24 mx-auto mb-4"
                 />
-                <h1 class="text-2xl font-semibold text-gray-800">Register ดิ</h1>
+                <h1 class="text-2xl font-semibold text-gray-800">
+                    Register ดิ
+                </h1>
             </div>
             <form class="space-y-4">
                 <div>
@@ -36,9 +38,23 @@
                     </label>
                     <input
                         type="text"
-                        id="username"
+                        id="email"
                         class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         placeholder="Enter your Email"
+                    />
+                </div>
+                <div>
+                    <label
+                        for="phone"
+                        class="block text-sm font-medium text-gray-700"
+                    >
+                        Phone
+                    </label>
+                    <input
+                        type="text"
+                        id="phone"
+                        class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        placeholder="Enter your username"
                     />
                 </div>
                 <div>
@@ -86,12 +102,3 @@
 
 <style>
 </style>
-
-
-
-
-
-
-
-
-

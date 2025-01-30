@@ -1,8 +1,28 @@
 <script>
-    import { goto } from '$app/navigation';
+    import { goto } from "$app/navigation";
+    let username = "";
+    let password = "";
     function RegisterPage() {
-    goto('/Register');
-  }
+        goto("/Register");
+    }
+    async function login() {
+        try {
+            const response = await fetch("http://localhost:3000/user/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_name: username, user_pass: password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.message === "Login successful") {
+                localStorage.setItem("userToken", data.userToken); 
+                goto("/booklist");
+            }
+        } catch (error) {
+            console.error("Error during login:", error);
+        }
+    }
 </script>
 
 <main class="flex h-screen">
@@ -32,6 +52,7 @@
                     <input
                         type="text"
                         id="username"
+                        bind:value={username}
                         class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         placeholder="Enter your username"
                     />
@@ -47,6 +68,7 @@
                     <input
                         type="password"
                         id="password"
+                        bind:value={password}
                         class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         placeholder="Enter your password"
                     />
@@ -61,7 +83,8 @@
                     </a>
 
                     <a
-                        href="#" on:click={RegisterPage}
+                        href="#"
+                        on:click={RegisterPage}
                         class="text-sm font-medium text-blue-600 hover:underline"
                     >
                         Register
@@ -72,6 +95,7 @@
                     <button
                         type="submit"
                         class="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        on:click={login}
                     >
                         Sign In
                     </button>
