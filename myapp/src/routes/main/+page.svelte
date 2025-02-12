@@ -1,5 +1,6 @@
 <script>
 	import { goto } from '$app/navigation';
+	import { onMount } from "svelte";
 
     function ProfilePage() {
     goto('/Profile');
@@ -154,23 +155,47 @@
 	}
 
 	let currentIndex = 0;
-	let visibleProducts = products.slice(0, 5);
+	let itemsPerPage = 5; // ค่าเริ่มต้น
+	let visibleProducts = [];
 
+	// 🟢 ฟังก์ชันตรวจจับขนาดหน้าจอ และกำหนด itemsPerPage
+	function updateItemsPerPage() {
+		const width = window.innerWidth;
+		if (width < 640) itemsPerPage = 1; // sm (มือถือ)
+		else if (width < 768) itemsPerPage = 3; // md (แท็บเล็ต)
+		else if (width < 1024) itemsPerPage = 4; // lg (แล็ปท็อป)
+		else itemsPerPage = 5; // xl ขึ้นไป (เดสก์ท็อป)
+
+		// อัปเดตสินค้าตาม index ใหม่
+		updateVisibleProducts();
+	}
+
+	// 🟢 ฟังก์ชันอัปเดต `visibleProducts`
+	function updateVisibleProducts() {
+		visibleProducts = products.slice(currentIndex, currentIndex + itemsPerPage);
+		if (visibleProducts.length < itemsPerPage) {
+			visibleProducts = visibleProducts.concat(products.slice(0, itemsPerPage - visibleProducts.length));
+		}
+	}
+
+	// 🟢 ฟังก์ชันเลื่อนสินค้าไปข้างหน้า
 	function slideNext() {
 		currentIndex = (currentIndex + 1) % products.length;
-		visibleProducts = products.slice(currentIndex, currentIndex + 5);
-		if (visibleProducts.length < 5) {
-			visibleProducts = visibleProducts.concat(products.slice(0, 5 - visibleProducts.length));
-		}
+		updateVisibleProducts();
 	}
 
+	// 🟢 ฟังก์ชันเลื่อนสินค้าไปข้างหลัง
 	function slidePrev() {
 		currentIndex = (currentIndex - 1 + products.length) % products.length;
-		visibleProducts = products.slice(currentIndex, currentIndex + 5);
-		if (visibleProducts.length < 5) {
-			visibleProducts = products.slice(products.length - (5 - visibleProducts.length)).concat(visibleProducts);
-		}
+		updateVisibleProducts();
 	}
+
+	// 📌 ตรวจจับการเปลี่ยนขนาดจอ
+	onMount(() => {
+		updateItemsPerPage();
+		window.addEventListener("resize", updateItemsPerPage);
+		return () => window.removeEventListener("resize", updateItemsPerPage);
+	});
 	let bannerImages = [
 		'https://fiverr-res.cloudinary.com/images/q_auto,f_auto/gigs/323203587/original/8f16754c80f8ea7a8a2b87b24c40f123ed219937/do-a-colorful-and-dynamic-anime-or-manga-banner-for-you.png',
 		'https://i.redd.it/t4x28924inbc1.jpeg',
@@ -295,7 +320,7 @@
 
         <section class="mb-8 relative">
             <h2 class="text-xl font-bold mb-4">สินค้าออกใหม่</h2>
-            <div class="grid grid-cols-5 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 {#each visibleProducts as product}
                     <div
                         class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
