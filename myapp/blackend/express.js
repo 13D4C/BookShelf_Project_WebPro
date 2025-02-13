@@ -17,14 +17,7 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 const pool = mysql.createPool({
-    host: 'localhost',
-    port: 3306,
-    user: 'root',
-    password: '',
-    database: 'books',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
+    // Database ตรงนี้
 });
 
 async function queryDatabase(sql, params = []) {
@@ -671,6 +664,241 @@ app.post('/user/getUserId', async (req, res) => {
     }
 });
 
+// Comment
+app.post('/books/:bookId/comments', async (req, res) => {
+    try {
+        const { commentDetail, userId, score, spoiler } = req.body;
+        const bookId = parseInt(req.params.bookId, 10);
+
+        if (isNaN(bookId) || !commentDetail || userId == null || score == null || spoiler == null) {
+            return res.status(400).json({ error: 'Invalid request body or parameters.' });
+        }
+
+        const book = await bookRepository.findOne({ where: { book_id: bookId } });
+        const user = await userRepository.findOne({ where: { user_id: userId } });
+
+        if (!book) {
+            return res.status(404).json({ error: 'Book not found' });
+        }
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const comment = commentRepository.create({
+            book,
+            comment_detail: commentDetail,
+            user,
+            score,
+            spoiler
+        });
+
+        await commentRepository.save(comment);
+        res.status(201).json({ message: 'Comment added successfully' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to add comment' });
+    }
+});
+
+app.get('/books/:bookId/comments', async (req, res) => {
+    try {
+        const bookId = parseInt(req.params.bookId, 10);
+        if (isNaN(bookId)) {
+            return res.status(400).json({ error: 'Invalid book ID.' });
+        }
+
+        const comments = await commentRepository.createQueryBuilder('comment')
+            .leftJoinAndSelect('comment.user', 'user')
+            .where('comment.book_id = :bookId', { bookId })
+            .orderBy('comment.time_stamp', 'ASC')
+            .getMany();
+
+        res.json(comments);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to fetch comments' });
+    }
+});
+
+app.post('/comments/:commentId/upvote', async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const commentId = parseInt(req.params.commentId, 10);
+
+        if (isNaN(commentId) || userId == null) {
+            return res.status(400).json({ error: 'Invalid comment ID or missing userId.' });
+        }
+
+        const existingVote = await votingRepository.findOne({
+            where: { comment_id: commentId, user_id: userId },
+        });
+        if (existingVote) {
+            if (existingVote.vote_type === 'Upvote') {
+                await votingRepository.delete({ comment_id: commentId, user_id: userId });
+                await commentRepository.decrement({ comment_id: commentId }, 'up_vote', 1);
+            } else {
+                existingVote.vote_type = 'Upvote';
+                await votingRepository.save(existingVote);
+                await commentRepository.increment({ comment_id: commentId }, 'up_vote', 1);
+                await commentRepository.decrement({ comment_id: commentId }, 'down_vote', 1);
+            }
+        } else {
+            await votingRepository.save({
+                comment_id: commentId,
+                user_id: userId,
+                vote_type: 'Upvote',
+            });
+            await commentRepository.increment({ comment_id: commentId }, 'up_vote', 1);
+        }
+
+        res.status(200).json({ message: 'Upvote successful' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to upvote comment' });
+    }
+});
+
+app.post('/comments/:commentId/downvote', async (req, res) => {
+    try {
+        const { userId } = req.body;
+        const commentId = parseInt(req.params.commentId, 10);
+        if (isNaN(commentId) || userId == null) {
+            return res.status(400).json({ error: 'Invalid comment ID or missing userId.' });
+        }
+
+        const existingVote = await votingRepository.findOne({
+            where: { comment_id: commentId, user_id: userId },
+        });
+
+        if (existingVote) {
+            if (existingVote.vote_type === 'Downvote') {
+                await votingRepository.delete({ comment_id: commentId, user_id: userId });
+                await commentRepository.decrement({ comment_id: commentId }, 'down_vote', 1);
+            } else {
+                existingVote.vote_type = 'Downvote';
+                await votingRepository.save(existingVote);
+                await commentRepository.increment({ comment_id: commentId }, 'down_vote', 1);
+                await commentRepository.decrement({ comment_id: commentId }, 'up_vote', 1);
+            }
+        } else {
+            await votingRepository.save({
+                comment_id: commentId,
+                user_id: userId,
+                vote_type: 'Downvote',
+            });
+            await commentRepository.increment({ comment_id: commentId }, 'down_vote', 1);
+        }
+        res.status(200).json({ message: 'Downvote successful' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({error: "Failed to downvote comment"});
+    }
+});
+
+app.post('/comments/:commentId/delete', async (req, res) => { // Changed to POST for consistency
+    try {
+        const { userId } = req.body;
+        const commentId = parseInt(req.params.commentId, 10);
+
+        if (isNaN(commentId) || userId == null) {
+            return res.status(400).json({ error: 'Invalid comment ID or missing userId.' });
+        }
+
+        const comment = await commentRepository.findOne({
+            where: { comment_id: commentId },
+            relations: ['user']
+        });
+
+        if (!comment) {
+            return res.status(404).json({ error: 'Comment not found' });
+        }
+
+        if (comment.user.user_id !== Number(userId)) {
+            return res.status(403).json({ error: 'Unauthorized to delete this comment' }); // 403 Forbidden
+        }
+
+        await commentRepository.delete({ comment_id: commentId });
+        res.status(200).json({ message: 'Comment deleted successfully' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete comment' });
+    }
+});
+
+
+app.post('/books/:bookId/comments/:replyId/reply', async (req, res) => {
+    try {
+        const { commentDetail, userId } = req.body;
+        const bookId = parseInt(req.params.bookId, 10);
+        const replyId = parseInt(req.params.replyId, 10);
+
+        if (isNaN(bookId) || isNaN(replyId) || !commentDetail || userId == null) {
+            return res.status(400).json({ error: 'Invalid request body or parameters.' });
+        }
+
+        const book = await bookRepository.findOne({ where: { book_id: bookId } });
+        const user = await userRepository.findOne({ where: { user_id: userId } });
+        const parentComment = await commentRepository.findOne({ where: { comment_id: replyId } });
+
+        if (!book) {
+            return res.status(404).json({ error: 'Book not found' });
+        }
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        if (!parentComment) {
+            return res.status(404).json({ error: 'Parent comment not found' });
+        }
+
+        const replyComment = commentRepository.create({
+            book,
+            comment_detail: commentDetail,
+            user,
+            reply_id: replyId
+        });
+
+        await commentRepository.save(replyComment);
+        res.status(201).json({ message: 'Reply added successfully' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to add reply' });
+    }
+});
+
+
+app.post('/comments/:commentId/update-votes', async (req, res) => {
+    try {
+        const commentId = parseInt(req.params.commentId, 10);
+
+        if (isNaN(commentId)) {
+            return res.status(400).json({ error: 'Invalid comment ID.' });
+        }
+
+        const upvotesCount = await votingRepository.count({
+            where: { comment_id: commentId, vote_type: 'Upvote' },
+        });
+
+        const downvotesCount = await votingRepository.count({
+            where: { comment_id: commentId, vote_type: 'Downvote' },
+        });
+
+        await commentRepository.update(commentId, {
+            up_vote: upvotesCount,
+            down_vote: downvotesCount,
+        });
+
+        res.status(200).json({ message: 'Comment votes updated successfully' });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update comment votes' });
+    }
+});
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
