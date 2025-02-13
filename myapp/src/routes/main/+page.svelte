@@ -1,169 +1,155 @@
-<script>
-	import { goto } from '$app/navigation';
+<script lang="ts">
+	import { goto } from "$app/navigation";
 	import { onMount } from "svelte";
 
-    function ProfilePage() {
-    goto('/Profile');
-  }
+	let products: any[] = [];
 
-  function MainPage() {
-    goto('/main');
-  }
+	async function getBooks() {
+		try {
+			const response = await fetch("http://localhost:3000/books");
 
-	let products = [
-		{
-			id: 1,
-			name: 'แฟนเช่า 1',
-			price: '100 บาท',
-			image:
-				'https://upload.wikimedia.org/wikipedia/th/b/b9/Rent-A-Girlfriend%2C_volume_1_thai_version.jpg'
-		},
-		{
-			id: 2,
-			name: 'Bluelock 1',
-			price: '120 บาท',
-			image:
-				'https://storage.naiin.com/system/application/bookstore/resource/product/202209/559989/6000065220_front_XXL.jpg?imgname=BLUE-LOCK-%E0%B8%82%E0%B8%B1%E0%B8%87%E0%B8%94%E0%B8%A7%E0%B8%A5%E0%B9%81%E0%B8%82%E0%B9%89%E0%B8%87-%E0%B9%80%E0%B8%A5%E0%B9%88%E0%B8%A1-1'
-		},
-		{
-			id: 3,
-			name: 'Blue Box 1',
-			price: '80 บาท',
-			image: 'https://down-th.img.susercontent.com/file/acca9e4811a1d28473c307449f0484c2'
-		},
-		{
-			id: 4,
-			name: 'Yosuga no sora',
-			price: '60 บาท',
-			image: 'https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1659108226i/9468160.jpg'
-		},
-		{
-			id: 5,
-			name: 'Jujutsu kaisen',
-			price: '80 บาท',
-			image: 'https://prodimage.images-bn.com/pimages/9781974751884_p0_v3_s1200x630.jpg'
-		},
-		{
-			id: 6,
-			name: 'Jujutsu kaisen',
-			price: '80 บาท',
-			image: 'https://prodimage.images-bn.com/pimages/9781974751884_p0_v3_s1200x630.jpg'
+			if (!response.ok) {
+				throw new Error(`HTTP error! Status: ${response.status}`);
+			}
+
+			products = await response.json();
+		} catch (error) {
+			console.error("Error fetching books:", error);
+			products = [];
 		}
-	];
+	}
+
+	function ProfilePage() {
+		goto("/Profile");
+	}
+
+	function MainPage() {
+		goto("/main");
+	}
 
 	let weeklyHighlightProducts = [
 		{
 			id: 7,
-			name: 'ฝึกวินัยให้คุณแม่',
-			price: '150 บาท',
-			image: 'https://miku-doujin.com/uploads/thumbnail/5721960596506d8921948659dc568ba2.jpg'
+			name: "ฝึกวินัยให้คุณแม่",
+			price: "150 บาท",
+			image: "https://miku-doujin.com/uploads/thumbnail/5721960596506d8921948659dc568ba2.jpg",
 		},
 		{
 			id: 8,
-			name: 'ถึงเสียตัวก็ไม่บอก',
-			price: '130 บาท',
-			image: 'https://miku-doujin.com/uploads/thumbnail/504036b078791902bd732c2f817c8968.jpg'
+			name: "ถึงเสียตัวก็ไม่บอก",
+			price: "130 บาท",
+			image: "https://miku-doujin.com/uploads/thumbnail/504036b078791902bd732c2f817c8968.jpg",
 		},
 		{
 			id: 9,
-			name: 'Circle',
-			price: '90 บาท',
-			image: 'https://doujin-new.com/wp-content/uploads/2023/12/Theater-Society-Circles-200x300.jpg'
+			name: "Circle",
+			price: "90 บาท",
+			image: "https://doujin-new.com/wp-content/uploads/2023/12/Theater-Society-Circles-200x300.jpg",
 		},
 		{
 			id: 10,
-			name: 'ไม่มีหญิงใดในต่างโลก',
-			price: '110 บาท',
-			image:
-				'https://i3.wp.com/doujin89.com/wp-content/uploads/2024/01/77a948371e804e07c34132a2b6c0c1f4ukqr6BWvKbRUNP9Q-0.jpg'
+			name: "ไม่มีหญิงใดในต่างโลก",
+			price: "110 บาท",
+			image: "https://i3.wp.com/doujin89.com/wp-content/uploads/2024/01/77a948371e804e07c34132a2b6c0c1f4ukqr6BWvKbRUNP9Q-0.jpg",
 		},
 		{
 			id: 11,
-			name: 'แผน NTR แฟนรุ่นพี่ แค้นนี้ต้องชำระ',
-			price: '100 บาท',
-			image: 'https://www.phoenixnext.com/media/brand/tmp/_LN_Kanojo_NTR_KV_2.jpg'
-		}
+			name: "แผน NTR แฟนรุ่นพี่ แค้นนี้ต้องชำระ",
+			price: "100 บาท",
+			image: "https://www.phoenixnext.com/media/brand/tmp/_LN_Kanojo_NTR_KV_2.jpg",
+		},
 	];
 	let novelProducts = [
 		{
 			id: 12,
-			name: 'มุมมองนักอ่านพระเจ้า',
-			price: '230 บาท',
-			image: 'https://th.bing.com/th/id/OIP.-cvt_ItGz5YCKfbt0OqnXgAAAA?rs=1&pid=ImgDetMain' 
+			name: "มุมมองนักอ่านพระเจ้า",
+			price: "230 บาท",
+			image: "https://th.bing.com/th/id/OIP.-cvt_ItGz5YCKfbt0OqnXgAAAA?rs=1&pid=ImgDetMain",
 		},
 		{
 			id: 13,
-			name: 'คุณอาเรีย เว้าอีสานใส่',
-			price: '230 บาท',
-			image: 'https://cdn.myanimelist.net/images/manga/1/298216l.jpg' 
+			name: "คุณอาเรีย เว้าอีสานใส่",
+			price: "230 บาท",
+			image: "https://cdn.myanimelist.net/images/manga/1/298216l.jpg",
 		},
-        {
+		{
 			id: 12,
-			name: 'เกิดชาตินี้พี่ต้องเทพ',
-			price: '230 บาท',
-			image: 'https://images-se-ed.com/ws/Storage/Originals/552284/015/5522840154347L.jpg?h=90e2ce479a1a9e85f6fb7821ced24629' 
+			name: "เกิดชาตินี้พี่ต้องเทพ",
+			price: "230 บาท",
+			image: "https://images-se-ed.com/ws/Storage/Originals/552284/015/5522840154347L.jpg?h=90e2ce479a1a9e85f6fb7821ced24629",
 		},
-        {
+		{
 			id: 12,
-			name: 'Sword Art Online',
-			price: '230 บาท',
-			image: 'https://th.bing.com/th/id/OIP.RsRj05nfWlKr8UyNBYj8_wHaLS?rs=1&pid=ImgDetMain' 
+			name: "Sword Art Online",
+			price: "230 บาท",
+			image: "https://th.bing.com/th/id/OIP.RsRj05nfWlKr8UyNBYj8_wHaLS?rs=1&pid=ImgDetMain",
 		},
-        {
+		{
 			id: 12,
-			name: 'Nisekoi',
-			price: '230 บาท',
-			image: 'https://th.bing.com/th/id/OIP.FaPFujqjjVjyQ-b4SRilNAHaLc?rs=1&pid=ImgDetMain' 
+			name: "Nisekoi",
+			price: "230 บาท",
+			image: "https://th.bing.com/th/id/OIP.FaPFujqjjVjyQ-b4SRilNAHaLc?rs=1&pid=ImgDetMain",
 		},
 	];
 	const footerLinks = [
-		{ title: 'เกี่ยวกับเรา', url: '/about' }, // เปลี่ยน URL
-		{ title: 'ติดต่อเรา', url: '/contact' }, // เปลี่ยน URL
-		{ title: 'นโยบายความเป็นส่วนตัว', url: '/privacy' }, // เปลี่ยน URL
+		{ title: "เกี่ยวกับเรา", url: "/about" }, // เปลี่ยน URL
+		{ title: "ติดต่อเรา", url: "/contact" }, // เปลี่ยน URL
+		{ title: "นโยบายความเป็นส่วนตัว", url: "/privacy" }, // เปลี่ยน URL
 		// เพิ่ม links อื่นๆ
 	];
 
 	const socialLinks = [
-		{ icon: 'fab fa-facebook-f', url: 'https://www.facebook.com/yourpage', label: 'Facebook' }, // เปลี่ยน URL
-		{ icon: 'fab fa-twitter', url: 'https://twitter.com/yourhandle', label: 'Twitter' }, // เปลี่ยน URL
 		{
-			icon: 'fab fa-instagram',
-			url: 'https://www.instagram.com/youraccount',
-			label: 'Instagram'
+			icon: "fab fa-facebook-f",
+			url: "https://www.facebook.com/yourpage",
+			label: "Facebook",
+		}, // เปลี่ยน URL
+		{
+			icon: "fab fa-twitter",
+			url: "https://twitter.com/yourhandle",
+			label: "Twitter",
+		}, // เปลี่ยน URL
+		{
+			icon: "fab fa-instagram",
+			url: "https://www.instagram.com/youraccount",
+			label: "Instagram",
 		}, // เปลี่ยน URL
 		// เพิ่ม social media อื่นๆ ได้
 	];
 
 	const contactInfo = {
-		address: '123 ถ.สุขุมวิท, กรุงเทพฯ', // เปลี่ยนที่อยู่
-		phone: '02-123-4567', // เปลี่ยนเบอร์โทร
-		email: 'info@example.com' // เปลี่ยนอีเมล
+		address: "123 ถ.สุขุมวิท, กรุงเทพฯ", // เปลี่ยนที่อยู่
+		phone: "02-123-4567", // เปลี่ยนเบอร์โทร
+		email: "info@example.com", // เปลี่ยนอีเมล
 	};
 	let categories = [
-		'ภาษาศาสตร์',
-		'บริหาร',
-		'สารคดี',
-		'ศิลปะ',
-		'ชีวประวัติ',
-		'ประวัติศาสตร์',
-		'อาหาร',
-		'นิยายวัย'
+		"ภาษาศาสตร์",
+		"บริหาร",
+		"สารคดี",
+		"ศิลปะ",
+		"ชีวประวัติ",
+		"ประวัติศาสตร์",
+		"อาหาร",
+		"นิยายวัย",
 	];
 
-	function navigateToProduct(id) {
+	function navigateToProduct(id: number) {
 		goto(`/product/${id}`);
 	}
 
 	let currentIndex = 0;
 	let itemsPerPage = 5; // ค่าเริ่มต้น
-	let visibleProducts = [];
+	let visibleProducts: any[] = [];
 
 	// 🟢 ฟังก์ชันตรวจจับขนาดหน้าจอ และกำหนด itemsPerPage
 	function updateItemsPerPage() {
 		const width = window.innerWidth;
-		if (width < 640) itemsPerPage = 1; // sm (มือถือ)
-		else if (width < 768) itemsPerPage = 3; // md (แท็บเล็ต)
-		else if (width < 1024) itemsPerPage = 4; // lg (แล็ปท็อป)
+		if (width < 640)
+			itemsPerPage = 1; // sm (มือถือ)
+		else if (width < 768)
+			itemsPerPage = 3; // md (แท็บเล็ต)
+		else if (width < 1024)
+			itemsPerPage = 4; // lg (แล็ปท็อป)
 		else itemsPerPage = 5; // xl ขึ้นไป (เดสก์ท็อป)
 
 		// อัปเดตสินค้าตาม index ใหม่
@@ -172,9 +158,14 @@
 
 	// 🟢 ฟังก์ชันอัปเดต `visibleProducts`
 	function updateVisibleProducts() {
-		visibleProducts = products.slice(currentIndex, currentIndex + itemsPerPage);
+		visibleProducts = products.slice(
+			currentIndex,
+			currentIndex + itemsPerPage,
+		);
 		if (visibleProducts.length < itemsPerPage) {
-			visibleProducts = visibleProducts.concat(products.slice(0, itemsPerPage - visibleProducts.length));
+			visibleProducts = visibleProducts.concat(
+				products.slice(0, itemsPerPage - visibleProducts.length),
+			);
 		}
 	}
 
@@ -192,14 +183,18 @@
 
 	// 📌 ตรวจจับการเปลี่ยนขนาดจอ
 	onMount(() => {
-		updateItemsPerPage();
-		window.addEventListener("resize", updateItemsPerPage);
-		return () => window.removeEventListener("resize", updateItemsPerPage);
+		getBooks().then(() => {
+			console.log(products);
+			updateItemsPerPage();
+			window.addEventListener("resize", updateItemsPerPage);
+			return () =>
+				window.removeEventListener("resize", updateItemsPerPage);
+		});
 	});
 	let bannerImages = [
-		'https://fiverr-res.cloudinary.com/images/q_auto,f_auto/gigs/323203587/original/8f16754c80f8ea7a8a2b87b24c40f123ed219937/do-a-colorful-and-dynamic-anime-or-manga-banner-for-you.png',
-		'https://i.redd.it/t4x28924inbc1.jpeg',
-		'https://cdn.vectorstock.com/i/500p/26/35/merry-christmas-podium-display-snowman-banner-vector-54372635.jpg'
+		"https://fiverr-res.cloudinary.com/images/q_auto,f_auto/gigs/323203587/original/8f16754c80f8ea7a8a2b87b24c40f123ed219937/do-a-colorful-and-dynamic-anime-or-manga-banner-for-you.png",
+		"https://i.redd.it/t4x28924inbc1.jpeg",
+		"https://cdn.vectorstock.com/i/500p/26/35/merry-christmas-podium-display-snowman-banner-vector-54372635.jpg",
 	];
 
 	let currentBannerIndex = 0;
@@ -218,28 +213,37 @@
 	let visibleWeeklyHighlightProducts = weeklyHighlightProducts.slice(0, 5);
 
 	function slideWeeklyHighlightNext() {
-		weeklyHighlightCurrentIndex = (weeklyHighlightCurrentIndex + 1) % weeklyHighlightProducts.length;
+		weeklyHighlightCurrentIndex =
+			(weeklyHighlightCurrentIndex + 1) % weeklyHighlightProducts.length;
 		visibleWeeklyHighlightProducts = weeklyHighlightProducts.slice(
 			weeklyHighlightCurrentIndex,
-			weeklyHighlightCurrentIndex + 5
+			weeklyHighlightCurrentIndex + 5,
 		);
 		if (visibleWeeklyHighlightProducts.length < 5) {
-			visibleWeeklyHighlightProducts = visibleWeeklyHighlightProducts.concat(
-				weeklyHighlightProducts.slice(0, 5 - visibleWeeklyHighlightProducts.length)
-			);
+			visibleWeeklyHighlightProducts =
+				visibleWeeklyHighlightProducts.concat(
+					weeklyHighlightProducts.slice(
+						0,
+						5 - visibleWeeklyHighlightProducts.length,
+					),
+				);
 		}
 	}
 
 	function slideWeeklyHighlightPrev() {
 		weeklyHighlightCurrentIndex =
-			(weeklyHighlightCurrentIndex - 1 + weeklyHighlightProducts.length) % weeklyHighlightProducts.length;
+			(weeklyHighlightCurrentIndex - 1 + weeklyHighlightProducts.length) %
+			weeklyHighlightProducts.length;
 		visibleWeeklyHighlightProducts = weeklyHighlightProducts.slice(
 			weeklyHighlightCurrentIndex,
-			weeklyHighlightCurrentIndex + 5
+			weeklyHighlightCurrentIndex + 5,
 		);
 		if (visibleWeeklyHighlightProducts.length < 5) {
 			visibleWeeklyHighlightProducts = weeklyHighlightProducts
-				.slice(weeklyHighlightProducts.length - (5 - visibleWeeklyHighlightProducts.length))
+				.slice(
+					weeklyHighlightProducts.length -
+						(5 - visibleWeeklyHighlightProducts.length),
+				)
 				.concat(visibleWeeklyHighlightProducts);
 		}
 	}
@@ -249,41 +253,61 @@
 
 	function slideNovelNext() {
 		novelCurrentIndex = (novelCurrentIndex + 1) % novelProducts.length;
-		visibleNovelProducts = novelProducts.slice(novelCurrentIndex, novelCurrentIndex + 5);
+		visibleNovelProducts = novelProducts.slice(
+			novelCurrentIndex,
+			novelCurrentIndex + 5,
+		);
 		if (visibleNovelProducts.length < 5) {
-			visibleNovelProducts = visibleNovelProducts.concat(novelProducts.slice(0, 5 - visibleNovelProducts.length));
+			visibleNovelProducts = visibleNovelProducts.concat(
+				novelProducts.slice(0, 5 - visibleNovelProducts.length),
+			);
 		}
 	}
 	function slideNovelPrev() {
-		novelCurrentIndex = (novelCurrentIndex - 1 + novelProducts.length) % novelProducts.length;
-		visibleNovelProducts = novelProducts.slice(novelCurrentIndex, novelCurrentIndex + 5);
+		novelCurrentIndex =
+			(novelCurrentIndex - 1 + novelProducts.length) %
+			novelProducts.length;
+		visibleNovelProducts = novelProducts.slice(
+			novelCurrentIndex,
+			novelCurrentIndex + 5,
+		);
 		if (visibleNovelProducts.length < 5) {
-			visibleNovelProducts = novelProducts.slice(novelProducts.length - (5 - visibleNovelProducts.length)).concat(visibleNovelProducts);
+			visibleNovelProducts = novelProducts
+				.slice(novelProducts.length - (5 - visibleNovelProducts.length))
+				.concat(visibleNovelProducts);
 		}
 	}
 
 	let smallBannerImages = [
-		'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/56108c72-51ea-4e26-8de9-008fde4723c4/dfhaomu-59c653ab-3da1-4c81-9a4b-bbd042eec441.jpg/v1/fill/w_1280,h_427,q_75,strp/hentai_banner_by_bankysenpai_dfhaomu-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NDI3IiwicGF0aCI6IlwvZlwvNTYxMDhjNzItNTFlYS00ZTI2LThkZTktMDA4ZmRlNDcyM2M0XC9kZmhhb211LTU5YzY1M2FiLTNkYTEtNGM4MS05YTRiLWJiZDA0MmVlYzQ0MS5qcGciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.iARBneFwUhe2l5QaD7tde0SZRIUGiBQxZnFadq0DFMQ',
-		'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0IUgoI9H2LpPoSSvg5nJxns3acKbS-gdQjQ&s'
+		"https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/56108c72-51ea-4e26-8de9-008fde4723c4/dfhaomu-59c653ab-3da1-4c81-9a4b-bbd042eec441.jpg/v1/fill/w_1280,h_427,q_75,strp/hentai_banner_by_bankysenpai_dfhaomu-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NDI3IiwicGF0aCI6IlwvZlwvNTYxMDhjNzItNTFlYS00ZTI2LThkZTktMDA4ZmRlNDcyM2M0XC9kZmhhb211LTU5YzY1M2FiLTNkYTEtNGM4MS05YTRiLWJiZDA0MmVlYzQ0MS5qcGciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.iARBneFwUhe2l5QaD7tde0SZRIUGiBQxZnFadq0DFMQ",
+		"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0IUgoI9H2LpPoSSvg5nJxns3acKbS-gdQjQ&s",
 	];
 </script>
 
 <div class="min-h-screen bg-blue-50">
-    <header class="bg-blue-900 text-white py-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <button class="text-xl font-bold" on:click={MainPage}>
-                ร้านหนังสือของป้าแพรวา
-              </button>
-            <div class="relative ml-auto">
-                <input type="text" placeholder="ค้นหา" class="rounded-md p-2 w-64 text-black"  role="search" aria-label="Search"/>
-                <button class="absolute right-0 top-1/2 -translate-y-1/2 text-blue-900">
-                    🔍
-                </button>
-            </div>
-            <button class="text-2xl ml-6">🛒</button>
-            <a href="#" on:click={ProfilePage} class="ml-6 text-2xl">👤</a>
-        </div>
-    </header>
+	<header class="bg-blue-900 text-white py-4">
+		<div class="container mx-auto flex justify-between items-center">
+			<button class="text-xl font-bold" on:click={MainPage}>
+				ร้านหนังสือของป้าแพรวา
+			</button>
+			<div class="relative ml-auto">
+				<input
+					type="text"
+					placeholder="ค้นหา"
+					class="rounded-md p-2 w-64 text-black"
+					role="search"
+					aria-label="Search"
+				/>
+				<button
+					class="absolute right-0 top-1/2 -translate-y-1/2 text-blue-900"
+				>
+					🔍
+				</button>
+			</div>
+			<button class="text-2xl ml-6">🛒</button>
+			<a href="#" on:click={ProfilePage} class="ml-6 text-2xl">👤</a>
+		</div>
+	</header>
 
 	<!-- Navigation -->
 	<nav class="bg-blue-700 text-white py-2">
@@ -300,7 +324,9 @@
 		<!-- Banner -->
 		<div class="grid grid-cols-4 gap-4 mb-8 relative">
 			<!-- Main Banner -->
-			<div class="col-span-4 md:col-span-3 relative bg-gray-300 h-64 rounded-lg overflow-hidden">
+			<div
+				class="col-span-4 md:col-span-3 relative bg-gray-300 h-64 rounded-lg overflow-hidden"
+			>
 				<img
 					src={bannerImages[currentBannerIndex]}
 					alt="Banner"
@@ -312,76 +338,84 @@
 			<div class="col-span-4 md:col-span-1 space-y-4">
 				{#each smallBannerImages as banner, index}
 					<div class="bg-gray-300 h-20 rounded-lg overflow-hidden">
-						<img src={banner} alt={`Small Banner ${index + 1}`} class="w-full h-full object-cover" />
+						<img
+							src={banner}
+							alt={`Small Banner ${index + 1}`}
+							class="w-full h-full object-cover"
+						/>
 					</div>
 				{/each}
 			</div>
 		</div>
 
-        <section class="mb-8 relative">
-            <h2 class="text-xl font-bold mb-4">สินค้าออกใหม่</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {#each visibleProducts as product}
-                    <div
-                        class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
-                        on:click={() => navigateToProduct(product.id)}
-                    >
-                        <div class="h-56 mb-2 rounded-md overflow-hidden">
-                            <img
-                                src={product.image}
-                                alt={product.name}
-                                class="h-full w-full object-cover"
-                            />
-                        </div>
-                        <p class="text-center">{product.name}</p>
-                        <p class="text-center text-red-500">{product.price}</p>
-                    </div>
-                {/each}
-            </div>
+		<section class="mb-8 relative">
+			<h2 class="text-xl font-bold mb-4">สินค้าออกใหม่</h2>
+			<div
+				class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+			>
+				{#each visibleProducts as product}
+					<div
+						class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
+						on:click={() => navigateToProduct(product.book_id)}
+					>
+						<div class="h-56 mb-2 rounded-md overflow-hidden">
+							<img
+								src={product.book_image}
+								alt={product.book_name_th}
+								class="h-full w-full object-cover"
+							/>
+						</div>
+						<p class="text-center">{product.book_name_th}</p>
+						<p class="text-center text-red-500">
+							{product.book_price}
+						</p>
+					</div>
+				{/each}
+			</div>
 
-            <button
-                class="absolute top-1/2 -translate-y-1/2 left-[-80px] bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300"
-                on:click={slidePrev}
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    class="w-6 h-6"
-                >
-                    <path
-                        fill-rule="evenodd"
-                        d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-2.47-2.47H16.5a.75.75 0 000-1.5H6.51l2.47-2.47a.75.75 0 10-1.06-1.06l-3 3z"
-                        clip-rule="evenodd"
-                    />
-                </svg>
-            </button>
+			<button
+				class="absolute top-1/2 -translate-y-1/2 left-[-80px] bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300"
+				on:click={slidePrev}
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="currentColor"
+					class="w-6 h-6"
+				>
+					<path
+						fill-rule="evenodd"
+						d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-2.47-2.47H16.5a.75.75 0 000-1.5H6.51l2.47-2.47a.75.75 0 10-1.06-1.06l-3 3z"
+						clip-rule="evenodd"
+					/>
+				</svg>
+			</button>
 
-            <button
-                class="absolute top-1/2 -translate-y-1/2 right-[-80px] bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300"
-                on:click={slideNext}
-            >
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    class="w-6 h-6"
-                >
-                    <path
-                        fill-rule="evenodd"
-                        d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s-4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm3.53 10.78a.75.75 0 000-1.06l-3-3a.75.75 0 10-1.06 1.06l2.47 2.47H7.5a.75.75 0 000 1.5h7.94l-2.47 2.47a.75.75 0 101.06 1.06l3-3z"
-                        clip-rule="evenodd"
-                    />
-                </svg>
-            </button>
-        </section>
+			<button
+				class="absolute top-1/2 -translate-y-1/2 right-[-80px] bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300"
+				on:click={slideNext}
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="currentColor"
+					class="w-6 h-6"
+				>
+					<path
+						fill-rule="evenodd"
+						d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s-4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm3.53 10.78a.75.75 0 000-1.06l-3-3a.75.75 0 10-1.06 1.06l2.47 2.47H7.5a.75.75 0 000 1.5h7.94l-2.47 2.47a.75.75 0 101.06 1.06l3-3z"
+						clip-rule="evenodd"
+					/>
+				</svg>
+			</button>
+		</section>
 		<!-- Categories -->
 		<section class="mb-8">
 			<h2 class="text-xl font-bold mb-4">หมวดหมู่</h2>
 			<div class="flex flex-wrap space-x-2">
 				{#each categories as category}
 					<button
-						class="bg-blue-200 text-blue-800 px-4 py-2 rounded-md  mb-2 hover:bg-blue-300 transition duration-200"
+						class="bg-blue-200 text-blue-800 px-4 py-2 rounded-md mb-2 hover:bg-blue-300 transition duration-200"
 					>
 						{category}
 					</button>
@@ -392,17 +426,25 @@
 		<section class="mb-8">
 			<h2 class="text-xl font-bold mb-4">สินค้าขายดีประจำสัปดาห์</h2>
 			<div class="relative">
-				<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+				<div
+					class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+				>
 					{#each visibleWeeklyHighlightProducts as product}
 						<div
 							class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200 transition duration-200"
 							on:click={() => navigateToProduct(product.id)}
 						>
 							<div class="h-56 mb-2 rounded-md overflow-hidden">
-								<img src={product.image} alt={product.name} class="h-full w-full object-cover" />
+								<img
+									src={product.image}
+									alt={product.name}
+									class="h-full w-full object-cover"
+								/>
 							</div>
 							<p class="text-center">{product.name}</p>
-							<p class="text-center text-red-500">{product.price}</p>
+							<p class="text-center text-red-500">
+								{product.price}
+							</p>
 						</div>
 					{/each}
 				</div>
@@ -453,17 +495,25 @@
 		<section class="mb-8">
 			<h2 class="text-xl font-bold mb-4">นิยาย แนะนำ</h2>
 			<div class="relative">
-				<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+				<div
+					class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+				>
 					{#each visibleNovelProducts as product}
 						<div
 							class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200 transition duration-200"
 							on:click={() => navigateToProduct(product.id)}
 						>
 							<div class="h-56 mb-2 rounded-md overflow-hidden">
-								<img src={product.image} alt={product.name} class="h-full w-full object-cover" />
+								<img
+									src={product.image}
+									alt={product.name}
+									class="h-full w-full object-cover"
+								/>
 							</div>
 							<p class="text-center">{product.name}</p>
-							<p class="text-center text-red-500">{product.price}</p>
+							<p class="text-center text-red-500">
+								{product.price}
+							</p>
 						</div>
 					{/each}
 				</div>
@@ -518,7 +568,11 @@
 				<ul>
 					{#each footerLinks as link}
 						<li>
-							<a href={link.url} class="hover:text-blue-300 transition-colors duration-300">{link.title}</a>
+							<a
+								href={link.url}
+								class="hover:text-blue-300 transition-colors duration-300"
+								>{link.title}</a
+							>
 						</li>
 					{/each}
 				</ul>
@@ -530,7 +584,7 @@
 				<p>
 					อีเมล:
 					<a
-						href={'mailto:' + contactInfo.email}
+						href={"mailto:" + contactInfo.email}
 						class="hover:text-blue-300 transition-colors duration-300"
 						>{contactInfo.email}</a
 					>
@@ -553,11 +607,16 @@
 					{/each}
 				</div>
 			</div>
-			<div class="mt-8 border-t border-blue-700 pt-4 text-center col-span-full">
-				<p>© {new Date().getFullYear()} ร้านหนังสือของป้าแพรวา. All rights reserved.</p>
+			<div
+				class="mt-8 border-t border-blue-700 pt-4 text-center col-span-full"
+			>
+				<p>
+					© {new Date().getFullYear()} ร้านหนังสือของป้าแพรวา. All rights
+					reserved.
+				</p>
 			</div>
 		</div>
-		</footer>
+	</footer>
 </div>
 
 <style>
@@ -594,5 +653,5 @@
 		border-width: 0;
 	}
 	/*  Font Awesome  */
-	@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+	@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css");
 </style>

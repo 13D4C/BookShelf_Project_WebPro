@@ -1,8 +1,29 @@
-<script>
+<script lang="ts">
     import { goto } from '$app/navigation';
     function RegisterPage() {
     goto('/Register');
   }
+  async function login(event: SubmitEvent) {
+        event.preventDefault();
+        const usernameInput = document.getElementById('username') as HTMLInputElement;
+        const passwordInput = document.getElementById('password') as HTMLInputElement;
+        try {
+            const response = await fetch("http://localhost:3000/user/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_name: usernameInput.value, user_pass: passwordInput.value }),
+            });
+            
+            const data = await response.json();
+
+            if (response.ok && data.message === "Login successful") {
+                localStorage.setItem("userToken", data.userToken); 
+                goto("/main");
+            }
+        } catch (error) {
+            console.error("Error during login:", error);
+        }
+    }
 </script>
 
 <main class="flex h-screen">
@@ -21,7 +42,7 @@
                 />
                 <h1 class="text-2xl font-semibold text-gray-800">Login ดิ</h1>
             </div>
-            <form class="space-y-4">
+            <form class="space-y-4" on:submit={login}>
                 <div>
                     <label
                         for="username"
@@ -61,7 +82,8 @@
                     </a>
 
                     <a
-                        href="#" on:click={RegisterPage}
+                        href="#"
+                        on:click={RegisterPage}
                         class="text-sm font-medium text-blue-600 hover:underline"
                     >
                         Register
