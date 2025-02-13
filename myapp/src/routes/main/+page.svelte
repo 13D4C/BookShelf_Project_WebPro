@@ -286,28 +286,31 @@
 
 <div class="min-h-screen bg-blue-50">
 	<header class="bg-blue-900 text-white py-4">
-		<div class="container mx-auto flex justify-between items-center">
-			<button class="text-xl font-bold" on:click={MainPage}>
-				ร้านหนังสือของป้าแพรวา
+	<div class="container mx-auto flex flex-wrap items-center justify-between gap-4">
+		<button class="hidden sm:block font-bold text-lg sm:text-xl md:text-2xl" on:click={MainPage}>
+			ร้านหนังสือของป้าแพรวา
+		</button>
+
+		<div class="relative flex-1 min-w-0">
+			<input
+				type="text"
+				placeholder="ค้นหา"
+				class="rounded-md p-2 w-40 sm:w-64 text-black text-sm sm:text-base"
+				role="search"
+				aria-label="Search"
+			/>
+			<button class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-900">
+				🔍
 			</button>
-			<div class="relative ml-auto">
-				<input
-					type="text"
-					placeholder="ค้นหา"
-					class="rounded-md p-2 w-64 text-black"
-					role="search"
-					aria-label="Search"
-				/>
-				<button
-					class="absolute right-0 top-1/2 -translate-y-1/2 text-blue-900"
-				>
-					🔍
-				</button>
-			</div>
-			<button class="text-2xl ml-6">🛒</button>
-			<a href="#" on:click={ProfilePage} class="ml-6 text-2xl">👤</a>
 		</div>
-	</header>
+
+		<div class="flex items-center gap-4">
+			<button class="text-xl sm:text-2xl">🛒</button>
+			<a href="#" on:click={ProfilePage} class="text-xl sm:text-2xl">👤</a>
+		</div>
+	</div>
+</header>
+
 
 	<!-- Navigation -->
 	<nav class="bg-blue-700 text-white py-2">
