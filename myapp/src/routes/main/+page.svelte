@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { onMount } from "svelte";
+	// import Swiper from 'swiper';
+	// import 'swiper/css';
 
 	let products: any[] = [];
 
@@ -141,7 +143,7 @@
 	let itemsPerPage = 5; // ค่าเริ่มต้น
 	let visibleProducts: any[] = [];
 
-	// 🟢 ฟังก์ชันตรวจจับขนาดหน้าจอ และกำหนด itemsPerPage
+	// ฟังก์ชันตรวจจับขนาดหน้าจอ และกำหนด itemsPerPage
 	function updateItemsPerPage() {
 		const width = window.innerWidth;
 		if (width < 640)
@@ -156,7 +158,7 @@
 		updateVisibleProducts();
 	}
 
-	// 🟢 ฟังก์ชันอัปเดต `visibleProducts`
+	// ฟังก์ชันอัปเดต `visibleProducts`
 	function updateVisibleProducts() {
 		visibleProducts = products.slice(
 			currentIndex,
@@ -169,19 +171,19 @@
 		}
 	}
 
-	// 🟢 ฟังก์ชันเลื่อนสินค้าไปข้างหน้า
+	// ฟังก์ชันเลื่อนสินค้าไปข้างหน้า
 	function slideNext() {
 		currentIndex = (currentIndex + 1) % products.length;
 		updateVisibleProducts();
 	}
 
-	// 🟢 ฟังก์ชันเลื่อนสินค้าไปข้างหลัง
+	// ฟังก์ชันเลื่อนสินค้าไปข้างหลัง
 	function slidePrev() {
 		currentIndex = (currentIndex - 1 + products.length) % products.length;
 		updateVisibleProducts();
 	}
 
-	// 📌 ตรวจจับการเปลี่ยนขนาดจอ
+	// ตรวจจับการเปลี่ยนขนาดจอ
 	onMount(() => {
 		getBooks().then(() => {
 			console.log(products);
@@ -284,14 +286,14 @@
 	];
 </script>
 
-<div class="min-h-screen bg-blue-50">
+<div class="h-screen w-screen bg-blue-50">
 	<header class="bg-blue-900 text-white py-4">
 	<div class="container mx-auto flex flex-wrap items-center justify-between gap-4">
 		<button class="hidden sm:block font-bold text-lg sm:text-xl md:text-2xl" on:click={MainPage}>
 			ร้านหนังสือของป้าแพรวา
 		</button>
 
-		<div class="relative flex-1 min-w-0">
+		<div class="relative ml-auto">
 			<input
 				type="text"
 				placeholder="ค้นหา"
@@ -377,7 +379,7 @@
 			</div>
 
 			<button
-				class="absolute top-1/2 -translate-y-1/2 left-[-80px] bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300"
+				class="absolute left-2 sm:left-[-80px] top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 z-10 max-w-[calc(100%-20px)]"
 				on:click={slidePrev}
 			>
 				<svg
@@ -395,7 +397,7 @@
 			</button>
 
 			<button
-				class="absolute top-1/2 -translate-y-1/2 right-[-80px] bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300"
+				class="absolute right-2 sm:right-[-80px] top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 z-10 max-w-[calc(100%-20px)]"
 				on:click={slideNext}
 			>
 				<svg

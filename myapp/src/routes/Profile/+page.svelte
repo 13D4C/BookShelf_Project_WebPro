@@ -84,7 +84,7 @@
     <header class="bg-blue-900 text-white py-4">
       <div class="container mx-auto flex justify-between items-center">
         <!-- Make the store name clickable -->
-        <button class="text-xl font-bold" on:click={MainPage}>
+        <button class="hidden sm:block font-bold text-lg sm:text-xl md:text-2xl" on:click={MainPage}>
           ร้านหนังสือของป้าแพรวา
         </button>
         <div class="relative ml-auto">
@@ -115,7 +115,7 @@
     <!-- Main Content Wrapper (bg-blue-50 to match overall page background) -->
     <div class="container mx-auto px-4 py-8 flex">
       <!-- Sidebar -->
-      <div class="bg-blue-700 w-64 min-w-[256px] p-4 rounded-lg">
+      <div class="hidden sm:block bg-blue-700 w-64 min-w-[256px] p-4 rounded-lg">
         <h2 class="text-lg font-semibold text-white">บัญชีของฉัน</h2>
         <ul class="mt-4">
           <li
