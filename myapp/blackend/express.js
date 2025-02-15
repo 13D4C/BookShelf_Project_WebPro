@@ -414,6 +414,190 @@ app.get('/books/voting-status/:userId', async (req, res) => {
 
 ///USER///
 
+//get all user
+app.get('/user' , async (req, res) => {
+    try {
+        const sql = `SELECT * FROM user WHERE user_permission != 'Manager' ;`;
+        const data = await queryDatabase(sql);
+        res.status(200).json(data);
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Failed to get user',
+            details: error.message
+        });
+    }
+});
+
+//delete some user
+//โยน token ของคนสั่งลบ กับ user_id ของคนที่จะลบ เเละ เหตุผลที่ลบ ไว้ใน body ที่ยิงมา
+app.post('/user/manage/delete' , async (req, res) => {
+    try {
+        const { token, user_id, reason} = req.body;
+        if (!token || !user_id || !reason) {
+            return res.status(400).json({ error: 'Token and User_id and reason is required' });
+        }
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+        if(decodedToken.user_permission != 'Manager'){
+            return res.status(401).json({ error: 'Permission Denied' });
+        }
+        let check_id = await queryDatabase("SELECT * FROM user WHERE user_id = ?", [user_id]);
+        if(check_id.length === 0){
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const sql = `DELETE FROM user WHERE user_id = ?`;
+        const sql_log = `INSERT INTO log_user_status (user_id, status, reason, manager_user_id) VALUEs (?, ?, ?, ?);`;
+        const delUsers = await queryDatabase(sql, [user_id]);
+        const savelog = await queryDatabase(sql_log, [user_id, 'Deleted', reason, decodedToken.user_id]);
+        res.status(200).json({
+            detail: 'Success to delete user',
+            details: delUsers
+        })
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Failed to delete user',
+            details: error.message
+        });
+    }
+});
+
+//ban user
+// ต้องการ tokenผู้สั่งเเบน,  user_idของคนที่จะลบ, เหตุผล, เเบนถึงเวลา..
+app.patch('/user/manage/ban' , async (req, res) => {
+    try {
+        const { token, user_id, reason, user_unban_time} = req.body;
+        if (!token || !user_id || !reason || !user_unban_time) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+        if(decodedToken.user_permission != 'Manager'){
+            return res.status(401).json({ error: 'Permission Denied' });
+        }
+        let check_id = await queryDatabase("SELECT * FROM user WHERE user_id = ?", [user_id]);
+        if(check_id.length === 0){
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const sql = `UPDATE user SET user_status = 'Banned', user_unban_time = ? WHERE user_id = ?`;
+        const sql_log = `INSERT INTO log_user_status (user_id, status, reason, manager_user_id, user_unban_time) VALUEs (?, ?, ?, ?, ?);`;
+        const banUser = await queryDatabase(sql, [user_unban_time ,user_id]);
+        const savelog = await queryDatabase(sql_log, [user_id, 'Banned', reason, decodedToken.user_id, user_unban_time]);
+        res.status(200).json({
+            detail: 'Success to ban user',
+            details: banUser
+        })
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Failed to ban user',
+            details: error.message
+        });
+    }
+});
+
+//unban user
+app.patch('/user/manage/unban' , async (req, res) => {
+    try {
+        const { token, user_id, reason} = req.body;
+        if (!token || !user_id || !reason) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+        if(decodedToken.user_permission != 'Manager'){
+            return res.status(401).json({ error: 'Permission Denied' });
+        }
+        let check_id = await queryDatabase("SELECT * FROM user WHERE user_id = ?", [user_id]);
+        if(check_id.length === 0){
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const sql = `UPDATE user SET user_status = 'Normal', user_unban_time = NULL WHERE user_id = ?`;
+        const sql_log = `INSERT INTO log_user_status (user_id, status, reason, manager_user_id) VALUEs (?, ?, ?, ?);`;
+        const unBanUser = await queryDatabase(sql, [user_id]);
+        const savelog = await queryDatabase(sql_log, [user_id, 'Normal', reason, decodedToken.user_id]);
+        res.status(200).json({
+            detail: 'Success to unban user',
+            details: unBanUser
+        })
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Failed to unban user',
+            details: error.message
+        });
+    }
+});
+
+//restrict user 
+//ต้องการ tokenผู้สั่ง, user_idของคนโดน, เหตุผลที่ทำ
+app.patch('/user/manage/restrict' , async (req, res) => {
+    try {
+        const { token, user_id, reason} = req.body;
+        if (!token || !user_id || !reason) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+        if(decodedToken.user_permission != 'Manager'){
+            return res.status(401).json({ error: 'Permission Denied' });
+        }
+        let check_id = await queryDatabase("SELECT * FROM user WHERE user_id = ?", [user_id]);
+        if(check_id.length === 0){
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const sql = `UPDATE user SET user_status = 'Isolated' WHERE user_id = ?`;
+        const sql_log = `INSERT INTO log_user_status (user_id, status, reason, manager_user_id) VALUEs (?, ?, ?, ?);`;
+        const restrictUser = await queryDatabase(sql, [user_id]);
+        const savelog = await queryDatabase(sql_log, [user_id, 'Isolated', reason, decodedToken.user_id]);
+        res.status(200).json({
+            detail: 'Success to restrict user',
+            details: restrictUser
+        })
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Failed to restrict user',
+            details: error.message
+        });
+    }
+});
+
+//unrestrict user
+app.patch('/user/manage/unrestrict' , async (req, res) => {
+    try {
+        const { token, user_id, reason} = req.body;
+        if (!token || !user_id || !reason) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+        if(decodedToken.user_permission != 'Manager'){
+            return res.status(401).json({ error: 'Permission Denied' });
+        }
+        let check_id = await queryDatabase("SELECT * FROM user WHERE user_id = ?", [user_id]);
+        if(check_id.length === 0){
+            return res.status(404).json({ error: 'User not found' });
+        }
+        const sql = `UPDATE user SET user_status = 'Normal' WHERE user_id = ?`;
+        const sql_log = `INSERT INTO log_user_status (user_id, status, reason, manager_user_id) VALUEs (?, ?, ?, ?);`;
+        const unrestrictUser = await queryDatabase(sql, [user_id]);
+        const savelog = await queryDatabase(sql_log, [user_id, 'Normal', reason, decodedToken.user_id]);
+        res.status(200).json({
+            detail: 'Success to unrestrict user',
+            details: unrestrictUser
+        })
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Failed to unrestrict user',
+            details: error.message
+        });
+    }
+});
+
 app.post('/user/register', async (req, res) => {
     try {
         const { user_email, user_name, user_pass, user_phone } = req.body;
@@ -515,6 +699,19 @@ app.post('/user/login', async (req, res) => {
             });
         }
 
+        if (user.user_status == "Banned"){
+            const userUnbanTime = new Date(users[0].user_unban_time);
+            const now = new Date();
+            if (userUnbanTime > now){
+                return res.status(401).json({
+                    error: 'User has been suspended',
+                    detail: `User has been suspended until ${user.user_unban_time}`
+                });
+            }
+            const sql = `UPDATE user SET user_status = 'Normal', user_unban_time = NULL WHERE user_id = ?`;
+            await queryDatabase(sql, [user.user_id]);
+        }
+
         const token = jwt.sign(
             {
                 user_id: user.user_id,
@@ -567,58 +764,79 @@ app.post('/user/getUserProfile', async (req, res) => {
     }
 });
 
-app.post('/user/change/:id', async (req, res) => {
+// โยนข้อมูลทั้งหมดที่จะเปลี่ยนมา keyจำเป็นต้องตรงกับ database  เช่น { "userdata": {"user_name" : "black", "user_pass": "Hello"}}
+// กับ user_id ของคนที่ต้องการเปลี่ยน
+app.patch('/user/update', async (req, res) => {
     try {
-        const { id } = req.params;
-        const { user_id, data, password } = req.body;
-        const findUserSql = 'SELECT * FROM user WHERE user_id = ?';
-        const users = await queryDatabase(findUserSql, [user_id]);
-
-        if (users.length === 0) {
-            return res.status(404).json({ error: 'User not found' });
+        const userData = req.body.user_data;
+        const user_id = req.body.user_id;
+        if(!userData || !user_id){
+            return res.status(400).json({ message: 'Information is require' });
         }
 
-        const user = users[0];
-        const match = await bcrypt.compare(password, user.user_pass);
-
-        if (!match) {
-            return res.status(401).json({ error: 'Invalid password' });
+        const checkResults = await queryDatabase('SELECT * FROM user WHERE user_id = ?', [user_id]);
+        if(checkResults.length == 0) {
+            return res.status(404).json({ message: 'User not found' });
         }
-        if (id === 'user_name' || id === 'user_email') {
-            const column = id === 'user_name' ? 'user_name' : 'user_email';
-            const existingUserSql = `SELECT * FROM user WHERE ${column} = ?`;
-            const existingUser = await queryDatabase(existingUserSql, [data]);
-            if (existingUser.length > 0) {
-                return res.status(409).json({ error: `${column === 'user_name' ? 'Username' : 'Email'} already exists` });
+
+        if (userData.user_name && userData.user_name != checkResults[0].user_name) {
+            const checkName = await queryDatabase('SELECT * FROM user WHERE user_name = ?', [userData.user_name]);
+            if (checkName.length > 0) {
+                return res.status(409).json({ message: 'Username is already registered' });
+            }
+            checkResults[0].user_name = userData.user_name;
+        }
+        
+        if (userData.user_email && userData.user_email != checkResults[0].user_email) {
+            const checkMail = await queryDatabase('SELECT * FROM user WHERE user_email = ?', [userData.user_email]);
+            if (checkMail.length > 0) {
+                return res.status(409).json({ message: 'Email is already registered' });
             }
         }
 
-        let updateData = data;
-        if (id === 'user_pass') {
-            updateData = await bcrypt.hash(data, 8);
+        if (userData.user_pass) {
+            const passwordHash = await bcrypt.hash(userData.user_pass, 8);
+            userData.user_pass = passwordHash;
         }
 
-        const updateUserSql = `UPDATE user SET ${id} = ? WHERE user_id = ?`;
-        await queryDatabase(updateUserSql, [updateData, user_id]);
+        let query = 'UPDATE user SET ';
+        const values = [];
+        const updates = [];
+        
+        for (const key in userData) {
+            if (userData.hasOwnProperty(key)) {
+                updates.push(`${key} = ?`);
+                values.push(userData[key]);
+            }
+        }
 
-        const updatedUserSql = 'SELECT * FROM user WHERE user_id = ?';
-        const updatedUsers = await queryDatabase(updatedUserSql, [user_id]);
-        const updatedUser = updatedUsers[0];
+        query += updates.join(', ');
+        query += ' WHERE user_id = ?';
+        values.push(checkResults[0].user_id)
+
+        const result = await queryDatabase(query, values);
+        if (result.affectedRows === 0) {
+            throw {message: 'user not found'}
+        }
 
         const token = jwt.sign(
             {
-                user_id: updatedUser.user_id,
-                user_name: updatedUser.user_name,
-                user_permission: updatedUser.user_permission,
+                user_id: checkResults[0].user_id,
+                user_name: checkResults[0].user_name,
+                user_permission: checkResults[0].user_permission
             },
             'itkmitl',
-            { expiresIn: '30d' }
-        );
+            { expiresIn: '30d'}
+        )
 
-        res.json({ message: 'User information updated successfully', userToken: token, name_user: updatedUser.user_name });
-    } catch (error) {
-        console.error('Error updating user information:', error);
-        res.status(500).json({ error: 'Failed to update user information' });
+        res.status(200).json({ message: 'User updated successfully', token: token});
+    }
+    catch (error) {
+        console.log(`EROR : ${error}`)
+        res.status(500).json({
+            message: 'Update fail',
+            error
+        });
     }
 });
 
