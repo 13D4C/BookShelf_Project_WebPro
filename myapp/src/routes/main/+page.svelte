@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { onMount } from "svelte";
-	// import Swiper from 'swiper';
-	// import 'swiper/css';
+	import Swiper from 'swiper/bundle';
+	import 'swiper/css/bundle';
+
 
 	let products: any[] = [];
+	 let swiperContainer;
 
 	async function getBooks() {
 		try {
@@ -154,6 +156,7 @@
 			itemsPerPage = 4; // lg (แล็ปท็อป)
 		else itemsPerPage = 5; // xl ขึ้นไป (เดสก์ท็อป)
 
+		
 		// อัปเดตสินค้าตาม index ใหม่
 		updateVisibleProducts();
 	}
@@ -170,21 +173,20 @@
 			);
 		}
 	}
-
 	// ฟังก์ชันเลื่อนสินค้าไปข้างหน้า
-	function slideNext() {
-		currentIndex = (currentIndex + 1) % products.length;
-		updateVisibleProducts();
-	}
+	// function slideNext() {
+	// 	currentIndex = (currentIndex + 1) % products.length;
+	// 	updateVisibleProducts();
+	// }
 
-	// ฟังก์ชันเลื่อนสินค้าไปข้างหลัง
-	function slidePrev() {
-		currentIndex = (currentIndex - 1 + products.length) % products.length;
-		updateVisibleProducts();
-	}
+	// // ฟังก์ชันเลื่อนสินค้าไปข้างหลัง
+	// function slidePrev() {
+	// 	currentIndex = (currentIndex - 1 + products.length) % products.length;
+	// 	updateVisibleProducts();
+	// }
 
-	// ตรวจจับการเปลี่ยนขนาดจอ
 	onMount(() => {
+	// ตรวจจับการเปลี่ยนขนาดจอ
 		getBooks().then(() => {
 			console.log(products);
 			updateItemsPerPage();
@@ -192,6 +194,41 @@
 			return () =>
 				window.removeEventListener("resize", updateItemsPerPage);
 		});
+
+		const swiper = new Swiper('.swiper', {
+  		// configure Swiper to use modules
+      pagination: { 
+		el: ".swiper-pagination",
+		clickable: true },
+      spaceBetween: 20,
+      slidesPerView: "auto",
+
+		});
+
+
+		let swiper1 = new Swiper(".swiper1", {
+      slidesPerView: 1,
+      spaceBetween: 30,
+      freeMode: true,
+	  navigation: {
+        nextEl: ".swiper-button-next",
+        prevEl: ".swiper-button-prev",
+      },
+	  breakpoints: {
+        640: {
+          slidesPerView: 3,
+          spaceBetween: 20,
+        },
+        768: {
+          slidesPerView: 4,
+          spaceBetween: 40,
+        },
+        1024: {
+          slidesPerView: 5,
+          spaceBetween: 50,
+        },
+      },
+   	 	});
 	});
 	let bannerImages = [
 		"https://fiverr-res.cloudinary.com/images/q_auto,f_auto/gigs/323203587/original/8f16754c80f8ea7a8a2b87b24c40f123ed219937/do-a-colorful-and-dynamic-anime-or-manga-banner-for-you.png",
@@ -284,9 +321,10 @@
 		"https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/56108c72-51ea-4e26-8de9-008fde4723c4/dfhaomu-59c653ab-3da1-4c81-9a4b-bbd042eec441.jpg/v1/fill/w_1280,h_427,q_75,strp/hentai_banner_by_bankysenpai_dfhaomu-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NDI3IiwicGF0aCI6IlwvZlwvNTYxMDhjNzItNTFlYS00ZTI2LThkZTktMDA4ZmRlNDcyM2M0XC9kZmhhb211LTU5YzY1M2FiLTNkYTEtNGM4MS05YTRiLWJiZDA0MmVlYzQ0MS5qcGciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.iARBneFwUhe2l5QaD7tde0SZRIUGiBQxZnFadq0DFMQ",
 		"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0IUgoI9H2LpPoSSvg5nJxns3acKbS-gdQjQ&s",
 	];
+
 </script>
 
-<div class="h-screen w-screen bg-blue-50">
+<div class="bg-blue-50">
 	<header class="bg-blue-900 text-white py-4">
 	<div class="container mx-auto flex flex-wrap items-center justify-between gap-4">
 		<button class="hidden sm:block font-bold text-lg sm:text-xl md:text-2xl" on:click={MainPage}>
@@ -355,8 +393,8 @@
 
 		<section class="mb-8 relative">
 			<h2 class="text-xl font-bold mb-4">สินค้าออกใหม่</h2>
-			<div
-				class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+			<!-- <div
+				class="hidden sm:grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
 			>
 				{#each visibleProducts as product}
 					<div
@@ -379,7 +417,7 @@
 			</div>
 
 			<button
-				class="absolute left-2 sm:left-[-80px] top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 z-10 max-w-[calc(100%-20px)]"
+				class=" hidden sm:block absolute left-2 sm:left-[-80px] top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 z-10 max-w-[calc(100%-20px)]"
 				on:click={slidePrev}
 			>
 				<svg
@@ -397,7 +435,7 @@
 			</button>
 
 			<button
-				class="absolute right-2 sm:right-[-80px] top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 z-10 max-w-[calc(100%-20px)]"
+				class=" hidden sm:block absolute right-2 sm:right-[-80px] top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 z-10 max-w-[calc(100%-20px)]"
 				on:click={slideNext}
 			>
 				<svg
@@ -412,8 +450,66 @@
 						clip-rule="evenodd"
 					/>
 				</svg>
-			</button>
+			</button> -->
+<div class=" hidden sm:contents">
+	<div class="swiper swiper1">
+		<div class="swiper-wrapper">
+		{#each products as product}
+					<div class="swiper-slide ">
+						<div
+						class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
+						on:click={() => navigateToProduct(product.book_id)}
+						>
+						<div class="h-56 mb-2 rounded-md overflow-hidden">
+							<img
+							src={product.book_image}
+							alt={product.book_name_th}
+							class="h-48 w-96 object-scale-down place-content-center"
+							/>
+						</div>
+						<p class="text-center truncate">{product.book_name_th}</p>
+						<p class="text-center text-red-500">{product.book_price}</p>
+						</div>
+					</div>
+					{/each}
+		</div>
+	</div>	
+  	<div class="swiper-button-next"></div>
+    <div class="swiper-button-prev"></div>
+</div>
+	<dir class="sm:hidden sm:block" style="padding-left: 0px;">
+		<div class="swiper" bind:this={swiperContainer}>
+			<div class="swiper-wrapper">
+				{#each products as product}
+				<div class="swiper-slide ">
+					<div
+					class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200 overflow-hidden"
+					on:click={() => navigateToProduct(product.book_id)}
+					>
+					<div class="h-56 mb-2 rounded-md overflow-hidden">
+						<img
+						src={product.book_image}
+						alt={product.book_name_th}
+						class="h-48 w-96 object-scale-down place-content-center"
+						/>
+					</div>
+					<p class="text-center truncate">{product.book_name_th}</p>
+					<p class="text-center text-red-500">{product.book_price}</p>
+					</div>
+				</div>
+				{/each}
+			</div>
+		</div>
+		<br><br><br>
+			<div class="swiper-pagination"></div>
+	</dir>
 		</section>
+
+
+
+
+
+
 		<!-- Categories -->
 		<section class="mb-8">
 			<h2 class="text-xl font-bold mb-4">หมวดหมู่</h2>
@@ -443,11 +539,11 @@
 								<img
 									src={product.image}
 									alt={product.name}
-									class="h-full w-full object-cover"
+									class="h-full w-full object-scale-down"
 								/>
 							</div>
-							<p class="text-center">{product.name}</p>
-							<p class="text-center text-red-500">
+							<p class="text-center h-24">{product.name}</p>
+							<p class="text-center text-red-500 place-content-center">
 								{product.price}
 							</p>
 						</div>
@@ -512,10 +608,10 @@
 								<img
 									src={product.image}
 									alt={product.name}
-									class="h-full w-full object-cover"
+									class="h-full w-full object-scale-down"
 								/>
 							</div>
-							<p class="text-center">{product.name}</p>
+							<p class="text-center h-24">{product.name}</p>
 							<p class="text-center text-red-500">
 								{product.price}
 							</p>
@@ -657,6 +753,23 @@
 		white-space: nowrap;
 		border-width: 0;
 	}
+	img{
+
+  border-radius: 8px;
+  margin-bottom: 10px;
+
+	}
+	/* Swiper */
+@media screen and (min-width: 1350px) {
+	.swiper-button-next{
+		position: absolute;
+		right: -80px;
+	}
+	.swiper-button-prev{
+		position: absolute;
+		left: -80px;
+	}
+}
 	/*  Font Awesome  */
 	@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css");
 </style>
