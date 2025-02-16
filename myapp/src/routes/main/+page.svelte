@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { onMount, onDestroy } from "svelte"; // Import onDestroy
-	import Swiper from 'swiper/bundle';
-	import 'swiper/css/bundle';
+	import Swiper from "swiper/bundle";
+	import "swiper/css/bundle";
 
 	interface Product {
 		id: number;
@@ -11,49 +11,13 @@
 		image: string;
 		book_id?: number; // Optional, since some products might not have it
 		book_name_th?: string; // Optional
-		book_image?: string;   // Optional
+		book_image?: string; // Optional
 		book_price?: string; // Optional
 	}
 
 	let products: Product[] = [
-		{
-			book_id: 1,
-			name: "ยอดนักสืบจิ๋วโคนัน เล่ม 100",
-			image: "https://miku-doujin.com/uploads/thumbnail/5721960596506d8921948659dc568ba2.jpg",
-			price: "150 บาท",
-		},
-		{
-			book_id: 2,
-			name: "ดาบพิฆาตอสูร เล่ม 23",
-			image: "https://miku-doujin.com/uploads/thumbnail/5721960596506d8921948659dc568ba2.jpg",
-			price: "90 บาท",
-		},
-		{
-			book_id: 3,
-			name: "มหาเวทย์ผนึกมาร เล่ม 0",
-			image: "https://miku-doujin.com/uploads/thumbnail/5721960596506d8921948659dc568ba2.jpg",
-			price: "120 บาท",
-		},
-		{
-			book_id: 4,
-			name: "เกิดใหม่ทั้งทีก็เป็นสไลม์ไปซะแล้ว เล่ม 18",
-			image: "https://miku-doujin.com/uploads/thumbnail/5721960596506d8921948659dc568ba2.jpg",
-			price: "350 บาท",
-		},
-		{
-			book_id: 5,
-			name: "One Piece เล่ม 105",
-			image: "https://www.mbookstore.com/images_book/978/978616464982/9786164649828_1_full.jpg?1702279275",
-			price: "95 บาท",
-		},
-		{
-			book_id: 6,
-			name: "SPY x FAMILY เล่ม 10",
-			image: "https://www.mbookstore.com/images_book/978/978616575966/9786165759669_1_full.jpg?1709519277",
-			price: "120 บาท",
-		},
-	];
 
+	];
 
 	async function getBooks() {
 		try {
@@ -62,8 +26,36 @@
 			if (!response.ok) {
 				throw new Error(`HTTP error! Status: ${response.status}`);
 			}
-
 			products = await response.json();
+			sections = [
+		{
+			products: products,
+			title: "สินค้าออกใหม่",
+			swiperClass: "swiper-new-products",
+			nextButtonClass: "swiper-button-next-new",
+			prevButtonClass: "swiper-button-prev-new",
+			paginationClass: "swiper-pagination-new",
+			refreshInterval: 100,
+		},
+		{
+			products: weeklyHighlightProducts,
+			title: "สินค้าขายดีประจำสัปดาห์",
+			swiperClass: "swiper-weekly",
+			nextButtonClass: "swiper-button-next-weekly",
+			prevButtonClass: "swiper-button-prev-weekly",
+			paginationClass: "swiper-pagination-weekly",
+			refreshInterval: 100,
+		},
+		{
+			products: novelProducts,
+			title: "นิยาย แนะนำ",
+			swiperClass: "swiper-novel",
+			nextButtonClass: "swiper-button-next-novel",
+			prevButtonClass: "swiper-button-prev-novel",
+			paginationClass: "swiper-pagination-novel",
+			refreshInterval: 100,
+		},
+	];
 		} catch (error) {
 			console.error("Error fetching books:", error);
 			products = [];
@@ -185,78 +177,46 @@
 		goto(`/product/${id}`);
 	}
 
+	// --- Swiper Section ---
+	interface SectionConfig {
+		products: Product[];
+		title: string;
+		swiperClass: string;
+		nextButtonClass: string;
+		prevButtonClass: string;
+		paginationClass: string;
+		refreshInterval?: number;
+	}
 
-    // --- Swiper Section ---
-    interface SectionConfig {
-        products: Product[];
-        title: string;
-        swiperClass: string;
-        nextButtonClass: string;
-        prevButtonClass: string;
-        paginationClass: string;
-		refreshInterval?: number; 
-    }
+	let sections: SectionConfig[] = [];
 
-    const sections: SectionConfig[] = [
-        {
-            products: products,
-            title: "สินค้าออกใหม่",
-            swiperClass: "swiper-new-products",
-            nextButtonClass: "swiper-button-next-new",
-            prevButtonClass: "swiper-button-prev-new",
-            paginationClass: "swiper-pagination-new",
-			refreshInterval: 100,
-        },
-        {
-            products: weeklyHighlightProducts,
-            title: "สินค้าขายดีประจำสัปดาห์",
-            swiperClass: "swiper-weekly",
-            nextButtonClass: "swiper-button-next-weekly",
-            prevButtonClass: "swiper-button-prev-weekly",
-            paginationClass: "swiper-pagination-weekly",
-			refreshInterval: 100,
-        },
-        {
-            products: novelProducts,
-            title: "นิยาย แนะนำ",
-            swiperClass: "swiper-novel",
-            nextButtonClass: "swiper-button-next-novel",
-            prevButtonClass: "swiper-button-prev-novel",
-            paginationClass: "swiper-pagination-novel",
-			refreshInterval: 100,
-        },
-    ];
-
-    let itemsPerPageMap: Record<string, number> = {}; // Store itemsPerPage for each section
+	let itemsPerPageMap: Record<string, number> = {}; // Store itemsPerPage for each section
 	let swiperInstances: Swiper[] = []; // Store Swiper instances
 	let refreshTimers: NodeJS.Timeout[] = [];
 
-    function updateItemsPerPage(sectionClass: string) {
-        const width = window.innerWidth;
-        if (width < 640)
-            itemsPerPageMap[sectionClass] = 1;
-        else if (width < 768)
-            itemsPerPageMap[sectionClass] = 3;
-        else if (width < 1024)
-            itemsPerPageMap[sectionClass] = 4;
-        else
-            itemsPerPageMap[sectionClass] = 5;
-    }
+	function updateItemsPerPage(sectionClass: string) {
+		const width = window.innerWidth;
+		if (width < 640) itemsPerPageMap[sectionClass] = 1;
+		else if (width < 768) itemsPerPageMap[sectionClass] = 3;
+		else if (width < 1024) itemsPerPageMap[sectionClass] = 4;
+		else itemsPerPageMap[sectionClass] = 5;
+	}
 
 	function destroySwipers() {
-		swiperInstances.forEach(swiper => {
-			if (swiper && swiper.destroy) { // Check if destroy is available
+		swiperInstances.forEach((swiper) => {
+			if (swiper && swiper.destroy) {
+				// Check if destroy is available
 				swiper.destroy(true, true); // Clean up Swiper instance
 			}
 		});
 		swiperInstances = []; // Clear the array
 	}
 
-		function initSwiper() {
+	function initSwiper() {
 		// Destroy existing swipers before re-initializing
 		destroySwipers();
-
-		sections.forEach(section => {
+		console.log(sections);
+		sections.forEach((section) => {
 			updateItemsPerPage(section.swiperClass); // Initialize itemsPerPage
 
 			const swiper = new Swiper("." + section.swiperClass, {
@@ -269,7 +229,7 @@
 				},
 				pagination: {
 					el: "." + section.paginationClass,
-					clickable: true
+					clickable: true,
 				},
 			});
 
@@ -284,41 +244,36 @@
 				}, section.refreshInterval);
 				refreshTimers.push(timerId);
 			}
-
-
 		});
 	}
 
+	onMount(() => {
+		getBooks().then(() => {
+			initSwiper();
 
-
-    onMount(() => {
-        initSwiper();
-
-        window.addEventListener('resize', () => {
-            sections.forEach(section => {
-                updateItemsPerPage(section.swiperClass);
-            });
-             // No need to destroy here; it's handled in initSwiper
-			initSwiper()
-        });
-
-		// Clear intervals on component destruction
-        return () => {
-            window.removeEventListener('resize', () => {
-				sections.forEach(section=>{
-					updateItemsPerPage(section.swiperClass)
-				})
-				initSwiper()
+			window.addEventListener("resize", () => {
+				sections.forEach((section) => {
+					updateItemsPerPage(section.swiperClass);
+				});
+				// No need to destroy here; it's handled in initSwiper
+				initSwiper();
 			});
 
-			// Clear all refresh timers
-			refreshTimers.forEach(timerId => clearInterval(timerId));
-			destroySwipers();  //Destroy Swiper when unmount
+			// Clear intervals on component destruction
+			return () => {
+				window.removeEventListener("resize", () => {
+					sections.forEach((section) => {
+						updateItemsPerPage(section.swiperClass);
+					});
+					initSwiper();
+				});
 
-        };
-    });
-
-
+				// Clear all refresh timers
+				refreshTimers.forEach((timerId) => clearInterval(timerId));
+				destroySwipers(); //Destroy Swiper when unmount
+			};
+		});
+	});
 
 	let bannerImages = [
 		"https://fiverr-res.cloudinary.com/images/q_auto,f_auto/gigs/323203587/original/8f16754c80f8ea7a8a2b87b24c40f123ed219937/do-a-colorful-and-dynamic-anime-or-manga-banner-for-you.png",
@@ -341,37 +296,43 @@
 		"https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/56108c72-51ea-4e26-8de9-008fde4723c4/dfhaomu-59c653ab-3da1-4c81-9a4b-bbd042eec441.jpg/v1/fill/w_1280,h_427,q_75,strp/hentai_banner_by_bankysenpai_dfhaomu-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NDI3IiwicGF0aCI6IlwvZlwvNTYxMDhjNzItNTFlYS00ZTI2LThkZTktMDA4ZmRlNDcyM2M0XC9kZmhhb211LTU5YzY1M2FiLTNkYTEtNGM4MS05YTRiLWJiZDA0MmVlYzQ0MS5qcGciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.iARBneFwUhe2l5QaD7tde0SZRIUGiBQxZnFadq0DFMQ",
 		"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0IUgoI9H2LpPoSSvg5nJxns3acKbS-gdQjQ&s",
 	];
-
-
 </script>
 
 <div class="bg-blue-50">
 	<header class="bg-blue-900 text-white py-4">
-	<div class="container mx-auto flex flex-wrap items-center justify-between gap-4">
-		<button class="hidden sm:block font-bold text-lg sm:text-xl md:text-2xl" on:click={MainPage}>
-			ร้านหนังสือของป้าแพรวา
-		</button>
-
-		<div class="relative ml-auto">
-			<input
-				type="text"
-				placeholder="ค้นหา"
-				class="rounded-md p-2 w-40 sm:w-64 text-black text-sm sm:text-base"
-				role="search"
-				aria-label="Search"
-			/>
-			<button class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-900">
-				🔍
+		<div
+			class="container mx-auto flex flex-wrap items-center justify-between gap-4"
+		>
+			<button
+				class="hidden sm:block font-bold text-lg sm:text-xl md:text-2xl"
+				on:click={MainPage}
+			>
+				ร้านหนังสือของป้าแพรวา
 			</button>
-		</div>
 
-		<div class="flex items-center gap-4">
-			<button class="text-xl sm:text-2xl">🛒</button>
-			<a href="#" on:click={ProfilePage} class="text-xl sm:text-2xl">👤</a>
-		</div>
-	</div>
-</header>
+			<div class="relative ml-auto">
+				<input
+					type="text"
+					placeholder="ค้นหา"
+					class="rounded-md p-2 w-40 sm:w-64 text-black text-sm sm:text-base"
+					role="search"
+					aria-label="Search"
+				/>
+				<button
+					class="absolute right-2 top-1/2 -translate-y-1/2 text-blue-900"
+				>
+					🔍
+				</button>
+			</div>
 
+			<div class="flex items-center gap-4">
+				<button class="text-xl sm:text-2xl">🛒</button>
+				<a href="#" on:click={ProfilePage} class="text-xl sm:text-2xl"
+					>👤</a
+				>
+			</div>
+		</div>
+	</header>
 
 	<!-- Navigation -->
 	<nav class="bg-blue-700 text-white py-2">
@@ -413,40 +374,54 @@
 		</div>
 
 		{#each sections as section}
-    <section class="mb-8 relative">
-        <h2 class="text-xl font-bold mb-4">{section.title}</h2>
-        <div class="contents">
-            <div class={section.swiperClass + " swiper"}>
-                <div class="swiper-wrapper">
-                    {#each section.products as product}
-                        <div class="swiper-slide">
-                            <div
-                                class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
-                                on:click={() => navigateToProduct(product.book_id || product.id)}
-                            >
-                                <div class="h-56 mb-2 rounded-md overflow-hidden">
-                                    <img
-                                        src={product.image}
-                                        alt={product.name}
-                                        class="h-48 w-96 object-scale-down place-content-center"
-                                    />
-                                </div>
-                                <p class="text-center truncate">{product.name}</p>
-                                <p class="text-center text-red-500">{product.price}</p>
-                            </div>
-                        </div>
-                    {/each}
-                </div>
-            </div>
-            <div class={section.nextButtonClass + " swiper-button-next"}></div>
-            <div class={section.prevButtonClass + " swiper-button-prev"}></div>
-            <br><br>
-            <div class={section.paginationClass + " swiper-pagination sm:hidden sm:block"}></div>
-        </div>
-    </section>
-{/each}
-
-
+			<section class="mb-8 relative">
+				<h2 class="text-xl font-bold mb-4">{section.title}</h2>
+				<div class="contents">
+					<div class={section.swiperClass + " swiper"}>
+						<div class="swiper-wrapper">
+							{#each section.products as product}
+								<div class="swiper-slide">
+									<div
+										class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
+										on:click={() =>
+											navigateToProduct(
+												product.book_id || product.id,
+											)}
+									>
+										<div
+											class="h-56 mb-2 rounded-md overflow-hidden"
+										>
+											<img
+												src={product.book_image}
+												alt={product.name}
+												class="h-48 w-96 object-scale-down place-content-center"
+											/>
+										</div>
+										<p class="text-center truncate">
+											{product.name}
+										</p>
+										<p class="text-center text-red-500">
+											{product.price}
+										</p>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+					<div
+						class={section.nextButtonClass + " swiper-button-next"}
+					></div>
+					<div
+						class={section.prevButtonClass + " swiper-button-prev"}
+					></div>
+					<br /><br />
+					<div
+						class={section.paginationClass +
+							" swiper-pagination sm:hidden sm:block"}
+					></div>
+				</div>
+			</section>
+		{/each}
 
 		<!-- Categories -->
 		<section class="mb-8">
@@ -554,35 +529,36 @@
 		white-space: nowrap;
 		border-width: 0;
 	}
-	img{
-
-  border-radius: 8px;
-  margin-bottom: 10px;
-
+	img {
+		border-radius: 8px;
+		margin-bottom: 10px;
 	}
 	/* Swiper */
-@media screen and (min-width: 1350px) {
-	.swiper-button-next-new, .swiper-button-next-weekly, .swiper-button-next-novel{
-		position: absolute;
-		right: -80px;
+	@media screen and (min-width: 1350px) {
+		.swiper-button-next-new,
+		.swiper-button-next-weekly,
+		.swiper-button-next-novel {
+			position: absolute;
+			right: -80px;
+		}
+		.swiper-button-prev-new,
+		.swiper-button-prev-weekly,
+		.swiper-button-prev-novel {
+			position: absolute;
+			left: -80px;
+		}
 	}
-	.swiper-button-prev-new, .swiper-button-prev-weekly, .swiper-button-prev-novel{
-		position: absolute;
-		left: -80px;
-	}
-}
 
-@media screen and (max-width: 767px) {
-  .swiper-button-next-new,
-  .swiper-button-prev-new,
-  .swiper-button-next-weekly,
-  .swiper-button-prev-weekly,
-  .swiper-button-next-novel,
-  .swiper-button-prev-novel
-    {
-    display: none !important;
-  }
-}
+	@media screen and (max-width: 767px) {
+		.swiper-button-next-new,
+		.swiper-button-prev-new,
+		.swiper-button-next-weekly,
+		.swiper-button-prev-weekly,
+		.swiper-button-next-novel,
+		.swiper-button-prev-novel {
+			display: none !important;
+		}
+	}
 
 	/*  Font Awesome  */
 	@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css");

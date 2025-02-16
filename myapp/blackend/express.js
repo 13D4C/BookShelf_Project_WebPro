@@ -17,6 +17,7 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 const pool = mysql.createPool({
+
 });
 
 async function queryDatabase(sql, params = []) {
