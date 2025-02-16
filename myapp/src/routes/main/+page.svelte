@@ -312,7 +312,6 @@
   function closeMenu() {
     isOpen = false;
   }
-
 </script>
 
 <div class="h-full bg-blue-50">
@@ -475,6 +474,15 @@
 					/>
 				</svg>
 			</button> -->
+			{#if products == ""}
+			 <iframe 
+  class="aspect-video w-3/4" 
+  src="https://www.youtube.com/embed/8ytKQE-8-Hw?autoplay=1" 
+  allow="autoplay">
+</iframe>
+
+			{/if}
+
 <div class="contents">
 	<div class="swiper swiper1">
 		<div class="swiper-wrapper">
