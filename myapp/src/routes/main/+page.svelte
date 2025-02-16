@@ -138,7 +138,7 @@
 	];
 
 	function navigateToProduct(id: number) {
-		goto(`/product/${id}`);
+		goto(`/details/${id}`);
 	}
 
 	let currentIndex = 0;
