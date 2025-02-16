@@ -195,17 +195,6 @@
 				window.removeEventListener("resize", updateItemsPerPage);
 		});
 
-		const swiper = new Swiper('.swiper', {
-  		// configure Swiper to use modules
-      pagination: { 
-		el: ".swiper-pagination",
-		clickable: true },
-      spaceBetween: 20,
-      slidesPerView: "auto",
-
-		});
-
-
 		let swiper1 = new Swiper(".swiper1", {
       slidesPerView: 1,
       spaceBetween: 30,
@@ -214,9 +203,12 @@
         nextEl: ".swiper-button-next",
         prevEl: ".swiper-button-prev",
       },
+	  pagination: { 
+		el: ".swiper-pagination",
+		clickable: true },
 	  breakpoints: {
         640: {
-          slidesPerView: 3,
+          slidesPerView: 1,
           spaceBetween: 20,
         },
         768: {
@@ -451,7 +443,7 @@
 					/>
 				</svg>
 			</button> -->
-<div class=" hidden sm:contents">
+<div class="contents">
 	<div class="swiper swiper1">
 		<div class="swiper-wrapper">
 		{#each products as product}
@@ -476,33 +468,10 @@
 	</div>	
   	<div class="swiper-button-next"></div>
     <div class="swiper-button-prev"></div>
+	<br><br>
+	<div class="swiper-pagination sm:hidden sm:block"></div>
+
 </div>
-	<dir class="sm:hidden sm:block" style="padding-left: 0px;">
-		<div class="swiper" bind:this={swiperContainer}>
-			<div class="swiper-wrapper">
-				{#each products as product}
-				<div class="swiper-slide ">
-					<div
-					class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200 overflow-hidden"
-					on:click={() => navigateToProduct(product.book_id)}
-					>
-					<div class="h-56 mb-2 rounded-md overflow-hidden">
-						<img
-						src={product.book_image}
-						alt={product.book_name_th}
-						class="h-48 w-96 object-scale-down place-content-center"
-						/>
-					</div>
-					<p class="text-center truncate">{product.book_name_th}</p>
-					<p class="text-center text-red-500">{product.book_price}</p>
-					</div>
-				</div>
-				{/each}
-			</div>
-		</div>
-		<br><br><br>
-			<div class="swiper-pagination"></div>
-	</dir>
 		</section>
 
 
@@ -770,6 +739,14 @@
 		left: -80px;
 	}
 }
+
+@media screen and (max-width: 767px) {
+  .swiper-button-next,
+  .swiper-button-prev {
+    display: none !important;
+  }
+}
+
 	/*  Font Awesome  */
 	@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css");
 </style>
