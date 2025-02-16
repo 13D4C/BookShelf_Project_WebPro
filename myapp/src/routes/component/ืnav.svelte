@@ -1,64 +1,67 @@
 <script>
-    let showMenu = false;
-
-    function toggleNavbar() {
-        showMenu = !showMenu;
+    import { goto } from '$app/navigation';
+  
+    function goToProfilePage() {
+      goto('/profile'); // ใช้ camelCase สำหรับชื่อฟังก์ชัน
     }
-</script>
-
-<div>
-    <div>
-        <nav
-            class="container px-6 py-8 mx-auto md:flex md:justify-between md:items-center"
-        >
-            <div class="flex items-center justify-between">
-                <a
-                    class="text-xl font-bold text-gray-800 md:text-2xl hover:text-blue-400"
-                    href="/home">📚</a
-                >
-                <div on:click={toggleNavbar} class="flex md:hidden">
-                    <button
-                        type="button"
-                        class="text-gray-800 hover:text-gray-400 focus:outline-none focus:text-gray-400"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke-width="1.5"
-                            stroke="currentColor"
-                            class="w-6 h-6"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                            /></svg
-                        >
-                    </button>
-                </div>
-            </div>
-            <div
-                class="flex-col mt-8 space-y-4 md:flex md:space-y-0 md:flex-row md:items-center md:space-x-10 md:mt-0 {showMenu
-                    ? 'flex'
-                    : 'hidden'}"
-            >
-                <a class="text-gray-800 hover:text-blue-400" href="/home"
-                    >Home</a
-                >
-                <a class="text-gray-800 hover:text-blue-400" href="/blog"
-                    >หนังสือ</a
-                >
-                <a class="text-gray-800 hover:text-blue-400" href="/contact"
-                    >Contact US</a
-                >
-                <a class="text-gray-800 hover:text-blue-400" href="/about"
-                    >About Us</a
-                >
-                <a class="text-gray-800 hover:text-blue-400" href="/about"
-                    >Login</a
-                >
-            </div>
-        </nav>
-    </div>
-</div>
+  
+    function goToMainPage() {
+      goto('/'); // โดยทั่วไปหน้าหลักมักจะอยู่ที่ root ('/')
+    }
+  
+    let searchQuery = ''; // เพิ่มตัวแปรสำหรับเก็บค่าใน input
+  
+    function handleSearch() {
+      // ทำอะไรบางอย่างกับ searchQuery เช่น redirect ไปหน้าผลลัพธ์การค้นหา
+      // ตัวอย่าง:
+      goto(`/search?q=${searchQuery}`); // ส่ง query parameter
+      // หรือถ้ามี component สำหรับแสดงผลลัพธ์การค้นหา ก็อาจจะ set state บางอย่าง
+    }
+  
+    // (Optional) Handle Enter key press in search input
+    function handleSearchKeyDown(event) {
+      if (event.key === 'Enter') {
+        handleSearch();
+      }
+    }
+  
+  </script>
+  
+  <div class="min-h-screen bg-blue-50">
+    <header class="bg-blue-900 text-white py-4">
+      <div class="container mx-auto flex justify-between items-center">
+        <!-- Make the store name clickable -->
+        <button class="text-xl font-bold" on:click={goToMainPage}>
+          ร้านหนังสือของป้าแพรวา
+        </button>
+        <div class="relative ml-auto">
+          <input
+            type="text"
+            placeholder="ค้นหา"
+            class="rounded-md p-2 w-64 text-black"
+            role="search"
+            aria-label="Search"
+            bind:value={searchQuery}  <!-- Bind ค่า input กับตัวแปร -->
+            on:keydown={handleSearchKeyDown}  <!-- (Optional) Handle Enter key -->
+          />
+          <button
+            class="absolute right-0 top-1/2 -translate-y-1/2 text-blue-900 p-2"
+            on:click={handleSearch}
+          >
+            🔍
+          </button>
+        </div>
+         <button class="text-2xl ml-6" on:click={() => goto('/cart')}>🛒</button>
+        <button class="ml-6 text-2xl" on:click={goToProfilePage}>👤</button>
+      </div>
+    </header>
+    <!-- Navigation -->
+    <nav class="bg-blue-700 text-white py-2">
+      <div class="container mx-auto flex space-x-4">
+        <a href="/novel" class="hover:underline">นิยาย</a>
+        <a href="/book" class="hover:underline">หนังสือ</a>
+        <a href="/entertainment" class="hover:underline">บันเทิง</a>
+        <a href="/comic" class="hover:underline">การ์ตูน</a>
+      </div>
+    </nav>
+  </div>
