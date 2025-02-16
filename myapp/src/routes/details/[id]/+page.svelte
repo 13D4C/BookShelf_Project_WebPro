@@ -103,12 +103,10 @@
 
   function toggleMenu() {
     isOpen = !isOpen;
-    document.body.classList.toggle("overflow-hidden", isOpen);
   }
 
   function closeMenu() {
     isOpen = false;
-    document.body.classList.remove("overflow-hidden");
   }
 
 
