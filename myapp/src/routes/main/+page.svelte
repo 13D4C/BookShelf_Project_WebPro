@@ -173,17 +173,6 @@
 			);
 		}
 	}
-	// ฟังก์ชันเลื่อนสินค้าไปข้างหน้า
-	// function slideNext() {
-	// 	currentIndex = (currentIndex + 1) % products.length;
-	// 	updateVisibleProducts();
-	// }
-
-	// // ฟังก์ชันเลื่อนสินค้าไปข้างหลัง
-	// function slidePrev() {
-	// 	currentIndex = (currentIndex - 1 + products.length) % products.length;
-	// 	updateVisibleProducts();
-	// }
 
 	onMount(() => {
 	// ตรวจจับการเปลี่ยนขนาดจอ
