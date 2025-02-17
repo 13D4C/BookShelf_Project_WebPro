@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { onMount } from "svelte";
-	import Swiper from 'swiper/bundle';
-	import 'swiper/css/bundle';
-
+	import { page } from "$app/stores";
+	import Swiper from "swiper/bundle";
+	import { writable } from "svelte/store";
+	import "swiper/css/bundle";
 
 	let products: any[] = [];
-	 let swiperContainer;
+	let swiperContainer;
+	const isLoading = writable(true);
+	let userToken;
 
 	async function getBooks() {
 		try {
@@ -156,7 +159,6 @@
 			itemsPerPage = 4; // lg (แล็ปท็อป)
 		else itemsPerPage = 5; // xl ขึ้นไป (เดสก์ท็อป)
 
-		
 		// อัปเดตสินค้าตาม index ใหม่
 		updateVisibleProducts();
 	}
@@ -174,8 +176,15 @@
 		}
 	}
 
-	onMount(() => {
-	// ตรวจจับการเปลี่ยนขนาดจอ
+	onMount(async() => {
+		userToken = localStorage.getItem("userToken");
+		checkAndRedirect(userToken, $page.route.id);
+		page.subscribe(($page) => {
+			userToken = localStorage.getItem("userToken");
+			checkAndRedirect(userToken, $page.route.id);
+		});
+		await new Promise(resolve => setTimeout(resolve, 100));
+		isLoading.set(false);
 		getBooks().then(() => {
 			console.log(products);
 			updateItemsPerPage();
@@ -185,31 +194,32 @@
 		});
 
 		let swiper1 = new Swiper(".swiper1", {
-      slidesPerView: 1,
-      spaceBetween: 30,
-      freeMode: true,
-	  navigation: {
-        nextEl: ".swiper-button-next",
-        prevEl: ".swiper-button-prev",
-      },
-	  pagination: { 
-		el: ".swiper-pagination",
-		clickable: true },
-	  breakpoints: {
-        640: {
-          slidesPerView: 1,
-          spaceBetween: 20,
-        },
-        768: {
-          slidesPerView: 4,
-          spaceBetween: 40,
-        },
-        1024: {
-          slidesPerView: 5,
-          spaceBetween: 50,
-        },
-      },
-   	 	});
+			slidesPerView: 1,
+			spaceBetween: 30,
+			freeMode: true,
+			navigation: {
+				nextEl: ".swiper-button-next",
+				prevEl: ".swiper-button-prev",
+			},
+			pagination: {
+				el: ".swiper-pagination",
+				clickable: true,
+			},
+			breakpoints: {
+				640: {
+					slidesPerView: 1,
+					spaceBetween: 20,
+				},
+				768: {
+					slidesPerView: 4,
+					spaceBetween: 40,
+				},
+				1024: {
+					slidesPerView: 5,
+					spaceBetween: 50,
+				},
+			},
+		});
 	});
 	let bannerImages = [
 		"https://fiverr-res.cloudinary.com/images/q_auto,f_auto/gigs/323203587/original/8f16754c80f8ea7a8a2b87b24c40f123ed219937/do-a-colorful-and-dynamic-anime-or-manga-banner-for-you.png",
@@ -303,120 +313,165 @@
 		"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0IUgoI9H2LpPoSSvg5nJxns3acKbS-gdQjQ&s",
 	];
 
-	  let isOpen = false; // ควบคุมสถานะเปิด/ปิดเมนู
+	let isOpen = false; // ควบคุมสถานะเปิด/ปิดเมนู
 
-  function toggleMenu() {
-    isOpen = !isOpen;
-  }
+	function toggleMenu() {
+		isOpen = !isOpen;
+	}
 
-  function closeMenu() {
-    isOpen = false;
-  }
+	function closeMenu() {
+		isOpen = false;
+	}
+
+	function checkAndRedirect(token: string | null, routeId: string | null) {
+		const isAuthRoute = routeId === "/" || routeId === "/Register";
+
+		if (!token && !isAuthRoute) {
+			goto("/");
+		}
+	}
 </script>
 
-<div class="h-full bg-blue-50">
-	<header class="bg-blue-900 text-white py-4 shadow-lg relative z-50">
-  <div class="container mx-auto flex items-center justify-between">
-    
-    <!-- ชื่อร้าน -->
-    <button class="font-bold text-lg sm:text-xl md:text-2xl" on:click={MainPage}>
-      ร้านหนังสือของป้าแพรวา
-    </button>
+{#if $isLoading}
+{:else}
+	<div class="h-full bg-blue-50">
+		<header class="bg-blue-900 text-white py-4 shadow-lg relative z-50">
+			<div class="container mx-auto flex items-center justify-between">
+				<!-- ชื่อร้าน -->
+				<button
+					class="font-bold text-lg sm:text-xl md:text-2xl"
+					on:click={MainPage}
+				>
+					ร้านหนังสือของป้าแพรวา
+				</button>
 
-    <!-- ปุ่มเปิดเมนูมือถือ -->
-    <button 
-      class="md:hidden p-2 rounded-md bg-blue-90 text-gray-400 hover:bg-blue-80 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
-      on:click={toggleMenu}>
-        <!-- ไอคอนเมนู -->
-        <svg class="size-6" fill="none" viewBox="0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
-        </svg>
-    </button>
-
-    <!-- เมนูเดสก์ท็อป -->
-    <div class="hidden md:flex items-center gap-6">
-      <div class="relative">
-        <input type="text" placeholder="ค้นหา" class="rounded-md p-2 w-64 text-black" />
-        <button class="absolute right-3 top-1/2 -translate-y-1/2 text-blue-900">🔍</button>
-      </div>
-      <button class="text-2xl">🛒</button>
-      <a href="#" on:click={ProfilePage} class="text-2xl">👤</a>
-    </div>
-  </div>
-</header>
-
-<!-- Background overlay -->
-{#if isOpen}
-  <div 
-    class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
-    on:click={closeMenu}
-  ></div>
-{/if}
-
-<!-- เมนูมือถือ -->
-<nav 
-  class="fixed top-0 left-0 w-full bg-blue-900 shadow-lg z-50 transform transition-transform duration-300 ease-in-out"
-  class:translate-y-0={isOpen}
-  class:-translate-y-full={!isOpen}
->
-  <div class="p-6 space-y-4">
-    <button class="text-white text-lg font-bold" on:click={closeMenu}>✖</button>
-
-    <div class="relative">
-      <input type="text" placeholder="ค้นหา" class="block w-full rounded-md p-2 text-black bg-gray-100" />
-      <button class="absolute right-3 top-1/2 -translate-y-1/2 text-blue-900">🔍</button>
-    </div>
-
-    <div class="flex items-center gap-4 bg-white-800 text-white p-3 rounded-md">
-      <button class="text-xl">ตระกร้า🛒</button>
-      <a href="#" on:click={ProfilePage} class="text-xl">โปรไฟล์👤</a>
-    </div>
-  </div>
-</nav>
-
-
-	<!-- Navigation -->
-	<nav class="bg-blue-700 text-white py-2">
-		<div class="container mx-auto flex space-x-4">
-			<a href="#" class="hover:underline">นิยาย</a>
-			<a href="#" class="hover:underline">หนังสือ</a>
-			<a href="#" class="hover:underline">บันเทิง</a>
-			<a href="#" class="hover:underline">การ์ตูน</a>
-		</div>
-	</nav>
-
-	<!-- Main Content -->
-	<main class="container mx-auto py-8">
-		<!-- Banner -->
-		<div class="grid grid-cols-4 gap-4 mb-8 relative">
-			<!-- Main Banner -->
-			<div
-				class="col-span-4 md:col-span-3 relative bg-gray-300 h-64 rounded-lg overflow-hidden"
-			>
-				<img
-					src={bannerImages[currentBannerIndex]}
-					alt="Banner"
-					class="absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000"
-				/>
-			</div>
-
-			<!-- Small Banners -->
-			<div class="col-span-4 md:col-span-1 space-y-4">
-				{#each smallBannerImages as banner, index}
-					<div class="bg-gray-300 h-20 rounded-lg overflow-hidden">
-						<img
-							src={banner}
-							alt={`Small Banner ${index + 1}`}
-							class="w-full h-full object-cover"
+				<!-- ปุ่มเปิดเมนูมือถือ -->
+				<button
+					class="md:hidden p-2 rounded-md bg-blue-90 text-gray-400 hover:bg-blue-80 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
+					on:click={toggleMenu}
+				>
+					<!-- ไอคอนเมนู -->
+					<svg
+						class="size-6"
+						fill="none"
+						viewBox="0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
 						/>
-					</div>
-				{/each}
-			</div>
-		</div>
+					</svg>
+				</button>
 
-		<section class="mb-8 relative">
-			<h2 class="text-xl font-bold mb-4">สินค้าออกใหม่</h2>
-			<!-- <div
+				<!-- เมนูเดสก์ท็อป -->
+				<div class="hidden md:flex items-center gap-6">
+					<div class="relative">
+						<input
+							type="text"
+							placeholder="ค้นหา"
+							class="rounded-md p-2 w-64 text-black"
+						/>
+						<button
+							class="absolute right-3 top-1/2 -translate-y-1/2 text-blue-900"
+							>🔍</button
+						>
+					</div>
+					<button class="text-2xl">🛒</button>
+					<a href="#" on:click={ProfilePage} class="text-2xl">👤</a>
+				</div>
+			</div>
+		</header>
+
+		<!-- Background overlay -->
+		{#if isOpen}
+			<div
+				class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
+				on:click={closeMenu}
+			></div>
+		{/if}
+
+		<!-- เมนูมือถือ -->
+		<nav
+			class="fixed top-0 left-0 w-full bg-blue-900 shadow-lg z-50 transform transition-transform duration-300 ease-in-out"
+			class:translate-y-0={isOpen}
+			class:-translate-y-full={!isOpen}
+		>
+			<div class="p-6 space-y-4">
+				<button
+					class="text-white text-lg font-bold"
+					on:click={closeMenu}>✖</button
+				>
+
+				<div class="relative">
+					<input
+						type="text"
+						placeholder="ค้นหา"
+						class="block w-full rounded-md p-2 text-black bg-gray-100"
+					/>
+					<button
+						class="absolute right-3 top-1/2 -translate-y-1/2 text-blue-900"
+						>🔍</button
+					>
+				</div>
+
+				<div
+					class="flex items-center gap-4 bg-white-800 text-white p-3 rounded-md"
+				>
+					<button class="text-xl">ตระกร้า🛒</button>
+					<a href="#" on:click={ProfilePage} class="text-xl"
+						>โปรไฟล์👤</a
+					>
+				</div>
+			</div>
+		</nav>
+
+		<!-- Navigation -->
+		<nav class="bg-blue-700 text-white py-2">
+			<div class="container mx-auto flex space-x-4">
+				<a href="#" class="hover:underline">นิยาย</a>
+				<a href="#" class="hover:underline">หนังสือ</a>
+				<a href="#" class="hover:underline">บันเทิง</a>
+				<a href="#" class="hover:underline">การ์ตูน</a>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<main class="container mx-auto py-8">
+			<!-- Banner -->
+			<div class="grid grid-cols-4 gap-4 mb-8 relative">
+				<!-- Main Banner -->
+				<div
+					class="col-span-4 md:col-span-3 relative bg-gray-300 h-64 rounded-lg overflow-hidden"
+				>
+					<img
+						src={bannerImages[currentBannerIndex]}
+						alt="Banner"
+						class="absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-1000"
+					/>
+				</div>
+
+				<!-- Small Banners -->
+				<div class="col-span-4 md:col-span-1 space-y-4">
+					{#each smallBannerImages as banner, index}
+						<div
+							class="bg-gray-300 h-20 rounded-lg overflow-hidden"
+						>
+							<img
+								src={banner}
+								alt={`Small Banner ${index + 1}`}
+								class="w-full h-full object-cover"
+							/>
+						</div>
+					{/each}
+				</div>
+			</div>
+
+			<section class="mb-8 relative">
+				<h2 class="text-xl font-bold mb-4">สินค้าออกใหม่</h2>
+				<!-- <div
 				class="hidden sm:grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
 			>
 				{#each visibleProducts as product}
@@ -474,260 +529,270 @@
 					/>
 				</svg>
 			</button> -->
-			{#if products == ""}
-			 <iframe 
-  class="aspect-video w-3/4" 
-  src="https://www.youtube.com/embed/8ytKQE-8-Hw?autoplay=1" 
-  allow="autoplay">
-</iframe>
+				{#if products == ""}
+					<iframe
+						class="aspect-video w-3/4"
+						src="https://www.youtube.com/embed/8ytKQE-8-Hw?autoplay=1"
+						allow="autoplay"
+					>
+					</iframe>
+				{/if}
 
-			{/if}
-
-<div class="contents">
-	<div class="swiper swiper1">
-		<div class="swiper-wrapper">
-		{#each products as product}
-					<div class="swiper-slide ">
-						<div
-						class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
-						on:click={() => navigateToProduct(product.book_id)}
-						>
-						<div class="h-56 mb-2 rounded-md overflow-hidden">
-							<img
-							src={product.book_image}
-							alt={product.book_name_th}
-							class="h-48 w-96 object-scale-down place-content-center"
-							/>
-						</div>
-						<p class="text-center truncate">{product.book_name_th}</p>
-						<p class="text-center text-red-500">{product.book_price}</p>
+				<div class="contents">
+					<div class="swiper swiper1">
+						<div class="swiper-wrapper">
+							{#each products as product}
+								<div class="swiper-slide">
+									<div
+										class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
+										on:click={() =>
+											navigateToProduct(product.book_id)}
+									>
+										<div
+											class="h-56 mb-2 rounded-md overflow-hidden"
+										>
+											<img
+												src={product.book_image}
+												alt={product.book_name_th}
+												class="h-48 w-96 object-scale-down place-content-center"
+											/>
+										</div>
+										<p class="text-center truncate">
+											{product.book_name_th}
+										</p>
+										<p class="text-center text-red-500">
+											{product.book_price}
+										</p>
+									</div>
+								</div>
+							{/each}
 						</div>
 					</div>
-					{/each}
-		</div>
-	</div>	
-  	<div class="swiper-button-next"></div>
-    <div class="swiper-button-prev"></div>
-	<br><br>
-	<div class="swiper-pagination sm:hidden sm:block"></div>
+					<div class="swiper-button-next"></div>
+					<div class="swiper-button-prev"></div>
+					<br /><br />
+					<div class="swiper-pagination sm:hidden sm:block"></div>
+				</div>
+			</section>
 
-</div>
-		</section>
-
-
-
-
-
-
-		<!-- Categories -->
-		<section class="mb-8">
-			<h2 class="text-xl font-bold mb-4">หมวดหมู่</h2>
-			<div class="flex flex-wrap space-x-2">
-				{#each categories as category}
-					<button
-						class="bg-blue-200 text-blue-800 px-4 py-2 rounded-md mb-2 hover:bg-blue-300 transition duration-200"
-					>
-						{category}
-					</button>
-				{/each}
-			</div>
-		</section>
-
-		<section class="mb-8">
-			<h2 class="text-xl font-bold mb-4">สินค้าขายดีประจำสัปดาห์</h2>
-			<div class="relative">
-				<div
-					class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-				>
-					{#each visibleWeeklyHighlightProducts as product}
-						<div
-							class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200 transition duration-200"
-							on:click={() => navigateToProduct(product.id)}
+			<!-- Categories -->
+			<section class="mb-8">
+				<h2 class="text-xl font-bold mb-4">หมวดหมู่</h2>
+				<div class="flex flex-wrap space-x-2">
+					{#each categories as category}
+						<button
+							class="bg-blue-200 text-blue-800 px-4 py-2 rounded-md mb-2 hover:bg-blue-300 transition duration-200"
 						>
-							<div class="h-56 mb-2 rounded-md overflow-hidden">
-								<img
-									src={product.image}
-									alt={product.name}
-									class="h-full w-full object-scale-down"
-								/>
-							</div>
-							<p class="text-center h-24">{product.name}</p>
-							<p class="text-center text-red-500 place-content-center">
-								{product.price}
-							</p>
-						</div>
+							{category}
+						</button>
 					{/each}
 				</div>
+			</section>
 
-				{#if weeklyHighlightProducts.length > 5}
-					<button
-						class="absolute top-1/2 -translate-y-1/2 left-4 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 transition duration-200"
-						on:click={slideWeeklyHighlightPrev}
-						aria-label="Previous"
+			<section class="mb-8">
+				<h2 class="text-xl font-bold mb-4">สินค้าขายดีประจำสัปดาห์</h2>
+				<div class="relative">
+					<div
+						class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
 					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-							class="w-6 h-6"
-						>
-							<path
-								fill-rule="evenodd"
-								d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-2.47-2.47H16.5a.75.75 0 000-1.5H6.51l2.47-2.47a.75.75 0 10-1.06-1.06l-3 3z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-					</button>
-
-					<button
-						class="absolute top-1/2 -translate-y-1/2 right-4 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 transition duration-200"
-						on:click={slideWeeklyHighlightNext}
-						aria-label="Next"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-							class="w-6 h-6"
-						>
-							<path
-								fill-rule="evenodd"
-								d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 9.22a.75.75 0 000 1.06l-3 3a.75.75 0 001.06 1.06l2.47-2.47H7.5a.75.75 0 000-1.5h9.94l-2.47-2.47a.75.75 0 00-1.06-1.06l-3 3z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-					</button>
-				{/if}
-			</div>
-		</section>
-
-		<!-- Novel Section -->
-		<section class="mb-8">
-			<h2 class="text-xl font-bold mb-4">นิยาย แนะนำ</h2>
-			<div class="relative">
-				<div
-					class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-				>
-					{#each visibleNovelProducts as product}
-						<div
-							class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200 transition duration-200"
-							on:click={() => navigateToProduct(product.id)}
-						>
-							<div class="h-56 mb-2 rounded-md overflow-hidden">
-								<img
-									src={product.image}
-									alt={product.name}
-									class="h-full w-full object-scale-down"
-								/>
+						{#each visibleWeeklyHighlightProducts as product}
+							<div
+								class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200 transition duration-200"
+								on:click={() => navigateToProduct(product.id)}
+							>
+								<div
+									class="h-56 mb-2 rounded-md overflow-hidden"
+								>
+									<img
+										src={product.image}
+										alt={product.name}
+										class="h-full w-full object-scale-down"
+									/>
+								</div>
+								<p class="text-center h-24">{product.name}</p>
+								<p
+									class="text-center text-red-500 place-content-center"
+								>
+									{product.price}
+								</p>
 							</div>
-							<p class="text-center h-24">{product.name}</p>
-							<p class="text-center text-red-500">
-								{product.price}
-							</p>
-						</div>
-					{/each}
+						{/each}
+					</div>
+
+					{#if weeklyHighlightProducts.length > 5}
+						<button
+							class="absolute top-1/2 -translate-y-1/2 left-4 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 transition duration-200"
+							on:click={slideWeeklyHighlightPrev}
+							aria-label="Previous"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								class="w-6 h-6"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-2.47-2.47H16.5a.75.75 0 000-1.5H6.51l2.47-2.47a.75.75 0 10-1.06-1.06l-3 3z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</button>
+
+						<button
+							class="absolute top-1/2 -translate-y-1/2 right-4 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 transition duration-200"
+							on:click={slideWeeklyHighlightNext}
+							aria-label="Next"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								class="w-6 h-6"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 9.22a.75.75 0 000 1.06l-3 3a.75.75 0 001.06 1.06l2.47-2.47H7.5a.75.75 0 000-1.5h9.94l-2.47-2.47a.75.75 0 00-1.06-1.06l-3 3z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</button>
+					{/if}
 				</div>
+			</section>
 
-				{#if novelProducts.length > 5}
-					<button
-						class="absolute top-1/2 -translate-y-1/2 left-4 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 transition duration-200"
-						on:click={slideNovelPrev}
-						aria-label="Previous"
+			<!-- Novel Section -->
+			<section class="mb-8">
+				<h2 class="text-xl font-bold mb-4">นิยาย แนะนำ</h2>
+				<div class="relative">
+					<div
+						class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
 					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-							class="w-6 h-6"
-						>
-							<path
-								fill-rule="evenodd"
-								d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-2.47-2.47H16.5a.75.75 0 000-1.5H6.51l2.47-2.47a.75.75 0 10-1.06-1.06l-3 3z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-					</button>
+						{#each visibleNovelProducts as product}
+							<div
+								class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200 transition duration-200"
+								on:click={() => navigateToProduct(product.id)}
+							>
+								<div
+									class="h-56 mb-2 rounded-md overflow-hidden"
+								>
+									<img
+										src={product.image}
+										alt={product.name}
+										class="h-full w-full object-scale-down"
+									/>
+								</div>
+								<p class="text-center h-24">{product.name}</p>
+								<p class="text-center text-red-500">
+									{product.price}
+								</p>
+							</div>
+						{/each}
+					</div>
 
-					<button
-						class="absolute top-1/2 -translate-y-1/2 right-4 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 transition duration-200"
-						on:click={slideNovelNext}
-						aria-label="Next"
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="currentColor"
-							class="w-6 h-6"
+					{#if novelProducts.length > 5}
+						<button
+							class="absolute top-1/2 -translate-y-1/2 left-4 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 transition duration-200"
+							on:click={slideNovelPrev}
+							aria-label="Previous"
 						>
-							<path
-								fill-rule="evenodd"
-								d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 9.22a.75.75 0 000 1.06l-3 3a.75.75 0 001.06 1.06l2.47-2.47H7.5a.75.75 0 000-1.5h9.94l-2.47-2.47a.75.75 0 00-1.06-1.06l-3 3z"
-								clip-rule="evenodd"
-							/>
-						</svg>
-					</button>
-				{/if}
-			</div>
-		</section>
-	</main>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								class="w-6 h-6"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-2.47-2.47H16.5a.75.75 0 000-1.5H6.51l2.47-2.47a.75.75 0 10-1.06-1.06l-3 3z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</button>
 
-	<footer class="bg-blue-800 text-white py-8">
-		<div class="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-			<div class="md:col-span-1">
-				<h4 class="text-lg font-semibold mb-3">Links</h4>
-				<ul>
-					{#each footerLinks as link}
-						<li>
+						<button
+							class="absolute top-1/2 -translate-y-1/2 right-4 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 transition duration-200"
+							on:click={slideNovelNext}
+							aria-label="Next"
+						>
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								class="w-6 h-6"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 9.22a.75.75 0 000 1.06l-3 3a.75.75 0 001.06 1.06l2.47-2.47H7.5a.75.75 0 000-1.5h9.94l-2.47-2.47a.75.75 0 00-1.06-1.06l-3 3z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</button>
+					{/if}
+				</div>
+			</section>
+		</main>
+
+		<footer class="bg-blue-800 text-white py-8">
+			<div
+				class="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8"
+			>
+				<div class="md:col-span-1">
+					<h4 class="text-lg font-semibold mb-3">Links</h4>
+					<ul>
+						{#each footerLinks as link}
+							<li>
+								<a
+									href={link.url}
+									class="hover:text-blue-300 transition-colors duration-300"
+									>{link.title}</a
+								>
+							</li>
+						{/each}
+					</ul>
+				</div>
+				<div class="md:col-span-1">
+					<h4 class="text-lg font-semibold mb-3">ติดต่อเรา</h4>
+					<p>{contactInfo.address}</p>
+					<p>โทร: {contactInfo.phone}</p>
+					<p>
+						อีเมล:
+						<a
+							href={"mailto:" + contactInfo.email}
+							class="hover:text-blue-300 transition-colors duration-300"
+							>{contactInfo.email}</a
+						>
+					</p>
+				</div>
+				<div class="md:col-span-1">
+					<h4 class="text-lg font-semibold mb-3">Social Media</h4>
+					<div class="flex space-x-4">
+						{#each socialLinks as link}
 							<a
 								href={link.url}
+								target="_blank"
+								rel="noopener noreferrer"
 								class="hover:text-blue-300 transition-colors duration-300"
-								>{link.title}</a
+								title={link.label}
 							>
-						</li>
-					{/each}
-				</ul>
-			</div>
-			<div class="md:col-span-1">
-				<h4 class="text-lg font-semibold mb-3">ติดต่อเรา</h4>
-				<p>{contactInfo.address}</p>
-				<p>โทร: {contactInfo.phone}</p>
-				<p>
-					อีเมล:
-					<a
-						href={"mailto:" + contactInfo.email}
-						class="hover:text-blue-300 transition-colors duration-300"
-						>{contactInfo.email}</a
-					>
-				</p>
-			</div>
-			<div class="md:col-span-1">
-				<h4 class="text-lg font-semibold mb-3">Social Media</h4>
-				<div class="flex space-x-4">
-					{#each socialLinks as link}
-						<a
-							href={link.url}
-							target="_blank"
-							rel="noopener noreferrer"
-							class="hover:text-blue-300 transition-colors duration-300"
-							title={link.label}
-						>
-							<i class={link.icon}></i>
-							<span class="sr-only">{link.label}</span>
-						</a>
-					{/each}
+								<i class={link.icon}></i>
+								<span class="sr-only">{link.label}</span>
+							</a>
+						{/each}
+					</div>
+				</div>
+				<div
+					class="mt-8 border-t border-blue-700 pt-4 text-center col-span-full"
+				>
+					<p>
+						© {new Date().getFullYear()} ร้านหนังสือของป้าแพรวา. All
+						rights reserved.
+					</p>
 				</div>
 			</div>
-			<div
-				class="mt-8 border-t border-blue-700 pt-4 text-center col-span-full"
-			>
-				<p>
-					© {new Date().getFullYear()} ร้านหนังสือของป้าแพรวา. All rights
-					reserved.
-				</p>
-			</div>
-		</div>
-	</footer>
-</div>
+		</footer>
+	</div>
+{/if}
 
 <style>
 	.container {
@@ -762,30 +827,28 @@
 		white-space: nowrap;
 		border-width: 0;
 	}
-	img{
-
-  border-radius: 8px;
-  margin-bottom: 10px;
-
+	img {
+		border-radius: 8px;
+		margin-bottom: 10px;
 	}
 	/* Swiper */
-@media screen and (min-width: 1350px) {
-	.swiper-button-next{
-		position: absolute;
-		right: -80px;
+	@media screen and (min-width: 1350px) {
+		.swiper-button-next {
+			position: absolute;
+			right: -80px;
+		}
+		.swiper-button-prev {
+			position: absolute;
+			left: -80px;
+		}
 	}
-	.swiper-button-prev{
-		position: absolute;
-		left: -80px;
-	}
-}
 
-@media screen and (max-width: 767px) {
-  .swiper-button-next,
-  .swiper-button-prev {
-    display: none !important;
-  }
-}
+	@media screen and (max-width: 767px) {
+		.swiper-button-next,
+		.swiper-button-prev {
+			display: none !important;
+		}
+	}
 
 	/*  Font Awesome  */
 	@import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css");
