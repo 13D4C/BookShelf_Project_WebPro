@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { onMount } from "svelte";
+	import { onMount, onDestroy } from "svelte"; // Import onDestroy
 	import { page } from "$app/stores";
 	import Swiper from "swiper/bundle";
 	import { writable } from "svelte/store";
@@ -8,8 +8,13 @@
 
 	let products: any[] = [];
 	let swiperContainer;
-	const isLoading = writable(true);
-	let userToken;
+	const isLoading = writable(true); // This is fine, we'll use it correctly
+	let userToken: string | null; // Explicitly type userToken
+
+	function Logout() {
+		localStorage.removeItem("userToken"); // Or whatever your token key is
+		window.location.href = "/"; // Full page reload
+	}
 
 	async function getBooks() {
 		try {
@@ -23,6 +28,8 @@
 		} catch (error) {
 			console.error("Error fetching books:", error);
 			products = [];
+		} finally {
+			isLoading.set(false);
 		}
 	}
 
@@ -34,6 +41,7 @@
 		goto("/main");
 	}
 
+	// ... (rest of your data: weeklyHighlightProducts, novelProducts, footerLinks, etc.)
 	let weeklyHighlightProducts = [
 		{
 			id: 7,
@@ -176,22 +184,21 @@
 		}
 	}
 
-	onMount(async() => {
+	// Use onDestroy to remove the event listener
+	let resizeListener: () => void;
+
+	onMount(async () => {
 		userToken = localStorage.getItem("userToken");
 		checkAndRedirect(userToken, $page.route.id);
 		page.subscribe(($page) => {
 			userToken = localStorage.getItem("userToken");
 			checkAndRedirect(userToken, $page.route.id);
 		});
-		await new Promise(resolve => setTimeout(resolve, 100));
-		isLoading.set(false);
-		getBooks().then(() => {
-			console.log(products);
-			updateItemsPerPage();
-			window.addEventListener("resize", updateItemsPerPage);
-			return () =>
-				window.removeEventListener("resize", updateItemsPerPage);
-		});
+
+		await getBooks();
+		updateItemsPerPage();
+		resizeListener = updateItemsPerPage;
+		window.addEventListener("resize", resizeListener);
 
 		let swiper1 = new Swiper(".swiper1", {
 			slidesPerView: 1,
@@ -221,6 +228,13 @@
 			},
 		});
 	});
+
+	onDestroy(() => {
+		if (resizeListener) {
+			window.removeEventListener("resize", resizeListener);
+		}
+	});
+
 	let bannerImages = [
 		"https://fiverr-res.cloudinary.com/images/q_auto,f_auto/gigs/323203587/original/8f16754c80f8ea7a8a2b87b24c40f123ed219937/do-a-colorful-and-dynamic-anime-or-manga-banner-for-you.png",
 		"https://i.redd.it/t4x28924inbc1.jpeg",
@@ -332,8 +346,7 @@
 	}
 </script>
 
-{#if $isLoading}
-{:else}
+{#if $isLoading}{:else}
 	<div class="h-full bg-blue-50">
 		<header class="bg-blue-900 text-white py-4 shadow-lg relative z-50">
 			<div class="container mx-auto flex items-center justify-between">
@@ -381,6 +394,7 @@
 					</div>
 					<button class="text-2xl">🛒</button>
 					<a href="#" on:click={ProfilePage} class="text-2xl">👤</a>
+					<a href="#" on:click={Logout} class="text-2xl">Logout</a>
 				</div>
 			</div>
 		</header>
@@ -424,6 +438,7 @@
 					<a href="#" on:click={ProfilePage} class="text-xl"
 						>โปรไฟล์👤</a
 					>
+					<a href="#" on:click={Logout} class="text-xl">Logout</a>
 				</div>
 			</div>
 		</nav>
