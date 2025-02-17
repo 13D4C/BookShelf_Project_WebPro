@@ -160,7 +160,6 @@
 		}
 	}
 
-	// Use onDestroy to remove the event listener
 	let resizeListener: () => void;
 
 	onMount(async () => {
