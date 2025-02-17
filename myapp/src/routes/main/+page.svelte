@@ -394,64 +394,6 @@
 
 			<section class="mb-8 relative">
 				<h2 class="text-xl font-bold mb-4">สินค้าออกใหม่</h2>
-				<!-- <div
-				class="hidden sm:grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-			>
-				{#each visibleProducts as product}
-					<div
-						class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
-						on:click={() => navigateToProduct(product.book_id)}
-					>
-						<div class="h-56 mb-2 rounded-md overflow-hidden">
-							<img
-								src={product.book_image}
-								alt={product.book_name_th}
-								class="h-full w-full object-cover"
-							/>
-						</div>
-						<p class="text-center">{product.book_name_th}</p>
-						<p class="text-center text-red-500">
-							{product.book_price}
-						</p>
-					</div>
-				{/each}
-			</div>
-
-			<button
-				class=" hidden sm:block absolute left-2 sm:left-[-80px] top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 z-10 max-w-[calc(100%-20px)]"
-				on:click={slidePrev}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					fill="currentColor"
-					class="w-6 h-6"
-				>
-					<path
-						fill-rule="evenodd"
-						d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-4.28 9.22a.75.75 0 000 1.06l3 3a.75.75 0 101.06-1.06l-2.47-2.47H16.5a.75.75 0 000-1.5H6.51l2.47-2.47a.75.75 0 10-1.06-1.06l-3 3z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-			</button>
-
-			<button
-				class=" hidden sm:block absolute right-2 sm:right-[-80px] top-1/2 -translate-y-1/2 bg-gray-200 p-2 rounded-full shadow-md hover:bg-gray-300 z-10 max-w-[calc(100%-20px)]"
-				on:click={slideNext}
-			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					viewBox="0 0 24 24"
-					fill="currentColor"
-					class="w-6 h-6"
-				>
-					<path
-						fill-rule="evenodd"
-						d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s-4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm3.53 10.78a.75.75 0 000-1.06l-3-3a.75.75 0 10-1.06 1.06l2.47 2.47H7.5a.75.75 0 000 1.5h7.94l-2.47 2.47a.75.75 0 101.06 1.06l3-3z"
-						clip-rule="evenodd"
-					/>
-				</svg>
-			</button> -->
 				{#if products.length == 0}
 					<iframe
 						class="aspect-video w-3/4"

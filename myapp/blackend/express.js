@@ -17,6 +17,7 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 const pool = mysql.createPool({
+
 });
 
 async function queryDatabase(sql, params = []) {
@@ -40,7 +41,6 @@ app.get('/books', async (req, res) => {
 
         let sql;
         let params = [];
-        let shouldModifyCategory = false;
 
         if (bookId) {
             sql = `SELECT b.*, a.*, s.*, p.* 
@@ -53,26 +53,27 @@ app.get('/books', async (req, res) => {
         } else if (allBooks) {
             sql = 'SELECT * FROM book_detail';
         } else {
-            sql = 'SELECT * FROM book_detail WHERE serie_id = ? OR book_id IN (SELECT MIN(book_id) FROM book_detail WHERE serie_id != ? GROUP BY serie_id)';
+            sql = `SELECT *
+            FROM book_detail
+            WHERE (serie_id = 1) OR
+                  (serie_id != 1 AND book_id IN (
+                      SELECT MIN(book_id)
+                      FROM (
+                          SELECT *
+                          FROM book_detail
+                          WHERE serie_id != 1
+                          ORDER BY release_date DESC
+                      ) AS sub
+                      GROUP BY serie_id
+                  ))
+            ORDER BY release_date DESC
+            LIMIT 10`;
             params = [1, 1];
-            shouldModifyCategory = true;
         }
 
         const books = await queryDatabase(sql, params);
 
-        if (shouldModifyCategory) {
-            const modifiedBooks = books.map(book => {
-                if (typeof book.book_category === 'string' && book.book_category) {
-                    book.book_category = book.book_category.split(',').map(s => s.trim());
-                } else {
-                    book.book_category = [];
-                }
-                return book;
-            });
-
-            res.json(modifiedBooks);
-        }
-        else if (Array.isArray(books) && books.length > 0 && bookId) {
+        if (Array.isArray(books) && books.length > 0 && bookId) {
             res.json(books[0]);
         } else {
             res.json(books);
