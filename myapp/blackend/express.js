@@ -82,6 +82,38 @@ app.get('/books', async (req, res) => {
     }
 });
 
+app.get('/books/one-each', async (req, res) => {
+    try {
+      const sql = `
+        SELECT bd.*, a.*, s.*, p.*
+        FROM book_detail bd
+        LEFT JOIN author a ON bd.author_id = a.author_id
+        LEFT JOIN serie s ON bd.serie_id = s.serie_id
+        LEFT JOIN publisher p ON bd.publisher_id = p.publisher_id
+        WHERE bd.book_id IN (
+          SELECT MIN(book_id)
+          FROM book_detail
+          GROUP BY serie_id
+        );
+      `;
+  
+      const books = await queryDatabase(sql);
+  
+          const modifiedBooks = books.map(book => {
+                  if (typeof book.book_category === 'string' && book.book_category) {
+                      book.book_category = book.book_category.split(',').map(s => s.trim());
+                  } else {
+                      book.book_category = [];
+                  }
+                  return book;
+              });
+  
+      res.json(modifiedBooks);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
 app.get('/books/searched/f', async (req, res) => {
     try {
         const name = req.query.name;
