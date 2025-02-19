@@ -17,7 +17,6 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 const pool = mysql.createPool({
-
 });
 
 async function queryDatabase(sql, params = []) {
@@ -1245,12 +1244,115 @@ app.post('/shop/publisher/cart/get' , async (req, res) => {
     catch (error) {
         console.error('ERROR', error);
         res.status(500).json({
-            error: 'Fail to get product to cart',
+            error: 'Fail to get product in cart',
             details: error.message
         });
     }
 });
 
+//เหมือนกับของ publisher เเค่ไม่มี custom
+app.post('/shop/seller/cart/add' , async (req, res) => {
+    try {
+        const { seller_book_id, token, amount}  = req.body;
+
+        if ( !seller_book_id || !token || !amount) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+
+        let user_querry = await queryDatabase("SELECT * FROM user WHERE user_id = ?", [decodedToken.user_id]);
+        if(user_querry.length === 0){
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        let book_querry = await queryDatabase("SELECT book_price FROM seller_book_detail WHERE seller_book_id = ?", [seller_book_id]);
+        if(book_querry.length === 0){
+            return res.status(404).json({ error: 'Book not found' });
+        }
+
+        let create_custom = await queryDatabase(
+                "INSERT INTO seller_order(seller_book_id, amount, item_price) VALUES (?, ?, ?)",
+                [seller_book_id, amount, book_querry[0].book_price]);
+        
+    
+
+        await queryDatabase("INSERT INTO seller_cart(user_id, seller_item_id) VALUES (?, ?)", [decodedToken.user_id, create_custom.insertId]);
+        return res.status(201).json({ message: 'Add product to cart successfully'});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to add product to cart',
+            details: error.message
+        });
+    }
+});
+
+//เหมือน publisher เเค่เปลี่ยน key
+app.delete('/shop/seller/cart/delete' , async (req, res) => {
+    try {
+        const { seller_item_id }  = req.body;
+
+        if ( !seller_item_id) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+       
+        await queryDatabase(
+            "DELETE FROM seller_cart WHERE seller_item_id=?",
+            [seller_item_id]);
+       
+        await queryDatabase(
+            "DELETE FROM seller_order WHERE seller_item_id = ?",
+            [seller_item_id]);
+        return res.status(200).json({ message: 'Delete product at cart successfully'});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to delete product to cart',
+            details: error.message
+        });
+    }
+});
+
+app.post('/shop/seller/cart/get' , async (req, res) => {
+    try {
+        const { token }  = req.body;
+
+        if ( !token) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+
+        let user_querry = await queryDatabase("SELECT * FROM user WHERE user_id = ?", [decodedToken.user_id]);
+        if(user_querry.length === 0){
+            return res.status(404).json({ error: 'User not found' });
+        }
+        let query = await queryDatabase(
+            `SELECT
+                c.user_id,
+                co.seller_item_id,
+                co.seller_book_id,
+                b.book_name,
+                b.book_price,
+                b.book_image
+            FROM seller_cart c
+            JOIN seller_order co ON c.seller_item_id = co.seller_item_id
+            JOIN seller_book_detail b ON co.seller_book_id = b.seller_book_id
+            WHERE c.user_id = ?`,
+            [decodedToken.user_id]);
+   
+        return res.status(200).json({ cart_info: query});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to get product in cart',
+            details: error.message
+        });
+    }
+});
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
