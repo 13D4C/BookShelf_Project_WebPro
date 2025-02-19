@@ -9,7 +9,6 @@
 
 	let products: any[] = [];
 	let eachbook: any[] = [];
-	let swiperContainer;
 	const isLoading = writable(true); // This is fine, we'll use it correctly
 	let userToken: string | null; // Explicitly type userToken
 
@@ -200,7 +199,39 @@
 				},
 			},
 		});
+
+		let swiper2 = new Swiper(".swiper2", {
+			slidesPerView: 1,
+			spaceBetween: 30,
+			freeMode: true,
+			navigation: {
+				nextEl: ".swiper-button-next",
+				prevEl: ".swiper-button-prev",
+			},
+			pagination: {
+				el: ".swiper-pagination",
+				clickable: true,
+			},
+			breakpoints: {
+				640: {
+					slidesPerView: 1,
+					spaceBetween: 20,
+				},
+				768: {
+					slidesPerView: 4,
+					spaceBetween: 40,
+				},
+				1024: {
+					slidesPerView: 5,
+					spaceBetween: 50,
+				},
+			},
+		});
+
+		
 	});
+
+	
 
 	onDestroy(() => {
 		if (resizeListener) {
@@ -313,11 +344,11 @@
 								</div>
 							{/each}
 						</div>
-					</div>
-					<div class="swiper-button-next"></div>
-					<div class="swiper-button-prev"></div>
+						<div  class="swiper-button-next"></div>
+					<div  class="swiper-button-prev"></div>
 					<br /><br />
 					<div class="swiper-pagination sm:hidden sm:block"></div>
+					</div>
 				</div>
 			</section>
 
@@ -335,6 +366,9 @@
 				</div>
 			</section>
 
+
+			
+
 			<section class="mb-8">
 				<h2 class="text-xl font-bold mb-4">หนังสือในแต่ละ หมวดหมู่</h2>
 
@@ -344,39 +378,44 @@
 							<h3 class="text-lg font-semibold mb-2">
 								{category}
 							</h3>
-							<div class="relative">
-								<div
-									class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
-								>
-									{#each getBooksByCategory(category, eachbook) as product}
-										<div
-											class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200 transition duration-200"
-											on:click={() =>
+							<div class="contents">
+					<div class="swiper swiper2">
+						<div class="swiper-wrapper">
+							{#each getBooksByCategory(category, eachbook) as product}
+								<div class="swiper-slide">
+									<div
+										class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
+										on:click={() =>
 												navigateToProduct(
 													product.book_id,
 												)}
+									>
+										<div
+											class="h-56 mb-2 rounded-md overflow-hidden"
 										>
-											<div
-												class="h-56 mb-2 rounded-md overflow-hidden"
-											>
-												<img
-													src={product.book_image}
-													alt={product.book_name_originl}
-													class="h-full w-full object-scale-down"
-												/>
-											</div>
-											<p class="text-center h-24">
-												{product.book_name_originl}
-											</p>
-											<p
-												class="text-center text-red-500 place-content-center"
-											>
-												{product.book_price}
-											</p>
+											<img
+												src={product.book_image}
+												alt={product.book_name_originl}
+												class="h-48 w-96 object-scale-down place-content-center"
+											/>
 										</div>
-									{/each}
+										<p class="text-center truncate">
+											{product.book_name_originl}
+										</p>
+										<p class="text-center text-red-500">
+											{product.book_price}
+										</p>
+									</div>
 								</div>
-							</div>
+							{/each}
+						</div>
+						<div class="swiper-button-next"></div>
+					<div class="swiper-button-prev"></div>
+					<br /><br />
+					<div class="swiper-pagination sm:hidden sm:block"></div>
+					</div>
+					
+				</div>
 						</div>
 					{/if}
 				{/each}
@@ -482,7 +521,7 @@
 		margin-bottom: 10px;
 	}
 	/* Swiper */
-	@media screen and (min-width: 1350px) {
+	/* @media screen and (min-width: 1350px) {
 		.swiper-button-next {
 			position: absolute;
 			right: -80px;
@@ -491,7 +530,7 @@
 			position: absolute;
 			left: -80px;
 		}
-	}
+	} */
 
 	@media screen and (max-width: 767px) {
 		.swiper-button-next,
