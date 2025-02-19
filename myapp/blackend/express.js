@@ -17,7 +17,7 @@ const port = process.env.PORT || 3000;
 app.use(bodyParser.json());
 
 const pool = mysql.createPool({
-    // Database ตรงนี้
+
 });
 
 async function queryDatabase(sql, params = []) {
@@ -1117,6 +1117,140 @@ app.post('/comments/:commentId/update-votes', async (req, res) => {
         res.status(500).json({ error: 'Failed to update comment votes' });
     }
 });
+
+
+
+// <<------------------------------- SHOP ------------------------------->>
+
+
+
+//  << เพิ่มสินค้าของ publisher ลงตระกร้า >>
+// ตัวอย่าง json ที่ต้องส่งมา
+// {
+//     "custom"(optional) : {"cover_color":"red", "font_family":"nato", "font_size":"500", "paper_type":"ไวเบรเนี่ยม", "marker": "none", "cover_type":"หนังหมู"},
+//     "token" :"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJ1c2VyX25hbWUiOiJhMTAiLCJ1c2VyX3Blcm1pc3Npb24iOiJNYW5hZ2VyIiwiaWF0IjoxNzM5NTY0MjA5LCJleHAiOjE3NDIxNTYyMDl9.M7r3crMAQUcg-1rCQ2sVMCVG5TpSBeUeysGbRo8XZ4A",
+//     "book_id" : "12",
+//     "amount" : "1"
+// }
+app.post('/shop/publisher/cart/add' , async (req, res) => {
+    try {
+        const { book_id, token, amount, custom }  = req.body;  // custom is optional
+
+        if ( !book_id || !token || !amount) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+
+        let user_querry = await queryDatabase("SELECT * FROM user WHERE user_id = ?", [decodedToken.user_id]);
+        if(user_querry.length === 0){
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        let book_querry = await queryDatabase("SELECT book_price FROM book_detail WHERE book_id = ?", [book_id]);
+        if(book_querry.length === 0){
+            return res.status(404).json({ error: 'Book not found' });
+        }
+
+        let create_custom;
+        
+        if (!custom) {
+            create_custom = await queryDatabase(
+                "INSERT INTO custom_order(book_id, amount, item_price) VALUES (?, ?, ?)",
+                [book_id, amount, book_querry[0].book_price]);
+        }
+        else {
+            create_custom = await queryDatabase(
+                "INSERT INTO custom_order(book_id, cover_color, cover_type, font_family, font_size, paper_type, marker, amount, item_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [book_id, custom.cover_color, custom.cover_type , custom.font_family, custom.font_size, custom.paper_type, custom.marker ,amount, book_querry[0].book_price]);
+        }
+
+        await queryDatabase("INSERT INTO cart(user_id, item_id) VALUES (?, ?)", [decodedToken.user_id, create_custom.insertId]);
+        return res.status(201).json({ message: 'Add product to cart successfully'});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to add product to cart',
+            details: error.message
+        });
+    }
+});
+
+//ลบสินค้าในตระกร้า
+// ตัวอย่าง JSON { "item_id" : "3"}
+app.delete('/shop/publisher/cart/delete' , async (req, res) => {
+    try {
+        const { item_id }  = req.body;
+
+        if ( !item_id) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+       
+        await queryDatabase(
+            "DELETE FROM cart WHERE item_id=?",
+            [item_id]);
+       
+        await queryDatabase(
+            "DELETE FROM custom_order WHERE item_id = ?",
+            [item_id]);
+        return res.status(200).json({ message: 'Delete product at cart successfully'});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to delete product to cart',
+            details: error.message
+        });
+    }
+});
+
+app.post('/shop/publisher/cart/get' , async (req, res) => {
+    try {
+        const { token }  = req.body;
+
+        if ( !token) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+
+        let user_querry = await queryDatabase("SELECT * FROM user WHERE user_id = ?", [decodedToken.user_id]);
+        if(user_querry.length === 0){
+            return res.status(404).json({ error: 'User not found' });
+        }
+        let query = await queryDatabase(
+            `SELECT
+                c.user_id,
+                co.item_id,
+                co.book_id,
+                co.cover_color,
+                co.cover_type,
+                co.font_family,
+                co.font_size,
+                co.paper_type,
+                co.marker,
+                co.amount,
+                b.book_name_th,
+                b.book_name_en,
+                b.book_price,
+                b.book_image
+            FROM cart c
+            JOIN custom_order co ON c.item_id = co.item_id
+            JOIN book_detail b ON co.book_id = b.book_id
+            WHERE c.user_id = ?`,
+            [decodedToken.user_id]);
+   
+        return res.status(200).json({ cart_info: query});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to get product to cart',
+            details: error.message
+        });
+    }
+});
+
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
