@@ -1354,6 +1354,101 @@ app.post('/shop/seller/cart/get' , async (req, res) => {
     }
 });
 
+app.post('/shop/order/create' , async (req, res) => {
+    try {
+        const { token , phone, email, address, fullname}  = req.body;
+
+        if ( !token || !phone || !email || !address || !fullname ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+
+        let cart_publisher_querry = await queryDatabase("SELECT * FROM cart WHERE user_id = ?", [decodedToken.user_id]);
+    
+        if(cart_publisher_querry.length != 0){
+            let querry_custom = await queryDatabase(
+                `SELECT bd.publisher_id, SUM(co.amount)*bd.book_price AS total_price
+                FROM cart c
+                JOIN custom_order co ON c.item_id = co.item_id
+                JOIN book_detail bd ON co.book_id = bd.book_id
+                WHERE c.user_id = ?
+                GROUP BY bd.publisher_id
+                ORDER BY bd.publisher_id;`, 
+                [decodedToken.user_id]);
+
+            querry_custom.forEach(async (item) => {
+                let insert_order = await queryDatabase(
+                    `INSERT INTO order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname) VALUEs (?, ?, ?, ?, ?, ?, ?, ?);`, 
+                    [decodedToken.user_id, item.publisher_id, item.total_price, "Payment Pending", phone, email, address, fullname]);
+                let traverst_cart = await queryDatabase(
+                    `SELECT c.item_id , bd.publisher_id FROM cart c
+                    JOIN custom_order co ON c.item_id = co.item_id
+                    JOIN book_detail bd ON co.book_id = bd.book_id
+                    WHERE c.user_id = ?;`, [decodedToken.user_id]);
+                traverst_cart.forEach(async (item_cart) => {
+                    if (item_cart.publisher_id == item.publisher_id) {
+                        let insert_order_bridge = await queryDatabase(
+                            `INSERT INTO order_bridge (item_id, order_id) VALUEs (?, ?);`, 
+                            [item_cart.item_id, insert_order.insertId]);
+                        let delete_cart = queryDatabase(
+                            `DELETE FROM cart WHERE item_id = ?;`, 
+                            [item_cart.item_id]);
+                    }
+                });
+
+            })
+        }
+
+        let cart_seller_querry = await queryDatabase("SELECT * FROM seller_cart WHERE user_id = ?", [decodedToken.user_id]);
+        if(cart_seller_querry.length != 0){
+            let querry_seller_order = await queryDatabase(
+                `SELECT sbd.owner_id, SUM(so.amount)*sbd.book_price AS total_price
+                FROM seller_cart c
+                JOIN seller_order so ON c.seller_item_id = so.seller_item_id
+                JOIN seller_book_detail sbd ON so.seller_book_id = sbd.seller_book_id
+                WHERE c.user_id = ?
+                GROUP BY sbd.owner_id
+                ORDER BY sbd.owner_id;`, 
+                [decodedToken.user_id]);
+            querry_seller_order.forEach(async (item) => {
+                let insert_order = await queryDatabase(
+                    `INSERT INTO seller_order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname) VALUEs (?, ?, ?, ?, ?, ?, ?, ?);`, 
+                    [decodedToken.user_id, item.owner_id, item.total_price, "Payment Pending", phone, email, address, fullname]);
+                console.log(insert_order)
+                let traverst_cart = await queryDatabase(
+                    `SELECT c.seller_item_id , bd.owner_id FROM seller_cart c
+                    JOIN seller_order so ON c.seller_item_id = so.seller_item_id
+                    JOIN seller_book_detail bd ON so.seller_book_id = bd.seller_book_id
+                    WHERE c.user_id = ?;`, [decodedToken.user_id]);
+    
+                traverst_cart.forEach(async (item_cart) => {
+                    if (item_cart.owner_id == item.owner_id) {
+                        let insert_order_bridge = await queryDatabase(
+                            `INSERT INTO seller_order_bridge (seller_item_id, seller_order_id) VALUEs (?, ?);`, 
+                            [item_cart.seller_item_id, insert_order.insertId]);
+                        let delete_cart = queryDatabase(
+                            `DELETE FROM seller_cart WHERE seller_item_id = ?;`, 
+                            [item_cart.seller_item_id]);
+                    }
+                });
+
+            })
+        }
+        if (cart_publisher_querry.length == 0 && cart_seller_querry.length == 0) {
+            return res.status(204).json({ message: "No products found in the cart"});
+        }
+
+        return res.status(200).json({ message: "Order created successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to create order',
+            details: error.message
+        });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
