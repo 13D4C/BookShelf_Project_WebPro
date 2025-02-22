@@ -26,11 +26,8 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
-<<<<<<< Updated upstream
 		"@sveltejs/adapter-node": "^5.2.12",
-=======
 		"@jaames/iro": "^5.5.2",
->>>>>>> Stashed changes
 		"@tailwindcss/vite": "^4.0.1",
 		"swiper": "^11.2.4"
 	}
