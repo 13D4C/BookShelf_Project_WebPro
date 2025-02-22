@@ -243,6 +243,7 @@
 	let bannerImages = [
 		"https://fiverr-res.cloudinary.com/images/q_auto,f_auto/gigs/323203587/original/8f16754c80f8ea7a8a2b87b24c40f123ed219937/do-a-colorful-and-dynamic-anime-or-manga-banner-for-you.png",
 		"https://i.redd.it/t4x28924inbc1.jpeg",
+		"https://media.discordapp.net/attachments/1206586748981874819/1342855894945501236/image.png?ex=67bb2782&is=67b9d602&hm=49396d86dc7e4f904b201ae6f5e7d2f6ea20cefbecf62a74f70580619d0e1e28&=&format=webp&quality=lossless&width=330&height=188",
 		"https://cdn.vectorstock.com/i/500p/26/35/merry-christmas-podium-display-snowman-banner-vector-54372635.jpg",
 	];
 
@@ -260,6 +261,7 @@
 	let smallBannerImages = [
 		"https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/56108c72-51ea-4e26-8de9-008fde4723c4/dfhaomu-59c653ab-3da1-4c81-9a4b-bbd042eec441.jpg/v1/fill/w_1280,h_427,q_75,strp/hentai_banner_by_bankysenpai_dfhaomu-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NDI3IiwicGF0aCI6IlwvZlwvNTYxMDhjNzItNTFlYS00ZTI2LThkZTktMDA4ZmRlNDcyM2M0XC9kZmhhb211LTU5YzY1M2FiLTNkYTEtNGM4MS05YTRiLWJiZDA0MmVlYzQ0MS5qcGciLCJ3aWR0aCI6Ijw9MTI4MCJ9XV0sImF1ZCI6WyJ1cm46c2VydmljZTppbWFnZS5vcGVyYXRpb25zIl19.iARBneFwUhe2l5QaD7tde0SZRIUGiBQxZnFadq0DFMQ",
 		"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0IUgoI9H2LpPoSSvg5nJxns3acKbS-gdQjQ&s",
+		"https://media.discordapp.net/attachments/1206586748981874819/1342855894945501236/image.png?ex=67bb2782&is=67b9d602&hm=49396d86dc7e4f904b201ae6f5e7d2f6ea20cefbecf62a74f70580619d0e1e28&=&format=webp&quality=lossless&width=330&height=188"
 	];
 
 	function checkAndRedirect(token: string | null, routeId: string | null) {
@@ -308,6 +310,7 @@
 			<section class="mb-8 relative">
 				<h2 class="text-xl font-bold mb-4">สินค้าออกใหม่</h2>
 				{#if products.length == 0}
+					<!-- svelte-ignore a11y_missing_attribute -->
 					<iframe
 						class="aspect-video w-3/4"
 						src="https://www.youtube.com/embed/8ytKQE-8-Hw?autoplay=1"
@@ -321,6 +324,8 @@
 						<div class="swiper-wrapper">
 							{#each products as product}
 								<div class="swiper-slide" style="text-align: center;">
+									<!-- svelte-ignore a11y_click_events_have_key_events -->
+									<!-- svelte-ignore a11y_no_static_element_interactions -->
 									<div
 										class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
 										on:click={() =>
@@ -385,6 +390,8 @@
 						<div class="swiper-wrapper">
 							{#each getBooksByCategory(category, eachbook) as product}
 								<div class="swiper-slide">
+									<!-- svelte-ignore a11y_click_events_have_key_events -->
+									<!-- svelte-ignore a11y_no_static_element_interactions -->
 									<div
 										class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
 										on:click={() =>

@@ -13,6 +13,7 @@
     let isLoadingBook = true;
     let errorMessage = "";
     let userToken: string | null;
+    let custom = true;
 
     $: discountedPrice = book.discount
         ? book.price * (1 - book.discount / 100)
@@ -162,11 +163,15 @@
                 <div class="relative">
                     {#if book.book_image}
                         <div class="max-w-xs">
+                            {#if !custom}
                             <img
                                 class="w-full rounded-lg object-cover"
                                 src={book.book_image}
                                 alt={book.book_name_originl}
                             />
+                            {:else}
+                            <h1>Stupid NIg</h1>
+                            {/if}
                         </div>
                     {/if}
                 </div>

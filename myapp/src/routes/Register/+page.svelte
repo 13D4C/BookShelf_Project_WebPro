@@ -1,6 +1,7 @@
 <script lang='ts'>
     import { goto } from '$app/navigation';
     let email = "";
+    let error = "";
 
     function goBack() {
         history.back();
@@ -13,7 +14,6 @@
     async function register(event: SubmitEvent) {
         event.preventDefault();
         let message = "";
-        let error = "";
         let details = {};
         const email = document.getElementById('email') as HTMLInputElement;
         const username = document.getElementById('username') as HTMLInputElement;
@@ -63,14 +63,14 @@
 
     <div
         class="flex-1 bg-cover bg-center"
-        style="background-image: url('https://scontent.fbkk6-2.fna.fbcdn.net/v/t39.30808-6/461275446_1082406396829060_2100932454648280842_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=6ee11a&_nc_ohc=8iH39aGh0owQ7kNvgE7LZym&_nc_oc=AdhPyTAyP7GBR4f71K9zanBIWbT1ILVJv1XmPOahTOy-awJme_X_HD0eKj8MpSfoAuw&_nc_zt=23&_nc_ht=scontent.fbkk6-2.fna&_nc_gid=AtFiFofr_aXyTNRmmsU0bLc&oh=00_AYBen4USCQgwE2wxET38tWG8jBF3WJTpQEB85tE9-X2ZKg&oe=67A10A7F');"
+        style="background-image: url('https://i.pinimg.com/736x/0c/8a/91/0c8a91931986c725c28b940bdb1adba6.jpg');"
     ></div>
 
     <div class="flex items-center justify-center w-1/3 bg-white shadow-lg">
         <div class="w-full max-w-md p-8 space-y-6">
             <div class="text-center">
                 <img
-                    src="https://scontent.fbkk6-1.fna.fbcdn.net/v/t39.30808-6/461323765_1667997300443297_6234426937292606085_n.jpg?_nc_cat=102&ccb=1-7&_nc_sid=aa7b47&_nc_ohc=JazFEVRFMFoQ7kNvgEA01rf&_nc_oc=AdizYuwiOTQO2O6B_kKA44ZbatjcXGnnWoH4XDFy6Ko2ld2mNx2SgWjdTqouWufV0Dg&_nc_zt=23&_nc_ht=scontent.fbkk6-1.fna&_nc_gid=AnAJiprmomPFB00J6l91eUA&oh=00_AYCUt5Top96sYU6L123eUy4dj7JxbYD8ooPpshptCuolwg&oe=67A129DB"
+                    src="https://i.imgflip.com/6362lr.png"
                     alt="Logo"
                     class="w-24 h-24 mx-auto mb-4"
                 />
@@ -136,7 +136,7 @@
                         placeholder="Enter your password"
                     />
                 </div>
-
+                <p>{error}</p>
                 <div>
                     <button
                         type="submit"

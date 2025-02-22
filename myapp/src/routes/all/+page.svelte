@@ -155,11 +155,16 @@
         }
     }
 
+    function clearSearch() {
+        isLoading.set(true);
+        goto("/all");
+    }
+
 
 </script>
 
-<!-- {#if $isLoading}
-{:else} -->
+{#if $isLoading}
+{:else}
     <Navbar />
 
     <div class="min-h-screen bg-white">
@@ -201,7 +206,7 @@
                     <!-- Checkbox (placed above the book grid) -->
                     <div class="mb-4">
                         <label class="flex items-center space-x-2">
-                            {#if search}<a href="/all" class="btn btn-primary">{search} ❌</a>{/if}
+                            {#if search}<button on:click={clearSearch}  class="btn btn-primary" >{search} ❌</button>{/if}
                             <input
                                 type="checkbox"
                                 bind:checked={showTrustedOnly}
@@ -255,4 +260,4 @@
             </div>
         </div>
     </div>
-<!-- {/if} -->
+{/if}
