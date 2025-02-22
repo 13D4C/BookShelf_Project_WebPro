@@ -1697,7 +1697,7 @@ app.post('/shop/publisher/order/getall' , async (req, res) => {
     }
 });
 
-// seller_id คือ user_id ของ publisher
+// seller_id คือ user_id ของ seller
 app.post('/shop/seller/order/getall' , async (req, res) => {
     try {
         const { seller_id }  = req.body;
