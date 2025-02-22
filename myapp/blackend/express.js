@@ -1158,6 +1158,9 @@ app.post('/shop/publisher/cart/add' , async (req, res) => {
                 [book_id, amount, book_querry[0].book_price]);
         }
         else {
+            if ( !custom) {
+                return res.status(400).json({ error: 'Information all is required' });
+            }
             create_custom = await queryDatabase(
                 "INSERT INTO custom_order(book_id, cover_color, cover_type, font_family, font_size, paper_type, marker, amount, item_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [book_id, custom.cover_color, custom.cover_type , custom.font_family, custom.font_size, custom.paper_type, custom.marker ,amount, book_querry[0].book_price]);
@@ -1354,9 +1357,11 @@ app.post('/shop/seller/cart/get' , async (req, res) => {
     }
 });
 
+
+//body คือ tokenคนสั่ง เบอร์ เมล์ ที่อยู่ ชื่อเต็ม 
 app.post('/shop/order/create' , async (req, res) => {
     try {
-        const { token , phone, email, address, fullname}  = req.body;
+        const { token , phone, email, address, fullname }  = req.body;
 
         if ( !token || !phone || !email || !address || !fullname ) {
             return res.status(400).json({ error: 'Information all is required' });
@@ -1376,29 +1381,35 @@ app.post('/shop/order/create' , async (req, res) => {
                 ORDER BY bd.publisher_id;`, 
                 [decodedToken.user_id]);
 
-            querry_custom.forEach(async (item) => {
-                let insert_order = await queryDatabase(
-                    `INSERT INTO order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname) VALUEs (?, ?, ?, ?, ?, ?, ?, ?);`, 
-                    [decodedToken.user_id, item.publisher_id, item.total_price, "Payment Pending", phone, email, address, fullname]);
-                let traverst_cart = await queryDatabase(
-                    `SELECT c.item_id , bd.publisher_id FROM cart c
-                    JOIN custom_order co ON c.item_id = co.item_id
-                    JOIN book_detail bd ON co.book_id = bd.book_id
-                    WHERE c.user_id = ?;`, [decodedToken.user_id]);
-                traverst_cart.forEach(async (item_cart) => {
-                    if (item_cart.publisher_id == item.publisher_id) {
-                        let insert_order_bridge = await queryDatabase(
-                            `INSERT INTO order_bridge (item_id, order_id) VALUEs (?, ?);`, 
-                            [item_cart.item_id, insert_order.insertId]);
-                        let delete_cart = queryDatabase(
-                            `DELETE FROM cart WHERE item_id = ?;`, 
-                            [item_cart.item_id]);
+                for (const item of querry_custom) {
+                    let insert_order = await queryDatabase(
+                        `INSERT INTO order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname, status_time, order_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp());`, 
+                        [decodedToken.user_id, item.publisher_id, item.total_price, "Payment Pending", phone, email, address, fullname]
+                    );
+                
+                    let traverst_cart = await queryDatabase(
+                        `SELECT c.item_id , bd.publisher_id FROM cart c
+                        JOIN custom_order co ON c.item_id = co.item_id
+                        JOIN book_detail bd ON co.book_id = bd.book_id
+                        WHERE c.user_id = ?;`, 
+                        [decodedToken.user_id]
+                    );
+                
+                    for (const item_cart of traverst_cart) {
+                        if (item_cart.publisher_id == item.publisher_id) {
+                            await queryDatabase(
+                                `INSERT INTO order_bridge (item_id, order_id) VALUES (?, ?);`, 
+                                [item_cart.item_id, insert_order.insertId]
+                            );
+                
+                            await queryDatabase(
+                                `DELETE FROM cart WHERE item_id = ?;`, 
+                                [item_cart.item_id]
+                            );
+                        }
                     }
-                });
-
-            })
+                }
         }
-
         let cart_seller_querry = await queryDatabase("SELECT * FROM seller_cart WHERE user_id = ?", [decodedToken.user_id]);
         if(cart_seller_querry.length != 0){
             let querry_seller_order = await queryDatabase(
@@ -1410,30 +1421,39 @@ app.post('/shop/order/create' , async (req, res) => {
                 GROUP BY sbd.owner_id
                 ORDER BY sbd.owner_id;`, 
                 [decodedToken.user_id]);
-            querry_seller_order.forEach(async (item) => {
-                let insert_order = await queryDatabase(
-                    `INSERT INTO seller_order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname) VALUEs (?, ?, ?, ?, ?, ?, ?, ?);`, 
-                    [decodedToken.user_id, item.owner_id, item.total_price, "Payment Pending", phone, email, address, fullname]);
-                console.log(insert_order)
-                let traverst_cart = await queryDatabase(
-                    `SELECT c.seller_item_id , bd.owner_id FROM seller_cart c
-                    JOIN seller_order so ON c.seller_item_id = so.seller_item_id
-                    JOIN seller_book_detail bd ON so.seller_book_id = bd.seller_book_id
-                    WHERE c.user_id = ?;`, [decodedToken.user_id]);
-    
-                traverst_cart.forEach(async (item_cart) => {
-                    if (item_cart.owner_id == item.owner_id) {
-                        let insert_order_bridge = await queryDatabase(
-                            `INSERT INTO seller_order_bridge (seller_item_id, seller_order_id) VALUEs (?, ?);`, 
-                            [item_cart.seller_item_id, insert_order.insertId]);
-                        let delete_cart = queryDatabase(
-                            `DELETE FROM seller_cart WHERE seller_item_id = ?;`, 
-                            [item_cart.seller_item_id]);
+                for (const item of querry_seller_order) {
+                    let insert_order = await queryDatabase(
+                        current_timestamp()
+                        `INSERT INTO seller_order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname, order_time, status_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp());`, 
+                        [decodedToken.user_id, item.owner_id, item.total_price, "Payment Pending", phone, email, address, fullname]
+                    );
+                
+                    console.log(insert_order);
+                
+                    let traverst_cart = await queryDatabase(
+                        `SELECT c.seller_item_id , bd.owner_id FROM seller_cart c
+                        JOIN seller_order so ON c.seller_item_id = so.seller_item_id
+                        JOIN seller_book_detail bd ON so.seller_book_id = bd.seller_book_id
+                        WHERE c.user_id = ?;`, 
+                        [decodedToken.user_id]
+                    );
+                
+                    for (const item_cart of traverst_cart) {
+                        if (item_cart.owner_id == item.owner_id) {
+                            await queryDatabase(
+                                `INSERT INTO seller_order_bridge (seller_item_id, seller_order_id) VALUES (?, ?);`, 
+                                [item_cart.seller_item_id, insert_order.insertId]
+                            );
+                
+                            await queryDatabase(
+                                `DELETE FROM seller_cart WHERE seller_item_id = ?;`, 
+                                [item_cart.seller_item_id]
+                            );
+                        }
                     }
-                });
-
-            })
+                }
         }
+
         if (cart_publisher_querry.length == 0 && cart_seller_querry.length == 0) {
             return res.status(204).json({ message: "No products found in the cart"});
         }
@@ -1448,6 +1468,291 @@ app.post('/shop/order/create' , async (req, res) => {
         });
     }
 });
+
+app.delete('/shop/publisher/order/delete' , async (req, res) => {
+    try {
+        const { order_id }  = req.body;
+
+        if ( !order_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        let order_bridge = await queryDatabase("SELECT item_id FROM order_bridge WHERE order_id = ?;", [order_id]);
+        
+        for (const item of order_bridge){
+                await queryDatabase("DELETE FROM custom_order WHERE item_id=?;", [item.item_id])
+        }
+
+        await queryDatabase("DELETE FROM order_bridge WHERE order_id=?;", [order_id])
+        await queryDatabase("DELETE FROM order_list WHERE order_id=?;", [order_id])
+        return res.status(200).json({message: "Delete order_list successfuldly"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to delete order',
+            details: error.message
+        });
+    }
+});
+
+app.delete('/shop/seller/order/delete' , async (req, res) => {
+    try {
+        const { seller_order_id }  = req.body;
+
+        if ( !seller_order_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        let order_bridge = await queryDatabase("SELECT seller_item_id FROM seller_order_bridge WHERE seller_order_id = ?;", [seller_order_id]);
+        for (const item of order_bridge){
+                await queryDatabase("DELETE FROM seller_order WHERE seller_item_id=?;", [item.seller_item_id])
+        }
+
+        await queryDatabase("DELETE FROM seller_order_bridge WHERE seller_order_id=?;", [seller_order_id])
+        await queryDatabase("DELETE FROM seller_order_list WHERE seller_order_id=?;", [seller_order_id])
+        return res.status(200).json({message: "Delete order_list successfuldly"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to delete order',
+            details: error.message
+        });
+    }
+});
+
+app.post('/shop/publisher/payment/upload-proof' , async (req, res) => {
+    try {
+        const { order_id, payment_slip, payment_time}  = req.body;
+
+        if ( !order_id || !payment_slip || !payment_time) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        const querry_status = await queryDatabase("SELECT order_status FROM order_list WHERE order_id=?", [order_id]);
+        if (querry_status[0].order_status != "Payment Pending") {
+            return res.status(400).json({message: "Please wait for review"})
+        }
+
+        await queryDatabase("UPDATE order_list SET payment_slip=?, payment_time=?, order_status=?, status_time=current_timestamp() WHERE order_id=?", [payment_slip, payment_time, "Waiting for review", order_id]);
+        return res.status(200).json({message: "Payment proof submitted successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to payment proof submission',
+            details: error.message
+        });
+    }
+});
+
+app.post('/shop/seller/payment/upload-proof' , async (req, res) => {
+    try {
+        const { seller_order_id, payment_slip, payment_time}  = req.body;
+
+        if ( !seller_order_id || !payment_slip || !payment_time) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        const querry_status = await queryDatabase("SELECT order_status FROM seller_order_list WHERE seller_order_id=?", [seller_order_id]);
+        if (querry_status[0].order_status != "Payment Pending") {
+            return res.status(400).json({message: "Please wait for review"})
+        }
+
+        await queryDatabase("UPDATE seller_order_list SET payment_slip=?, payment_time=?, order_status=?, status_time=current_timestamp() WHERE seller_order_id=?", [payment_slip, payment_time, "Waiting for review", seller_order_id]);
+        return res.status(200).json({message: "Payment proof submitted successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to payment proof submission',
+            details: error.message
+        });
+    }
+});
+
+app.patch('/shop/seller/payment/approve' , async (req, res) => {
+    try {
+        const { seller_order_id }  = req.body;
+
+        if ( !seller_order_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        await queryDatabase("UPDATE seller_order_list SET order_status='Checked', status_time=current_timestamp() WHERE seller_order_id=?", [seller_order_id]);
+        return res.status(200).json({message: "Payment approve successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to payment approve',
+            details: error.message
+        });
+    }
+});
+
+app.patch('/shop/publisher/payment/approve' , async (req, res) => {
+    try {
+        const { order_id }  = req.body;
+
+        if ( !order_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        await queryDatabase("UPDATE order_list SET order_status='Checked', status_time=current_timestamp() WHERE order_id=?", [order_id]);
+        return res.status(200).json({message: "Payment approve successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to payment approve',
+            details: error.message
+        });
+    }
+});
+
+app.get('/shop/publisher/order/get/:order_id' , async (req, res) => {
+    try {
+        const order_id = req.params.order_id;
+       
+        const querry_order = await queryDatabase("SELECT * FROM order_list WHERE order_id=?", [order_id]);
+        if (querry_order[0].length == 0){
+            return res.status(204).json({ message: "No order found in the order_list"}); 
+        } 
+        const querry_item = await queryDatabase (
+            `SELECT *
+            FROM order_bridge ob
+            JOIN custom_order co ON ob.item_id = co.item_id
+            JOIN book_detail bd ON co.book_id  = bd.book_id
+            WHERE order_id = ?;`, [order_id]);
+        const querry_buyer = await queryDatabase (
+            `SELECT user.*
+            FROM order_list
+            JOIN user ON order_list.user_id = user.user_id
+            WHERE order_id = ?;`, [order_id]
+        );
+
+        return res.status(200).json({order_info: querry_order, item: querry_item, buyer:querry_buyer});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to get order',
+            details: error.message
+        });
+    }
+});
+
+app.get('/shop/seller/order/get/:seller_order_id' , async (req, res) => {
+    try {
+        const seller_order_id = req.params.seller_order_id;
+       
+        const querry_order = await queryDatabase("SELECT * FROM seller_order_list WHERE seller_order_id=?", [seller_order_id]);
+        if (querry_order[0].length == 0){
+            return res.status(204).json({ message: "No order found in the seller_order_list"}); 
+        } 
+        const querry_item = await queryDatabase (
+            `SELECT *
+            FROM seller_order_bridge ob
+            JOIN seller_order co ON ob.seller_item_id = co.seller_item_id
+            JOIN seller_book_detail bd ON co.seller_book_id  = bd.seller_book_id
+            WHERE seller_order_id = ?;`, [seller_order_id]);
+
+        const querry_buyer = await queryDatabase (
+            `SELECT user.*
+            FROM seller_order_list
+            JOIN user ON seller_order_list.user_id = user.user_id
+            WHERE seller_order_id = ?;`, [seller_order_id]
+        );
+
+        return res.status(200).json({order_info: querry_order, item: querry_item, buyer:querry_buyer});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to get order',
+            details: error.message
+        });
+    }
+});
+
+// publisher_id คือ user_id ของ publisher
+app.post('/shop/publisher/order/getall' , async (req, res) => {
+    try {
+        const { publisher_id }  = req.body;
+
+        if ( !publisher_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const querry_order = await queryDatabase("SELECT * FROM order_list WHERE owner_id=?", [publisher_id]);
+        return res.status(200).json({order_all: querry_order});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to get order',
+            details: error.message
+        });
+    }
+});
+
+// seller_id คือ user_id ของ publisher
+app.post('/shop/seller/order/getall' , async (req, res) => {
+    try {
+        const { seller_id }  = req.body;
+
+        if ( !seller_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const querry_order = await queryDatabase("SELECT * FROM seller_order_list WHERE owner_id=?", [seller_id]);
+        return res.status(200).json({order_all: querry_order});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to get order',
+            details: error.message
+        });
+    }
+});
+
+app.patch('/shop/publisher/order/shipping' , async (req, res) => {
+    try {
+        const { order_id, tracking_number}  = req.body;
+        if ( !order_id || !tracking_number) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        await queryDatabase(`UPDATE order_list SET order_status='Shipped', status_time=current_timestamp(), tracking_number=?  WHERE order_id=?`, [tracking_number, order_id]);
+        return res.status(200).json({message: "Status updated successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Status update failed',
+            details: error.message
+        });
+    }
+});
+
+app.patch('/shop/seller/order/shipping' , async (req, res) => {
+    try {
+        const { seller_order_id, tracking_number}  = req.body;
+        if ( !seller_order_id || !tracking_number) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        await queryDatabase(`UPDATE seller_order_list SET order_status='Shipped', status_time=current_timestamp(), tracking_number=?  WHERE seller_order_id=?`, [tracking_number, seller_order_id]);
+        return res.status(200).json({message: "Status updated successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Status update failed',
+            details: error.message
+        });
+    }
+});
+
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
