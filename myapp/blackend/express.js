@@ -1697,7 +1697,7 @@ app.post('/shop/publisher/order/getall' , async (req, res) => {
     }
 });
 
-// seller_id คือ user_id ของ publisher
+// seller_id คือ user_id ของ seller
 app.post('/shop/seller/order/getall' , async (req, res) => {
     try {
         const { seller_id }  = req.body;
@@ -1753,6 +1753,24 @@ app.patch('/shop/seller/order/shipping' , async (req, res) => {
     }
 });
 
+app.post('/shop/buyer/order/getall' , async (req, res) => {
+    try {
+        const { user_id }  = req.body;
+
+        if ( !user_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const querry_order = await queryDatabase("SELECT * FROM order_list WHERE user_id=?", [user_id]);
+        return res.status(200).json({order_all: querry_order});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to get order',
+            details: error.message
+        });
+    }
+});
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
