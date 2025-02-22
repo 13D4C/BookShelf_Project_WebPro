@@ -1,62 +1,79 @@
 <script lang="ts">
-    import { navigating } from "$app/stores";
     import { goto } from "$app/navigation";
     import Navbar from "$lib/components/navbar.svelte";
     import { onMount } from "svelte";
     import { writable } from "svelte/store";
     import { page } from "$app/stores";
+    import { generateStars } from "$lib/utils";
 
     let books: any[] = [];
     let userToken: string | null;
-    function getUniqueCategories(books) {
+    let search: string | null;
+    let uniqueCategories: any[] = [];
+    let selectedCategory = null; // Initially, no category is selected
+    let showTrustedOnly = false;
+    let cards: any[] = [];
+    const isLoading = writable(true);
+
+    function getUniqueCategories(booksData) {
         let categories = new Set();
 
-        books.forEach((book) => {
+        booksData.forEach((book) => {
             if (book.book_category) {
                 const individualCategories = book.book_category.split(",");
-                console.log(individualCategories);
                 individualCategories.forEach((category) => {
-                    if (!categories.has(category)) {
-                        // Check if category is already in the Set
-                        categories.add(category); // Add only if it's not present
-                    }
+                    categories.add(category);
                 });
             }
         });
 
         return Array.from(categories);
     }
+
     async function getBooks() {
         try {
-            const response = await fetch(
-                "http://localhost:3000/books?all=true",
-            );
+            const urlParams = new URLSearchParams(window.location.search);
+            const nameParam = urlParams.get("name");
+            let url = "http://localhost:3000/books/searched/f?";
+            if (nameParam) {
+                search = nameParam;
+                url += `name=${encodeURIComponent(nameParam)}`;
+            } else {
+                url = "http://localhost:3000/books?all=true";
+            }
+            console.log(url);
+            const response = await fetch(url);
 
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
 
             books = await response.json();
+            uniqueCategories = getUniqueCategories(books); // Calculate here after books are fetched
+
+            // Check for category parameter and apply filter *after* books are loaded.
+            const categoryParam = urlParams.get("category");
+            if (categoryParam) {
+                selectedCategory = categoryParam; // Set selectedCategory directly.
+            }
+
         } catch (error) {
             console.error("Error fetching books:", error);
             books = [];
+            uniqueCategories = []; // Also reset uniqueCategories on error.
         } finally {
             isLoading.set(false);
         }
     }
-    // Get unique categories from the books data
-    let uniqueCategories: any[] = [];
 
-    // Add a variable to store the currently selected category
-    let selectedCategory = null; // Initially, no category is selected
 
-    // Add a variable for the trusted filter checkbox
-    let showTrustedOnly = false;
 
     // Function to filter books based on selected category
     function filterBooks(category) {
         selectedCategory = category;
+        equalizeCardHeights(); // Re-equalize after filtering
     }
+
 
     // Reactive statement to filter books
     $: filteredBooks = (() => {
@@ -77,36 +94,37 @@
         return result;
     })();
 
+  $: if (books.length > 0) {
+    // Chain the dependency: recalculate when 'books' changes
+        equalizeCardHeights();
+    }
+
+    $: if(filteredBooks) {
+        equalizeCardHeights();
+    }
+
     // Function to navigate to book detail page
     function goToBookDetail(bookId) {
         goto(`/details/${bookId}`); // Use the goto function
     }
 
-    // onMount lifecycle hook to equalize card heights
+    // onMount lifecycle hook
     onMount(async () => {
-        equalizeCardHeights(); // Initial equalization
-        await getBooks();
-        uniqueCategories = getUniqueCategories(books);
-        const imageLoadPromises = Array.from(
-            document.querySelectorAll(".book-card img"),
-        ).map((img) => {
-            return new Promise((resolve) => {
-                if (img.complete) {
-                    resolve(); // Already loaded
-                } else {
-                    img.onload = resolve; // Resolve when loaded
-                    img.onerror = resolve; // Resolve even if there's an error (don't block)
-                }
-            });
-        });
+        cards = document.querySelectorAll(".book-card");
+        page.subscribe(($page) => {
+            userToken = localStorage.getItem("userToken");
+            checkAndRedirect(userToken, $page.route.id);
 
-        Promise.all(imageLoadPromises).then(() => {
-            equalizeCardHeights();
         });
+        await getBooks(); // Initial fetch of books
     });
 
+
+
     function equalizeCardHeights() {
-        const cards = document.querySelectorAll(".book-card");
+      // Use querySelectorAll directly on the filtered books' container if possible.  If not, a slight delay is needed.
+         if (!cards.length) return; // Exit if no cards
+
         let maxHeight = 0;
 
         // Reset heights first (important for responsiveness)
@@ -125,27 +143,23 @@
         });
     }
 
-    //อันนี้
+    $: $page.url && getBooks();
+
     function checkAndRedirect(token: string | null, routeId: string | null) {
         const isAuthRoute = routeId === "/" || routeId === "/Register";
 
         if (!token && !isAuthRoute) {
             goto("/");
         } else {
-            isLoading.set(false);
+             //isLoading.set(false); // moved to getBooks()
         }
     }
-    const isLoading = writable(true);
-    onMount(async () => {
-        page.subscribe(($page) => {
-            userToken = localStorage.getItem("userToken");
-            checkAndRedirect(userToken, $page.route.id);
-        });
-    });
-    //ถึงนี่
+
+
 </script>
 
-{#if $isLoading}{:else}
+<!-- {#if $isLoading}
+{:else} -->
     <Navbar />
 
     <div class="min-h-screen bg-white">
@@ -187,6 +201,7 @@
                     <!-- Checkbox (placed above the book grid) -->
                     <div class="mb-4">
                         <label class="flex items-center space-x-2">
+                            {#if search}<a href="/all" class="btn btn-primary">{search} ❌</a>{/if}
                             <input
                                 type="checkbox"
                                 bind:checked={showTrustedOnly}
@@ -219,9 +234,7 @@
                                     <p class="font-semibold text-blue-700">
                                         {book.book_name_originl}
                                     </p>
-                                    <p class="text-sm text-gray-600">
-                                        {book.author_id}
-                                    </p>
+                                    {@html generateStars(book.book_score)}
                                     <p class="text-blue-500 font-bold">
                                         {book.book_price}
                                     </p>
@@ -242,4 +255,4 @@
             </div>
         </div>
     </div>
-{/if}
+<!-- {/if} -->

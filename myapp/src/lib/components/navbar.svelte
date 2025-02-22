@@ -2,6 +2,7 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
 
+	let searchInput: string = "";
 	let isOpen = false;
 
 	function toggleMenu() {
@@ -27,6 +28,10 @@
 		localStorage.removeItem("userToken");
 		goto("/"); // use goto
 	}
+	function handleSearch() {
+             goto(`/all?name=${encodeURIComponent(searchInput)}`);
+
+    }
 </script>
 
 {#if $page.url.pathname !== "/"}
@@ -65,11 +70,14 @@
 			<div class="hidden md:flex items-center gap-6">
 				<div class="relative">
 					<input
+					bind:value={searchInput}
 						type="text"
 						placeholder="ค้นหา"
 						class="rounded-md p-2 w-64 text-black"
+						on:keydown={(e) => { if (e.key === 'Enter') { handleSearch(); } }}
 					/>
 					<button
+					on:click={handleSearch}
 						class="absolute right-3 top-1/2 -translate-y-1/2 text-blue-900"
 						>🔍</button
 					>
@@ -102,13 +110,15 @@
 
 			<div class="relative">
 				<input
+				bind:value={searchInput}
 					type="text"
 					placeholder="ค้นหา"
 					class="block w-full rounded-md p-2 text-black bg-gray-100"
+					on:keydown={(e) => { if (e.key === 'Enter') { handleSearch(); } }}
 				/>
 				<button
 					class="absolute right-3 top-1/2 -translate-y-1/2 text-blue-900"
-					>🔍</button
+					on:click={handleSearch}>🔍</button
 				>
 			</div>
 
@@ -125,10 +135,9 @@
 	<!-- Navigation -->
 	<nav class="bg-blue-700 text-white py-2">
 		<div class="container mx-auto flex space-x-4">
-			<a href="/" class="hover:underline">นิยาย</a>
-			<a href="/" class="hover:underline">หนังสือ</a>
-			<a href="/" class="hover:underline">บันเทิง</a>
-			<a href="/" class="hover:underline">การ์ตูน</a>
+			<a href="/main" class="hover:underline">หน้าหลัก</a>
+			<a href="/all" class="hover:underline">หนังสือทั้งหมด</a>
+			<a href="/" class="hover:underline">Custom</a>
 		</div>
 	</nav>
 {/if}

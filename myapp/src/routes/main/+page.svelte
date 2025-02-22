@@ -6,6 +6,7 @@
 	import { writable } from "svelte/store";
 	import "swiper/css/bundle";
 	import Navbar from "$lib/components/navbar.svelte";
+	import { generateStars } from "$lib/utils";
 
 	let products: any[] = [];
 	let eachbook: any[] = [];
@@ -33,7 +34,7 @@
 			isLoading.set(false);
 		}
 	}
-	function getBooksByCategory(category, books) {
+	function getBooksByCategory(category: string, books: any[]) {
 		return books.filter(
 			(book) =>
 				Array.isArray(book.book_category) &&
@@ -319,7 +320,7 @@
 					<div class="swiper swiper1">
 						<div class="swiper-wrapper">
 							{#each products as product}
-								<div class="swiper-slide">
+								<div class="swiper-slide" style="text-align: center;">
 									<div
 										class="bg-gray-100 rounded-lg p-4 shadow-md cursor-pointer hover:bg-gray-200"
 										on:click={() =>
@@ -337,6 +338,7 @@
 										<p class="text-center truncate">
 											{product.book_name_th}
 										</p>
+										{@html generateStars(product.book_score)}
 										<p class="text-center text-red-500">
 											{product.book_price}
 										</p>
@@ -357,11 +359,11 @@
 				<h2 class="text-xl font-bold mb-4">หมวดหมู่</h2>
 				<div class="flex flex-wrap space-x-2">
 					{#each categories as category}
-						<button
+						<a href="/all?category={encodeURIComponent(category)}"
 							class="bg-blue-200 text-blue-800 px-4 py-2 rounded-md mb-2 hover:bg-blue-300 transition duration-200"
 						>
 							{category}
-						</button>
+				</a>
 					{/each}
 				</div>
 			</section>
@@ -402,6 +404,7 @@
 										<p class="text-center truncate">
 											{product.book_name_originl}
 										</p>
+										{@html generateStars(product.book_score)}
 										<p class="text-center text-red-500">
 											{product.book_price}
 										</p>
