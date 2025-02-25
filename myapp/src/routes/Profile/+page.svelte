@@ -79,6 +79,60 @@
     address = event.target.address.value;
   }
 
+    // --- เพิ่มเติมสำหรับ "การขอเปิดร้านค้า" ---
+  let qrCodeImage: string | null = null;
+  let idCardImage: string | null = null;
+
+  function handleQRCodeUpload(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        qrCodeImage = e.target?.result as string;
+      };
+      reader.readAsDataURL(target.files[0]);
+    }
+  }
+
+  function handleIDCardUpload(event: Event) {
+    const target = event.target as HTMLInputElement;
+      if (target.files && target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        idCardImage = e.target?.result as string;
+      };
+      reader.readAsDataURL(target.files[0]);
+    }
+  }
+
+  function submitShopRequest(event: Event) {
+     event.preventDefault();
+    //  console.log("QR Code:", qrCodeImage); // ตรวจสอบใน console
+    //  console.log("ID Card:", idCardImage);   // ตรวจสอบใน console
+
+    // *ทำการส่งข้อมูล qrCodeImage และ idCardImage ไปยัง backend
+    // *ทำการตรวจสอบ backend ว่าผู้ใช้มีสิทธิ์เปิดร้านหรือไม่
+    // *แสดงข้อความตอบกลับจาก backend
+
+    alert("คำขอเปิดร้านค้าถูกส่งแล้ว!");
+    // รีเซ็ต input fields
+    qrCodeImage = null;
+    idCardImage = null;
+    const qrCodeInput = document.getElementById("qrCode") as HTMLInputElement;
+    const idCardInput = document.getElementById("idCard") as HTMLInputElement;
+
+    if (qrCodeInput) {
+      qrCodeInput.value = '';
+    }
+
+    if (idCardInput) {
+       idCardInput.value = '';
+    }
+
+  }
+  // --- จบส่วนเพิ่มเติม "การขอเปิดร้านค้า" ---
+
+
   // Format date helper function
   function formatDate(dateString) {
     const options = { year: "numeric", month: "long", day: "numeric" };
@@ -168,6 +222,16 @@
           on:click={() => (activeMenu = "orders")}
         >
           <i class="fa-solid fa-box mr-2" />คำสั่งซื้อของฉัน
+        </li>
+          <!-- เพิ่มเมนู "การขอเปิดร้านค้า" -->
+        <li
+          class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
+          'shopRequest'
+            ? 'bg-blue-900 text-white'
+            : 'text-white'}"
+          on:click={() => (activeMenu = "shopRequest")}
+        >
+          <i class="fa-solid fa-store mr-2"></i>การขอเปิดร้านค้า
         </li>
       </ul>
     </div>
@@ -392,6 +456,28 @@
             </table>
           </div>
         {/if}
+
+      {:else if activeMenu === "shopRequest"}
+        <h1 class="text-2xl font-semibold mb-4">การขอเปิดร้านค้า</h1>
+        <form on:submit={submitShopRequest} class="bg-white p-6 rounded-lg shadow-md space-y-4">
+          <div>
+            <label for="qrCode" class="block text-sm font-medium text-gray-700">รูป QR Code:</label>
+             <input type="file" id="qrCode" accept="image/*" on:change={handleQRCodeUpload} class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              {#if qrCodeImage}
+                <img src={qrCodeImage} alt="QR Code Preview" class="mt-2 h-24">
+             {/if}
+          </div>
+          <div>
+              <label for="idCard" class="block text-sm font-medium text-gray-700">รูปบัตรประชาชน:</label>
+              <input type="file" id="idCard" accept="image/*" on:change={handleIDCardUpload} class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+              {#if idCardImage}
+                  <img src={idCardImage} alt="ID Card Preview" class="mt-2 h-24">
+              {/if}
+          </div>
+            <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+              ส่งคำขอ
+            </button>
+        </form>
       {/if}
     </div>
   </div>
