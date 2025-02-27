@@ -16,3 +16,25 @@ export function generateStars(rating: number): string {
     }
     return starsHTML;
 }
+
+export async function getUser(userToken: string): Promise<any> {
+    try {
+        const response = await fetch('http://localhost:3000/user/getUserProfile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ token: userToken }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        return await response.json();
+
+    } catch (error) {
+        console.error("Error fetching user:", error);
+        return null;
+    }
+}

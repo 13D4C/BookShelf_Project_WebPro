@@ -26,9 +26,10 @@
 		"vite": "^6.0.0"
 	},
 	"dependencies": {
-		"@sveltejs/adapter-node": "^5.2.12",
 		"@jaames/iro": "^5.5.2",
+		"@sveltejs/adapter-node": "^5.2.12",
 		"@tailwindcss/vite": "^4.0.1",
+		"jwt-decode": "^4.0.0",
 		"swiper": "^11.2.4"
 	}
 }
