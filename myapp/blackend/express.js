@@ -37,6 +37,7 @@ app.get('/books', async (req, res) => {
     try {
         const bookId = req.query.id;
         const allBooks = req.query.all;
+        const publisher_id = req.query.publisher_id;
 
         let sql;
         let params = [];
@@ -51,6 +52,11 @@ app.get('/books', async (req, res) => {
             params = [bookId];
         } else if (allBooks) {
             sql = 'SELECT * FROM book_detail';
+        } else if (publisher_id) {
+            sql = `SELECT *
+                   FROM book_detail
+                   WHERE  publisher_id = ?`
+            params = [publisher_id]
         } else {
             sql = `SELECT *
             FROM book_detail
@@ -163,9 +169,13 @@ app.post('/books/add', async (req, res) => {
         const entityType = req.query.type; // e.g., /books/add?type=book
 
         if (entityType === 'book') {
-            const bookData = req.body;
-            const sql = 'INSERT INTO book_detail SET ?';
-            const result = await queryDatabase(sql, [bookData]);
+            const book_upload = req.body;
+            const keys = Object.keys(book_upload);
+            const values = Object.values(book_upload);
+            const placeholders = keys.map(() => '?').join(', ');
+            const sql = `INSERT INTO book_detail(${keys.join(', ')}) VALUES (${placeholders})`;
+            const result = await queryDatabase(sql, values);
+            
             res.status(201).json({ message: 'Book added successfully', book_id: result.insertId });
 
         } else if (entityType === 'serie') {
@@ -281,8 +291,15 @@ app.post('/books/update/book/:bookId', async (req, res) => {
     try {
         const bookId = req.params.bookId;
         const bookData = req.body;
-        const sql = 'UPDATE book_detail SET ? WHERE book_id = ?';
-        const result = await queryDatabase(sql, [bookData, bookId]);
+
+        const keys = Object.keys(bookData);
+        const values = Object.values(bookData);
+        const setClause = keys.map(key => `${key} = ?`).join(', ');
+
+        const sql = `UPDATE book_detail SET ${setClause} WHERE book_id = ?`;
+        values.push(bookId);
+
+        const result = await queryDatabase(sql, values);
 
         if (result.affectedRows === 0) {
             res.status(404).json({ error: 'Book not found' });
@@ -1304,9 +1321,15 @@ app.post('/shop/order/create' , async (req, res) => {
                 [decodedToken.user_id]);
 
                 for (const item of querry_custom) {
+                    let owner = await queryDatabase(
+                        `SELECT * FROM user WHERE publisher_id = ?`,
+                        [item.publisher_id]
+                    )
+                    owner = owner[0]
+
                     let insert_order = await queryDatabase(
                         `INSERT INTO order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname, status_time, order_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp());`, 
-                        [decodedToken.user_id, item.publisher_id, item.total_price, "Payment Pending", phone, email, address, fullname]
+                        [decodedToken.user_id, owner, item.total_price, "Payment Pending", phone, email, address, fullname]
                     );
                 
                     let traverst_cart = await queryDatabase(
@@ -1599,15 +1622,15 @@ app.get('/shop/seller/order/get/:seller_order_id' , async (req, res) => {
     }
 });
 
-// publisher_id คือ user_id ของ publisher
+// user_id ของ publisher
 app.post('/shop/publisher/order/getall' , async (req, res) => {
     try {
-        const { publisher_id }  = req.body;
+        const { user_id }  = req.body;
 
-        if ( !publisher_id ) {
+        if ( !user_id ) {
             return res.status(400).json({ error: 'Information all is required' });
         }
-        const querry_order = await queryDatabase("SELECT * FROM order_list WHERE owner_id=?", [publisher_id]);
+        const querry_order = await queryDatabase("SELECT * FROM order_list WHERE owner_id=?", [user_id]);
         return res.status(200).json({order_all: querry_order});
     }
     catch (error) {
@@ -1682,8 +1705,9 @@ app.post('/shop/buyer/order/getall' , async (req, res) => {
         if ( !user_id ) {
             return res.status(400).json({ error: 'Information all is required' });
         }
-        const querry_order = await queryDatabase("SELECT * FROM order_list WHERE user_id=?", [user_id]);
-        return res.status(200).json({order_all: querry_order});
+        const query_order = await queryDatabase("SELECT * FROM order_list WHERE user_id=?", [user_id]);
+        const query_order_selleter = await queryDatabase("SELECT * FROM seller_order_list WHERE user_id=?", [user_id]);
+        return res.status(200).json({publisher_order_all: query_order, seller_order_all:query_order_selleter});
     }
     catch (error) {
         console.error('ERROR', error);

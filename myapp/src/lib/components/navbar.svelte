@@ -138,6 +138,7 @@
 			<a href="/main" class="hover:underline">หน้าหลัก</a>
 			<a href="/all" class="hover:underline">หนังสือทั้งหมด</a>
 			<a href="/" class="hover:underline">Custom</a>
+			<a href="/managebook" class="hover:underline">จัดการหนังสือ</a>
 		</div>
 	</nav>
 {/if}
