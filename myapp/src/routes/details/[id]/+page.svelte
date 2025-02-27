@@ -18,9 +18,9 @@
     let newComment = "";
     let newScore = 0;
     let isChecked = false;
-    let replyComment = "";
-    let replyMode = {};
     let comments = writable([]);
+    let replyComment = "";
+    let replyMode = writable({});
 
     $: discountedPrice = book.discount
         ? book.price * (1 - book.discount / 100)
@@ -135,11 +135,11 @@
         }
     }
 
-    function organizeComments(comments: any[]) {
+    function organizeComments(comments) {
         const commentMap = {};
-        const rootComments: any[] = [];
+        const rootComments = [];
 
-        comments.forEach((comment: { replies: never[]; comment_id: string | number; reply_id: string | number; }) => {
+        comments.forEach((comment) => {
             comment.replies = [];
             commentMap[comment.comment_id] = comment;
 
@@ -160,8 +160,8 @@
             return;
         }
         try {
-            await fetch(`${API_BASE}/comments/${commentId}`, {
-                method: "DELETE",
+            await fetch(`${API_BASE}/comments/${commentId}/delete`, {
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId }),
             });
@@ -193,30 +193,36 @@
         }
     }
 
-    function toggleReply(commentId: string | number) {
-        replyMode[commentId] = !replyMode[commentId];
+    function toggleReply(commentId) {
+        replyMode.update((replies) => ({
+            ...replies,
+            [commentId]: !replies[commentId],
+        }));
     }
 
-    async function submitReply(commentId: string | number) {
-        if (replyComment.trim() && bookId && userId !== null) {
-            try {
-                await fetch(`${API_BASE}/books/${bookId}/comments`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        commentDetail: replyComment,
-                        userId,
-                        score: newScore,
-                        spoiler: isChecked,
-                        replyId: commentId,
-                    }),
-                });
+    async function submitReply(commentId) {
+        if (!replyComment.trim()) return;
+
+        const replyData = {
+            book_id: bookId,
+            comment_detail: replyComment,
+            user_id: userId,
+            reply_id: commentId,
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/comments/reply`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(replyData),
+            });
+
+            if (res.ok) {
                 replyComment = "";
-                replyMode[commentId] = false;
                 fetchComments();
-            } catch (error) {
-                console.error("Error submitting reply:", error);
             }
+        } catch (err) {
+            console.error("Error posting reply:", err);
         }
     }
 </script>
@@ -324,38 +330,170 @@
                         <p class="text-gray-600 mt-2">{book.reviewText}</p>
                     </div>
                 </div>
-                <h2>Comments</h2>
-                <ul>
-                    {#each $comments as comment}
-                        <li>
-                            <p>{comment.comment_detail} ({comment.score} ⭐)</p>
-                            <button
-                                on:click={() =>
-                                    deleteComment(comment.comment_id)}
-                                >🗑️</button
-                            >
-                            <button
-                                on:click={() => toggleReply(comment.comment_id)}
-                                >Reply</button
-                            >
-                            {#if replyMode[comment.comment_id]}
-                                <input bind:value={replyComment} />
-                                <button
-                                    on:click={() =>
-                                        submitReply(comment.comment_id)}
-                                    >Submit</button
+                <div class="comments-section">
+                    <h3 class="comments-section-title">Comments</h3>
+            
+                    <div class="post-comment">
+                        <form on:submit|preventDefault={submitComment} class="comment-form">
+                            <textarea
+                                bind:value={newComment}
+                                rows="4"
+                                placeholder="Write your comment here..."
+                                class="comment-textarea"
+                                required
+                            ></textarea>
+            
+                            <div class="comment-form-controls">
+                                <div>
+                                        <label for="score" class="score-label"
+                                            >Score:</label
+                                        >
+                                        <select
+                                            bind:value={newScore}
+                                            class="score-select"
+                                            required
+                                        >
+                                            {#each [1, 2, 3, 4, 5] as s}
+                                                <option value={s}>{s}</option>
+                                            {/each}
+                                        </select>
+                                    </div>
+                                <button type="submit" class="submit-comment-button"
+                                    >Submit Comment</button
                                 >
-                            {/if}
-                            <ul>
-                                {#each comment.replies as reply}
-                                    <li>{reply.comment_detail}</li>
-                                {/each}
-                            </ul>
-                        </li>
-                    {/each}
-                </ul>
-                <input bind:value={newComment} />
-                <button on:click={submitComment}>Submit Comment</button>
+                            </div>
+                        </form>
+                    </div>
+            
+                    {#if $comments.length > 0}
+                        <div class="comments-list">
+                            {#each $comments as comment}
+                                <div class="comment-card">
+                                    <div class="comment-header">
+                                        {#if comment.user_image}
+                                            <img
+                                                src={comment.user_image}
+                                                alt={comment.user_name}
+                                                class="user-image"
+                                            />
+                                        {:else}
+                                            <div class="user-image placeholder-avatar">
+                                                <span>{comment.user_name.charAt(0)}</span>
+                                            </div>
+                                        {/if}
+                                        <div class="user-info">
+                                            <p class="user-name">{comment.user_name} &ensp; {@html generateStars(comment.score)}</p>
+                                            <p class="timestamp">
+                                                {new Date(comment.time_stamp).toLocaleString()}
+                                            </p>
+                                        </div>
+                                    </div>
+            
+                                    <div class="comment-body">
+                                        <p>{comment.comment_detail}</p>
+                                    </div>
+            
+                                    <div class="comment-footer">
+                                        {#if comment.user_id === userId}
+                                            <button
+                                                on:click|stopPropagation={() =>
+                                                    deleteComment(comment.comment_id)}
+                                                class="delete-button"
+                                            >
+                                                Delete
+                                            </button>
+                                        {/if}
+                                        <button
+                                            on:click|stopPropagation={() =>
+                                                toggleReply(comment.comment_id)}
+                                            class="reply-button"
+                                        >
+                                            Reply
+                                        </button>
+            
+                                        {#if $replyMode[comment.comment_id]}
+                                            <div class="reply-section">
+                                                <textarea
+                                                    bind:value={replyComment}
+                                                    rows="2"
+                                                    placeholder="Write your reply here..."
+                                                    class="reply-textarea"
+                                                    required
+                                                ></textarea>
+                                                <button
+                                                    on:click|stopPropagation={() =>
+                                                        submitReply(comment.comment_id)}
+                                                    class="submit-reply-button"
+                                                >
+                                                    Submit Reply
+                                                </button>
+                                            </div>
+                                        {/if}
+            
+                                        {#if comment.replies.length > 0}
+                                            <div class="replies-list">
+                                                {#each comment.replies as reply}
+                                                    <div class="reply-comment">
+                                                        <div class="reply-header">
+                                                            {#if reply.user_image}
+                                                                <img
+                                                                    src={reply.user_image}
+                                                                    alt={reply.user_name}
+                                                                    class="user-image"
+                                                                />
+                                                            {:else}
+                                                                <div
+                                                                    class="user-image placeholder-avatar"
+                                                                >
+                                                                    <span
+                                                                        >{reply.user_name.charAt(
+                                                                            0,
+                                                                        )}</span
+                                                                    >
+                                                                </div>
+                                                            {/if}
+                                                            <div class="user-info">
+                                                                <p class="user-name">
+                                                                    {reply.user_name}
+                                                                </p>
+                                                                <p class="timestamp">
+                                                                    {new Date(
+                                                                        reply.time_stamp,
+                                                                    ).toLocaleString()}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="reply-body">
+                                                            {#if reply.spoiler}
+                                                            <p class="spoiler">
+                                                            <span class="spoiler-tag">[Spoiler]</span>
+                                                            {reply.comment_detail}
+                                                            </p>
+                                                            {:else}
+                                                            <p>{reply.comment_detail}</p>
+                                                            {/if}
+                                                        </div>
+                                                        {#if reply.user_id === userId}
+                                                            <button
+                                                                on:click|stopPropagation={() =>
+                                                                    deleteComment(reply.comment_id)}
+                                                                class="delete-button"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        {/if}
+                                                    </div>
+                                                {/each}
+                                            </div>
+                                        {/if}
+                                    </div>
+                                </div>
+                            {/each}
+                        </div>
+                    {:else}
+                        <p class="no-comments">No comments yet.</p>
+                    {/if}
+                </div>
             {/if}
 
             <!-- Related Books -->
@@ -398,11 +536,266 @@
 {/if}
 
 <style>
-    .container {
-        max-width: 1200px;
-        margin-left: auto;
-        margin-right: auto;
-        padding-left: 1rem;
-        padding-right: 1rem;
+	/* General Styles */
+	.container {
+		max-width: 1200px;
+		margin-left: auto;
+		margin-right: auto;
+		padding-left: 1rem;
+		padding-right: 1rem;
+	}
+
+	/* Comments Section */
+	.comments-section {
+		margin-top: 2rem;
+		padding: 1rem;
+		border: 1px solid #e2e8f0; /* Light gray border */
+		border-radius: 0.5rem;
+		background-color: #f8fafc; /* Very light gray background */
+	}
+
+	.comments-section-title {
+		font-size: 1.5rem;
+		font-weight: bold;
+		margin-bottom: 1rem;
+		color: #2d3748; /* Dark gray for titles */
+	}
+
+	/* Post Comment Section */
+	.post-comment {
+		margin-bottom: 1.5rem;
+		padding: 1rem;
+		border: 1px solid #cbd5e0; /* Slightly darker gray border */
+		border-radius: 0.375rem;
+		background-color: #fff; /* White background for input area */
+	}
+
+	.post-comment-title {
+		font-size: 1.25rem;
+		font-weight: 600;
+		margin-bottom: 0.75rem;
+		color: #4a5568; /* Medium gray for subtitles */
+	}
+
+	.comment-form {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.comment-textarea {
+		width: 100%;
+		padding: 0.5rem;
+		margin-bottom: 0.5rem;
+		border: 1px solid #cbd5e0;
+		border-radius: 0.25rem;
+		resize: vertical; /* Allow vertical resizing */
+	}
+	.comment-form-controls {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		margin-bottom: 0.5rem;
+        justify-content: space-between;
+	}
+	.score-label {
+		margin-right: 0.5rem;
+		font-weight: 500;
+        align-self: center;
+	}
+
+	.score-select {
+		padding: 0.25rem 0.5rem;
+		border: 1px solid #cbd5e0;
+		border-radius: 0.25rem;
+        align-self: center;
+	}
+	.checkbox-wrapper {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+
+	}
+
+	.spoiler-checkbox {
+		margin-right: 0.25rem;
+	}
+
+	.spoiler-label {
+		font-size: 0.875rem;
+		color: #4a5568;
+	}
+
+	.submit-comment-button {
+		padding: 0.5rem 1rem;
+		background-color: #f97316; /* Orange-500 */
+		color: white;
+		border: none;
+		border-radius: 0.25rem;
+		cursor: pointer;
+		transition: background-color 0.2s ease;
+        align-self: flex-end;
+	}
+
+	.submit-comment-button:hover {
+		background-color: #ea580c; /* Darker orange on hover */
+	}
+
+	/* Comments List */
+	.comments-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem; /* Spacing between comments */
+	}
+
+	.comment-card {
+		padding: 1rem;
+		border: 1px solid #e2e8f0;
+		border-radius: 0.375rem;
+		background-color: #fff;
+	}
+
+	/* Comment Header */
+	.comment-header {
+		display: flex;
+		align-items: center;
+		margin-bottom: 0.5rem;
+	}
+
+	.user-image {
+		width: 2.5rem; /* Slightly larger avatar */
+		height: 2.5rem;
+		border-radius: 50%; /* Circular avatar */
+		margin-right: 0.75rem;
+		object-fit: cover; /* Ensure image covers the space */
+	}
+	.placeholder-avatar {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background-color: #e2e8f0; /* Light gray background */
+		color: #4a5568;
+		font-weight: 500;
+		text-transform: uppercase;
+	}
+	.user-info {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.user-name {
+		font-weight: 500;
+		color: #2d3748;
+	}
+
+	.timestamp {
+		font-size: 0.75rem;
+		color: #718096; /* Gray color for timestamp */
+	}
+
+	/* Comment Body */
+	.comment-body {
+		margin-bottom: 0.5rem;
+		color: #4a5568;
+		word-wrap: break-word; /* Handle long words */
+	}
+    .spoiler {
+        background-color: #f0f0f0; /* Light gray background */
+        color: #718096;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
     }
+	.spoiler-tag{
+		color: red;
+		font-weight: bold;
+	}
+	/* Comment Footer */
+	.comment-footer {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start; /* Align buttons to the start */
+		gap: 0.75rem; /* Spacing between buttons */
+	}
+
+	.delete-button,
+	.reply-button {
+		padding: 0.25rem 0.5rem;
+		background-color: transparent;
+		color: #718096;
+		border: 1px solid #cbd5e0;
+		border-radius: 0.25rem;
+		cursor: pointer;
+		font-size: 0.875rem;
+		transition: background-color 0.2s ease, color 0.2s ease;
+	}
+
+	.delete-button:hover,
+	.reply-button:hover {
+		background-color: #e2e8f0;
+		color: #2d3748;
+	}
+
+	/* Reply Section */
+	.reply-section {
+		margin-top: 0.5rem;
+		padding: 0.5rem;
+		border: 1px solid #cbd5e0;
+		border-radius: 0.25rem;
+		background-color: #f8fafc;
+		margin-left: 3rem; /* Indent reply section */
+	}
+
+	.reply-textarea {
+		width: 100%;
+		padding: 0.5rem;
+		border: 1px solid #cbd5e0;
+		border-radius: 0.25rem;
+		resize: vertical;
+		margin-bottom: 0.5rem;
+	}
+
+	.submit-reply-button {
+		padding: 0.25rem 0.75rem;
+		background-color: #3490dc; /* Blue-500 */
+		color: white;
+		border: none;
+		border-radius: 0.25rem;
+		cursor: pointer;
+		font-size: 0.875rem;
+		transition: background-color 0.2s ease;
+	}
+
+	.submit-reply-button:hover {
+		background-color: #2779bd; /* Darker blue on hover */
+	}
+
+	/* Replies List */
+	.replies-list {
+		margin-top: 0.5rem;
+		margin-left: 3rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+
+	.reply-comment {
+		padding: 0.75rem;
+		border: 1px solid #e2e8f0;
+		border-radius: 0.25rem;
+		background-color: #f8fafc;
+	}
+	.reply-header {
+		display: flex;
+		align-items: center;
+		margin-bottom: 0.5rem;
+	}
+	.reply-body {
+		margin-bottom: 0.5rem;
+		color: #4a5568;
+		word-wrap: break-word;
+	}
+	/* No Comments */
+	.no-comments {
+		color: #718096;
+		font-style: italic;
+	}
 </style>
