@@ -30,7 +30,7 @@
 <main class="flex h-screen">
     <div
         class="flex-1 bg-cover bg-center"
-        style="background-image: url('https://media.discordapp.net/attachments/1206586748981874819/1342855895243030588/5minyap.gif?ex=67bb2782&is=67b9d602&hm=01e8855d25cc328d48011557f8a5f91a558002afb71620392fed3c054f285327&=&width=372&height=662');"
+        style="background-image: url('https://static1.srcdn.com/wordpress/wp-content/uploads/2017/04/Family-Guy-the-Griffin-House.jpg');"
     ></div>
 
     <div class="flex items-center justify-center w-1/3 bg-white shadow-lg">

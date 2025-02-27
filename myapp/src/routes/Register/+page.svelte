@@ -63,7 +63,7 @@
 
     <div
         class="flex-1 bg-cover bg-center"
-        style="background-image: url('https://i.pinimg.com/736x/0c/8a/91/0c8a91931986c725c28b940bdb1adba6.jpg');"
+        style="background-image: url('https://y.yarn.co/3ba26216-6da9-4e33-a71a-17968dbaa03d_screenshot.jpg');"
     ></div>
 
     <div class="flex items-center justify-center w-1/3 bg-white shadow-lg">

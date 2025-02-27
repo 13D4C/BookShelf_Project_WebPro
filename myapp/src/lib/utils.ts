@@ -17,7 +17,7 @@ export function generateStars(rating: number): string {
     return starsHTML;
 }
 
-export async function getUser(userToken: string): Promise<any> {
+export async function getUser(userToken: string): any{
     try {
         const response = await fetch('http://localhost:3000/user/getUserProfile', {
             method: 'POST',

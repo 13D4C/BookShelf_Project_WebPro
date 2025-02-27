@@ -18,13 +18,11 @@
     let bookId = $page.params.id;
     let newComment = "";
     let newScore = 0;
-    let isChecked = false;
+    let update = true;
     let comments = writable([]);
     let replyComment = "";
     let replyMode = writable({});
-
     let custom = false;
-
     let colorHex = '#ff0000'; // ค่าสีเริ่มต้น
     let colorJson = ''; // เก็บค่าสีในรูปแบบ JSON
     let inputText = 'New Book';
@@ -67,9 +65,11 @@
     }
 
     // Reactive statement to fetch data
-    $: if ($page.params.id) {
-        fetchBookData($page.params.id);
+    $: if ($page.params.id || update) {
+        bookId = $page.params.id;
+        fetchBookData(bookId);
         fetchComments();
+        update = false;
     }
 
     async function fetchBookData(bookId: string) {
@@ -214,6 +214,7 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId }),
             });
+            updateBookScore();
             fetchComments();
         } catch (error) {
             console.error("Error deleting comment:", error);
@@ -231,10 +232,11 @@
                         commentDetail: newComment,
                         userId: userId,
                         score: newScore,
-                        spoiler: isChecked,
+                        spoiler: false,
                     }),
                 });
                 newComment = "";
+                updateBookScore();
                 fetchComments();
             } catch (error) {
                 console.error("Error submitting comment:", error);
@@ -274,6 +276,29 @@
             console.error("Error posting reply:", err);
         }
     }
+
+    async function updateBookScore() {
+    if (bookId) {
+        try {
+            const response = await fetch(`http://localhost:3000/books/${bookId}/update-score`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({}),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            update = true;
+
+
+        } catch (error) {
+            console.error('Error updating book score:', error);
+        }
+    }
+}
 </script>
 
 {#if $isLoading}{:else}
@@ -452,17 +477,11 @@
                             {#each $comments as comment}
                                 <div class="comment-card">
                                     <div class="comment-header">
-                                        {#if comment.user_image}
                                             <img
                                                 src={comment.user_image}
                                                 alt={comment.user_name}
                                                 class="user-image"
                                             />
-                                        {:else}
-                                            <div class="user-image placeholder-avatar">
-                                                <span>{comment.user_name.charAt(0)}</span>
-                                            </div>
-                                        {/if}
                                         <div class="user-info">
                                             <p class="user-name">{comment.user_name} &ensp; {@html generateStars(comment.score)}</p>
                                             <p class="timestamp">
@@ -517,23 +536,11 @@
                                                 {#each comment.replies as reply}
                                                     <div class="reply-comment">
                                                         <div class="reply-header">
-                                                            {#if reply.user_image}
                                                                 <img
                                                                     src={reply.user_image}
                                                                     alt={reply.user_name}
                                                                     class="user-image"
                                                                 />
-                                                            {:else}
-                                                                <div
-                                                                    class="user-image placeholder-avatar"
-                                                                >
-                                                                    <span
-                                                                        >{reply.user_name.charAt(
-                                                                            0,
-                                                                        )}</span
-                                                                    >
-                                                                </div>
-                                                            {/if}
                                                             <div class="user-info">
                                                                 <p class="user-name">
                                                                     {reply.user_name}
@@ -546,14 +553,7 @@
                                                             </div>
                                                         </div>
                                                         <div class="reply-body">
-                                                            {#if reply.spoiler}
-                                                            <p class="spoiler">
-                                                            <span class="spoiler-tag">[Spoiler]</span>
-                                                            {reply.comment_detail}
-                                                            </p>
-                                                            {:else}
                                                             <p>{reply.comment_detail}</p>
-                                                            {/if}
                                                         </div>
                                                         {#if reply.user_id === userId}
                                                             <button
@@ -696,15 +696,6 @@
 		align-items: center;
 		gap: 0.5rem;
 
-	}
-
-	.spoiler-checkbox {
-		margin-right: 0.25rem;
-	}
-
-	.spoiler-label {
-		font-size: 0.875rem;
-		color: #4a5568;
 	}
 
 	.submit-comment-button {

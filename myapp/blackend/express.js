@@ -9,7 +9,7 @@ const app = express();
 app.use(cors({
     origin: ['http://localhost:5173'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 const port = process.env.PORT || 3000;
@@ -421,7 +421,7 @@ app.patch('/books/:id/update-score', async (req, res) => {
             avgScore = totalScore / comments.length;
         }
 
-        const updateSql = 'UPDATE book SET book_score = ? WHERE book_id = ?';
+        const updateSql = 'UPDATE book_detail SET book_score = ? WHERE book_id = ?';
         await queryDatabase(updateSql, [avgScore, bookId]);
 
         res.json({ message: 'Book score updated successfully' });
