@@ -26,17 +26,43 @@
     let colorHex = '#ff0000'; // ค่าสีเริ่มต้น
     let colorJson = ''; // เก็บค่าสีในรูปแบบ JSON
     let inputText = 'New Book';
+    let colorPicker;
 
-    function customPage() {
-        if (!custom) {
-            custom = true;
-        }
-        else {
-            custom = false;
-        }
-        
-        console.log(custom);
+    onMount(async () => {
+        page.subscribe(async ($page) => {
+            userToken = localStorage.getItem("userToken");
+            checkAndRedirect(userToken, $page.route.id);
+            await getUser(userToken).then((user) => {
+                userId = user.user_id;
+            });
+        });
+    });
+
+   function customPage() {
+    custom = !custom;
+    
+    // If we're switching to custom mode, initialize the color picker
+    // but with a small delay to ensure the DOM element exists
+    if (custom) {
+        setTimeout(() => {
+            if (document.getElementById('colorPicker')) {
+                colorPicker = new iro.ColorPicker('#colorPicker', {
+                    width: 280,
+                    color: colorHex,
+                    borderWidth: 1,
+                    borderColor: '#fff'
+                });
+                
+                // Set up event listener
+                colorPicker.on('color:change', (color) => {
+                    colorHex = color.hexString;
+                });
+            }
+        }, 50); // Small delay to ensure DOM is updated
     }
+    
+    console.log(custom);
+}
 
     function updateColor(event) {
     const newColor = event.target.value;
@@ -146,28 +172,6 @@
         }
     }
     const isLoading = writable(true);
-    onMount(async () => {
-        page.subscribe(async ($page) => {
-            userToken = localStorage.getItem("userToken");
-            checkAndRedirect(userToken, $page.route.id);
-            await getUser(userToken).then((user) => {
-                userId = user.user_id;
-            });
-        });
-
-        var colorPicker = new iro.ColorPicker('#picker', {
-            
-        width: 280,
-        color: colorHex,
-        borderWidth: 1,
-        borderColor: '#fff'
-        });
-
-    // ฟังก์ชันที่ถูกเรียกเมื่อสีมีการเปลี่ยนแปลง
-        colorPicker.on('color:change', (color) => {
-        colorHex = color.hexString;
-        });
-    });
     //comments
 
     const API_BASE = "http://localhost:3000";
@@ -396,7 +400,7 @@
                         <input type="text" bind:value={inputText} placeholder="ชื่อหนังสื่อ" class="border p-2 w-full"/>
 
                         <!-- Container สำหรับ iro.js color picker -->
-                        <div id="picker"></div>
+                        <div id="colorPicker"></div>
 
                         <!-- อินพุตสำหรับแก้ไขค่าสี HEX -->
                         <input type="text" bind:value={colorHex} on:input={updateColor} placeholder="#ffffff" class="border p-2 w-full"/>
