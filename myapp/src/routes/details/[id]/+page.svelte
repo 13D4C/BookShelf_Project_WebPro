@@ -5,6 +5,7 @@
     import Navbar from "$lib/components/navbar.svelte";
     import { writable } from "svelte/store";
     import { generateStars, getUser } from "$lib/utils";
+    import iro from '@jaames/iro';
 
     let book = {}; // Initialize as an empty object
     let quantity = 1;
@@ -21,6 +22,41 @@
     let comments = writable([]);
     let replyComment = "";
     let replyMode = writable({});
+
+    let custom = false;
+
+    let colorHex = '#ff0000'; // ค่าสีเริ่มต้น
+    let colorJson = ''; // เก็บค่าสีในรูปแบบ JSON
+    let inputText = 'New Book';
+
+    function customPage() {
+        if (!custom) {
+            custom = true;
+        }
+        else {
+            custom = false;
+        }
+        
+        console.log(custom);
+    }
+
+    function updateColor(event) {
+    const newColor = event.target.value;
+    colorPicker.color.hexString = newColor;
+  }
+
+  // ฟังก์ชันที่ถูกเรียกเมื่อกดปุ่ม "ตกลง"
+  function submitColor() {
+    // สร้างอ็อบเจ็กต์ที่มีค่าสี
+    const colorData = {
+        Name: inputText,
+        color: colorHex
+    };
+    // แปลงอ็อบเจ็กต์เป็นสตริง JSON
+    colorJson = JSON.stringify(colorData);
+    // แสดงผลหรือส่งค่า colorJson ตามต้องการ
+    console.log(colorJson);
+  }
 
     $: discountedPrice = book.discount
         ? book.price * (1 - book.discount / 100)
@@ -117,6 +153,19 @@
             await getUser(userToken).then((user) => {
                 userId = user.user_id;
             });
+        });
+
+        var colorPicker = new iro.ColorPicker('#picker', {
+            
+        width: 280,
+        color: colorHex,
+        borderWidth: 1,
+        borderColor: '#fff'
+        });
+
+    // ฟังก์ชันที่ถูกเรียกเมื่อสีมีการเปลี่ยนแปลง
+        colorPicker.on('color:change', (color) => {
+        colorHex = color.hexString;
         });
     });
     //comments
@@ -249,14 +298,18 @@
                     <!-- Book Image -->
                     <div class="relative">
                         {#if book.book_image}
-                            <div class="max-w-xs">
-                                <img
-                                    class="w-full rounded-lg object-cover"
-                                    src={book.book_image}
-                                    alt={book.book_name_originl}
-                                />
+                        <div class="max-w-xs">
+                        {#if !custom}
+                        <img class="w-full rounded-lg object-cover" src={book.book_image} alt={book.book_name_originl}/>
+                    {:else}
+                        <div class=" h-96 color-display border rounded-lg items-center object-cover">
+                            <div class="h-full border rounded shadow-lg flex pt-12 pb-4 justify-center" style="background-color: {colorHex};">
+                                <h1 class="text-center text-xl font-bold text-white">{inputText}</h1>
                             </div>
+                        </div>
                         {/if}
+                        </div>
+                    {/if}
                     </div>
 
                     <!-- Book Details -->
@@ -305,7 +358,36 @@
                                 class="px-8 py-3 bg-orange-500 text-white rounded text-lg"
                                 >ซื้อ</button
                             >
+                            
                         </div>
+                        <button
+                            class="px-8 py-3 bg-orange-500 text-white rounded text-lg"
+                            on:click={() => customPage(book.book_id)}>
+                            แก้ไข
+                        </button>
+                        {#if custom}
+                    <div class="w-full md:w-1/2 space-y-4">
+                        <!-- อินพุตสำหรับเปลี่ยนข้อความใน h1 -->
+                        <input type="text" bind:value={inputText} placeholder="ชื่อหนังสื่อ" class="border p-2 w-full"/>
+
+                        <!-- Container สำหรับ iro.js color picker -->
+                        <div id="picker"></div>
+
+                        <!-- อินพุตสำหรับแก้ไขค่าสี HEX -->
+                        <input type="text" bind:value={colorHex} on:input={updateColor} placeholder="#ffffff" class="border p-2 w-full"/>
+
+                        <!-- ปุ่มตกลงส่งค่าสีเป็น JSON -->
+                        <button on:click={submitColor} class="px-4 py-2 bg-blue-500 text-white rounded border border-slate-300 hover:border-slate-400 hover:bg-blue-400">ตกลง</button>
+
+                        <!-- แสดงค่าสีในรูปแบบ JSON -->
+                        {#if colorJson}
+                            <div class="p-4 bg-white border rounded shadow">
+                            <h2 class="text-lg font-semibold mb-2">ค่าสีในรูปแบบ JSON:</h2>
+                            <pre class="text-sm whitespace-pre-wrap">{colorJson}</pre>
+                            </div>
+                        {/if}
+                    </div>
+                    {/if}
                     </div>
                 </div>
 
@@ -698,17 +780,6 @@
 		color: #4a5568;
 		word-wrap: break-word; /* Handle long words */
 	}
-    .spoiler {
-        background-color: #f0f0f0; /* Light gray background */
-        color: #718096;
-        padding: 0.25rem;
-        border-radius: 0.25rem;
-    }
-	.spoiler-tag{
-		color: red;
-		font-weight: bold;
-	}
-	/* Comment Footer */
 	.comment-footer {
 		display: flex;
 		align-items: center;
