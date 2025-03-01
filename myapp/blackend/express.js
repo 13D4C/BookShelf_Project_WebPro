@@ -1072,13 +1072,12 @@ app.post('/comments/reply', async (req, res) => {
 // }
 app.post('/shop/publisher/cart/add' , async (req, res) => {
     try {
-        const { book_id, token, amount, custom }  = req.body;  // custom is optional
+        const { book_id, token, amount, custom }  = req.body;
 
         if ( !book_id || !token || !amount) {
             return res.status(400).json({ error: 'Information all is required' });
         }
         const decodedToken = await jwt.verify(token, 'itkmitl');
-
         let user_querry = await queryDatabase("SELECT * FROM user WHERE user_id = ?", [decodedToken.user_id]);
         if(user_querry.length === 0){
             return res.status(404).json({ error: 'User not found' });
@@ -1464,6 +1463,17 @@ app.delete('/shop/seller/order/delete' , async (req, res) => {
             error: 'Fail to delete order',
             details: error.message
         });
+    }
+});
+
+app.get('/seller/all', async (req, res) => {
+    try {
+        let sql = `SELECT * FROM seller_book_detail`;
+        const books = await queryDatabase(sql);
+
+        res.json(books);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 

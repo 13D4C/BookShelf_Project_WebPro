@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
+	import { getUser } from "$lib/utils";
 
 	let searchInput: string = "";
+	let cartCount = 0;
 	let isOpen = false;
+	let user_id :any;
 
 	function toggleMenu() {
 		isOpen = !isOpen;
@@ -29,9 +32,39 @@
 		goto("/"); // use goto
 	}
 	function handleSearch() {
-             goto(`/all?name=${encodeURIComponent(searchInput)}`);
+		goto(`/all?name=${encodeURIComponent(searchInput)}`);
+	}
 
-    }
+	async function fetchCartCount() {
+        user_id = localStorage.getItem('userToken');
+        if (user_id) {
+            try {
+                const response = await fetch('http://localhost:3000/shop/publisher/cart/get', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token: user_id })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok: ${response.status}`);
+                }
+
+                const data = await response.json();
+                cartCount = data.cart_info.reduce((total, item) => total + item.amount, 0);
+
+            } catch (error) {
+                console.error('Error fetching cart count:', error);
+                cartCount = 0;
+            }
+        } else {
+            cartCount = 0;
+        }
+	}
+	$: if ($page) {
+		fetchCartCount();
+	}
 </script>
 
 {#if $page.url.pathname !== "/"}
@@ -70,21 +103,25 @@
 			<div class="hidden md:flex items-center gap-6">
 				<div class="relative">
 					<input
-					bind:value={searchInput}
+						bind:value={searchInput}
 						type="text"
 						placeholder="ค้นหา"
 						class="rounded-md p-2 w-64 text-black"
-						on:keydown={(e) => { if (e.key === 'Enter') { handleSearch(); } }}
+						on:keydown={(e) => {
+							if (e.key === "Enter") {
+								handleSearch();
+							}
+						}}
 					/>
 					<button
-					on:click={handleSearch}
+						on:click={handleSearch}
 						class="absolute right-3 top-1/2 -translate-y-1/2 text-blue-900"
 						>🔍</button
 					>
 				</div>
-				<button class="text-2xl">🛒</button>
+				<a href="/cart" class="text-2xl">🛒<sup>{cartCount}</sup></a>
 				<button on:click={ProfilePage} class="text-2xl">👤</button>
-                <button on:click={Logout} class="text-2xl">Logout</button>
+				<button on:click={Logout} class="text-2xl">Logout</button>
 			</div>
 		</div>
 	</header>
@@ -110,11 +147,15 @@
 
 			<div class="relative">
 				<input
-				bind:value={searchInput}
+					bind:value={searchInput}
 					type="text"
 					placeholder="ค้นหา"
 					class="block w-full rounded-md p-2 text-black bg-gray-100"
-					on:keydown={(e) => { if (e.key === 'Enter') { handleSearch(); } }}
+					on:keydown={(e) => {
+						if (e.key === "Enter") {
+							handleSearch();
+						}
+					}}
 				/>
 				<button
 					class="absolute right-3 top-1/2 -translate-y-1/2 text-blue-900"
@@ -126,8 +167,9 @@
 				class="flex items-center gap-4 bg-white-800 text-white p-3 rounded-md"
 			>
 				<button class="text-xl">ตระกร้า🛒</button>
-				<button on:click={ProfilePage} class="text-xl">โปรไฟล์👤</button>
-                <button on:click={Logout} class="text-xl">Logout</button>
+				<button on:click={ProfilePage} class="text-xl">โปรไฟล์👤</button
+				>
+				<button on:click={Logout} class="text-xl">Logout</button>
 			</div>
 		</div>
 	</nav>
@@ -137,7 +179,7 @@
 		<div class="container mx-auto flex space-x-4">
 			<a href="/main" class="hover:underline">หน้าหลัก</a>
 			<a href="/all" class="hover:underline">หนังสือทั้งหมด</a>
-			<a href="/" class="hover:underline">Custom</a>
+			<a href="/marketplace" class="hover:underline">ร้านค้าชุมชน</a>
 			<a href="/managebook" class="hover:underline">จัดการหนังสือ</a>
 		</div>
 	</nav>

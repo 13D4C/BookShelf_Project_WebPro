@@ -161,7 +161,6 @@
         }
     }
 
-    //อันนี้
     function checkAndRedirect(token: string | null, routeId: string | null) {
         const isAuthRoute = routeId === "/" || routeId === "/Register";
 
@@ -303,6 +302,30 @@
         }
     }
 }
+async function addToCart(bookId: number, amount: number, custom?: any) {
+        try {
+            const response = await fetch('http://localhost:3000/shop/publisher/cart/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ book_id: bookId, token: userToken, amount, custom })
+            });
+
+            if (!response.ok) {
+				if(response.status === 404){
+					alert('Book not found');
+					throw new Error(`Book not found`);
+				}
+                const errorData = await response.json();
+                throw new Error(`Failed to add to cart: ${errorData.error} - ${errorData.details}`);
+            }
+            window.location.reload();
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+           alert('Add to cart failed');
+        }
+    }
 </script>
 
 {#if $isLoading}{:else}
@@ -381,25 +404,19 @@
                         <div class="flex gap-4">
                             <button
                                 class="px-8 py-3 border border-orange-500 text-orange-500 rounded text-lg"
-                                >ใส่รถเข็น</button
-                            >
+                                on:click={() => addToCart(book.book_id, quantity, custom)}
+                                >ใส่รถเข็น</button>
                             <button
-                                class="px-8 py-3 bg-orange-500 text-white rounded text-lg"
-                                >ซื้อ</button
-                            >
-                            
-                        </div>
-                        <button
                             class="px-8 py-3 bg-orange-500 text-white rounded text-lg"
                             on:click={() => customPage(book.book_id)}>
                             แก้ไข
                         </button>
+                        </div>
+                        
                         {#if custom}
                     <div class="w-full md:w-1/2 space-y-4">
-                        <!-- อินพุตสำหรับเปลี่ยนข้อความใน h1 -->
                         <input type="text" bind:value={inputText} placeholder="ชื่อหนังสื่อ" class="border p-2 w-full"/>
 
-                        <!-- Container สำหรับ iro.js color picker -->
                         <div id="colorPicker"></div>
 
                         <!-- อินพุตสำหรับแก้ไขค่าสี HEX -->
