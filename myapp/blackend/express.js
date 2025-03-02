@@ -648,16 +648,18 @@ app.patch('/user/manage/unrestrict' , async (req, res) => {
 
 app.post('/user/register', async (req, res) => {
     try {
-        const { user_email, user_name, user_pass, user_phone } = req.body;
+        const { user_email, user_name, user_pass, user_phone, user_firstname, user_lastname } = req.body;
 
-        if (!user_email || !user_name || !user_pass || !user_phone) {
+        if (!user_email || !user_name || !user_pass || !user_phone || !user_firstname || !user_lastname) {
             return res.status(400).json({
                 error: 'All fields are required',
                 details: {
                     email: !user_email ? 'Email is required' : null,
                     username: !user_name ? 'Username is required' : null,
                     password: !user_pass ? 'Password is required' : null,
-                    phone: !user_phone ? 'Phone number is required' : null
+                    phone: !user_phone ? 'Phone number is required' : null,
+                    firstname: !user_firstname ? 'Firstname is required' : null,
+                    lastname: !user_lastname ? 'Lastname is required' : null
                 }
             });
         }
@@ -679,14 +681,16 @@ app.post('/user/register', async (req, res) => {
         }
 
         const passwordHash = await bcrypt.hash(user_pass, 8);
-        const insertUserSql = 'INSERT INTO user (user_email, user_name, user_pass, user_phone, user_permission, user_image) VALUES (?, ?, ?, ?, ?, ?)';
+        const insertUserSql = 'INSERT INTO user (user_email, user_name, user_pass, user_phone, user_permission, user_image, user_firstname, user_lastname) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         await queryDatabase(insertUserSql, [
             user_email,
             user_name,
             passwordHash,
             user_phone,
             '3',
-            'https://i.imgur.com/tdrsXyg.jpeg'
+            'https://i.imgur.com/tdrsXyg.jpeg',
+            user_firstname,
+            user_lastname
         ]);
 
         res.status(201).json({

@@ -19,6 +19,8 @@
         const username = document.getElementById('username') as HTMLInputElement;
         const password = document.getElementById('password') as HTMLInputElement;
         const phone = document.getElementById('phone') as HTMLInputElement;
+        const firstname = document.getElementById('firstname') as HTMLInputElement;
+        const lastname = document.getElementById('lastname') as HTMLInputElement;
         
 
         const userData = {
@@ -26,6 +28,8 @@
             user_name: username.value,
             user_pass: password.value,
             user_phone: phone.value,
+            user_firstname: firstname.value,
+            user_lastname: lastname.value,
         };
 
         try {
@@ -58,7 +62,7 @@
         on:click={goBack}
         class="absolute top-4 right-4 bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-full shadow-lg"
     >
-        Back
+    ลงชื่อเข้าใช้
     </button>
 
     <div
@@ -75,23 +79,37 @@
                     class="w-24 h-24 mx-auto mb-4"
                 />
                 <h1 class="text-2xl font-semibold text-gray-800">
-                    Register ดิ
+                    สมัคร ดิ๊
                 </h1>
             </div>
             <form class="space-y-4" on:submit={register}>
                 <div>
                     <label
+                        for="username"
+                        class="block text-sm font-medium text-gray-700"
+                    >
+                        ชื่อผู้ใช้
+                    </label>
+                    <input
+                        type="text"
+                        id="username"
+                        class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        placeholder="โปรดใส่ชื่อผู้ใช้"
+                    />
+                </div>
+                <div>
+                    <label
                         for="email"
                         class="block text-sm font-medium text-gray-700"
                     >
-                        Email
+                        อีเมล
                     </label>
                     <input
                         type="text"
                         id="email"
                         bind:value={email}
                         class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter your Email"
+                        placeholder="โปรดใส่อีเมล"
                     />
                 </div>
                 <div>
@@ -99,13 +117,13 @@
                         for="phone"
                         class="block text-sm font-medium text-gray-700"
                     >
-                        Phone
+                        โทรศัพท์
                     </label>
                     <input
                         type="text"
                         id="phone"
                         class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter your phone number"
+                        placeholder="โปรดใส่เบอร์โทรศัพท์"
                     />
                 </div>
                 <div>
@@ -113,13 +131,27 @@
                         for="username"
                         class="block text-sm font-medium text-gray-700"
                     >
-                        Username
+                        ชื่อจริง
                     </label>
                     <input
                         type="text"
-                        id="username"
+                        id="firstname"
                         class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter your username"
+                        placeholder="โปรดใส่ชื่อจริง"
+                    />
+                </div>
+                <div>
+                    <label
+                        for="username"
+                        class="block text-sm font-medium text-gray-700"
+                    >
+                        นามสกุล
+                    </label>
+                    <input
+                        type="text"
+                        id="lastname"
+                        class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        placeholder="โปรดใส่นามสกุล"
                     />
                 </div>
                 <div>
@@ -127,13 +159,13 @@
                         for="password"
                         class="block text-sm font-medium text-gray-700"
                     >
-                        Password
+                        รหัสผ่าน
                     </label>
                     <input
                         type="password"
                         id="password"
                         class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter your password"
+                        placeholder="โปรดใส่รหัสผ่าน"
                     />
                 </div>
                 <p>{error}</p>
@@ -147,7 +179,7 @@
                         class:cursor-not-allowed={!isValidEmail()}
                         disabled={!isValidEmail()}
                     >
-                        Register
+                        ลงชื่อเข้าใช้
                     </button>
                 </div>
             </form>

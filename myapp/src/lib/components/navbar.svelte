@@ -84,7 +84,7 @@
 	});
 </script>
 
-{#if $page.url.pathname !== "/" && $page.url.pathname !== "/Register"}
+{#if $page.url.pathname !== "/" && $page.url.pathname !== "/Register" && $page.url.pathname !== "/Register/promax"}
 	<header class="bg-blue-900 text-white py-4 shadow-lg relative z-50">
 		<div class="container mx-auto flex items-center justify-between">
 			<!-- ชื่อร้าน -->

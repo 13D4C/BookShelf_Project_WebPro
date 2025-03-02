@@ -2,11 +2,12 @@
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
+  import { getUser } from "$lib/utils";
 
   // --- State & Variables ---
   let user: any = {};
   let address = "คุณยังไม่ได้ระบุที่อยู่ใดๆ";
-  let activeMenu = "sellerRequests"; // Start on sellerRequests
+  let activeMenu = "account"; // Start on sellerRequests
   let userToken: string | null;
   let qrCodeImage: string | null = null;
   let idCardImage: string | null = null;
@@ -171,33 +172,6 @@
     }
   }
 
-  // --- API Interaction ---
-  async function getUser() {
-    try {
-      if (!userToken) {
-        return;
-      }
-      const response = await fetch(
-        "http://localhost:3000/user/getUserProfile",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ token: userToken }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const userData = await response.json();
-      user = userData;
-    } catch (error) {
-      console.error("Error fetching user:", error);
-    }
-  }
 
     // Get all user (for ban management)
   async function getAllUsers() {
@@ -495,7 +469,9 @@ async function banUser(userId: number) {
 
   onMount(async () => {
     userToken = localStorage.getItem("userToken");
-    await getUser();
+    await getUser(userToken).then((data) => {
+      user = data;
+    });
     if (userToken) { // Only fetch if logged in as admin
       await getAllUsers();
     }
@@ -523,6 +499,7 @@ async function banUser(userId: number) {
           </button>
           <ul class="mt-4">
             <!-- Menu  -->
+             {#if user.user_permission === "Manager"}
             <li
               class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
               'sellerRequests'
@@ -545,6 +522,10 @@ async function banUser(userId: number) {
                 closeMenu();
               }}
             >
+            <i class="fa-solid fa-ban mr-2"></i>จัดการการแบน
+          </li>
+          {/if}
+            <li>
               <i class="fa-solid fa-user mr-2"></i>บัญชีผู้ใช้
             </li>
             <li
@@ -557,7 +538,6 @@ async function banUser(userId: number) {
                 closeMenu();
               }}
             >
-              <i class="fa-solid fa-location-dot mr-2"></i>ที่อยู่
             </li>
             <li
               class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
@@ -593,8 +573,6 @@ async function banUser(userId: number) {
                 closeMenu();
               }}
             >
-              <i class="fa-solid fa-ban mr-2"></i>จัดการการแบน
-            </li>
           </ul>
         </div>
       {/if}
@@ -609,30 +587,12 @@ async function banUser(userId: number) {
         <!-- Menu -->
         <li
           class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
-          'sellerRequests'
-            ? 'bg-blue-900 text-white'
-            : 'text-white'}"
-          on:click={() => (activeMenu = "sellerRequests")}
-        >
-          <i class="fa-solid fa-user-check mr-2"></i>ยืนยันการเปิดร้าน
-        </li>
-        <li
-          class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
           'account'
             ? 'bg-blue-900 text-white'
             : 'text-white'}"
           on:click={() => (activeMenu = "account")}
         >
           <i class="fa-solid fa-user mr-2"></i>บัญชีผู้ใช้
-        </li>
-        <li
-          class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
-          'address'
-            ? 'bg-blue-900 text-white'
-            : 'text-white'}"
-          on:click={() => (activeMenu = "address")}
-        >
-          <i class="fa-solid fa-location-dot mr-2"></i>ที่อยู่
         </li>
         <li
           class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
@@ -652,6 +612,17 @@ async function banUser(userId: number) {
         >
           <i class="fa-solid fa-store mr-2"></i>การขอเปิดร้านค้า
         </li>
+        <!--admin-->
+        {#if user.user_permission === "Manager"}
+        <li
+          class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
+          'sellerRequests'
+            ? 'bg-blue-900 text-white'
+            : 'text-white'}"
+          on:click={() => (activeMenu = "sellerRequests")}
+        >
+          <i class="fa-solid fa-user-check mr-2"></i>ยืนยันการเปิดร้าน
+        </li>
         <li
           class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
           'banManagement'
@@ -664,6 +635,7 @@ async function banUser(userId: number) {
         >
           <i class="fa-solid fa-ban mr-2"></i>จัดการการแบน
         </li>
+        {/if}
       </ul>
     </div>
 
@@ -671,6 +643,10 @@ async function banUser(userId: number) {
     <div class="flex-1 p-4">
       {#if activeMenu === "account"}
         <h1 class="text-2xl font-semibold mb-4">บัญชีผู้ใช้</h1>
+        <img src={user.user_image} alt="Profile" class="w-24 h-24 rounded-full" />
+        <h1>ชื่อบัญชี: {user.user_name}</h1>
+        <h1>ชื่อจริง: {user.user_firstname} {user.user_lastname}</h1>
+        <h1>อีเมลผู้ใช้: {user.user_email}</h1>
         <form on:submit={updateUser} class="bg-white p-6 rounded-lg shadow-md">
           <div class="mb-4">
             <label class="block text-gray-700 text-sm font-bold mb-2" for="name"
@@ -722,32 +698,6 @@ async function banUser(userId: number) {
               type="email"
               name="email"
               value={user?.user_email ?? ""}
-            />
-          </div>
-          <button
-            type="submit"
-            class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-          >
-            บันทึก
-          </button>
-        </form>
-      {:else if activeMenu === "address"}
-        <h1 class="text-2xl font-semibold mb-4">ที่อยู่</h1>
-        <form
-          on:submit={updateAddress}
-          class="bg-white p-6 rounded-lg shadow-md"
-        >
-          <div class="mb-4">
-            <label
-              class="block text-gray-700 text-sm font-bold mb-2"
-              for="address">ที่อยู่:</label
-            >
-            <textarea
-              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              id="address"
-              name="address"
-              bind:value={address}
-              rows="4"
             />
           </div>
           <button

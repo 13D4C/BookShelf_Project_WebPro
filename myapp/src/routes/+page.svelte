@@ -41,7 +41,7 @@
                     alt="Logo"
                     class="w-24 h-24 mx-auto mb-4"
                 />
-                <h1 class="text-2xl font-semibold text-gray-800">Login ดิ</h1>
+                <h1 class="text-2xl font-semibold text-gray-800">ลงชื่อเข้าใช้ ดิ๊</h1>
             </div>
             <form class="space-y-4" on:submit={login}>
                 <div>
@@ -49,13 +49,12 @@
                         for="username"
                         class="block text-sm font-medium text-gray-700"
                     >
-                        Username
+                        ชื่อผู้ใช้
                     </label>
                     <input
                         type="text"
                         id="username"
                         class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter your username"
                     />
                 </div>
 
@@ -64,28 +63,27 @@
                         for="password"
                         class="block text-sm font-medium text-gray-700"
                     >
-                        Password
+                        รหัสผ่าน
                     </label>
                     <input
                         type="password"
                         id="password"
                         class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                        placeholder="Enter your password"
                     />
                 </div>
 
                 <div class="flex items-center justify-between">
-                    <a href='/'
+                    <a href='/Register/promax'
                         class="text-sm font-medium text-blue-600 hover:underline"
                     >
-                        Forgot password?
+                       ลืมรหัสผ่าน?
                     </a>
 
                     <a
                         href="/Register"
                         class="text-sm font-medium text-blue-600 hover:underline"
                     >
-                        Register
+                        สมัครสมาชิก
                     </a>
                 </div>
                 <p>{errors}</p>
@@ -94,7 +92,7 @@
                         type="submit"
                         class="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
-                        Sign In
+                    ลงชื่อเข้าใช้
                     </button>
                 </div>
             </form>
