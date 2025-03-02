@@ -549,8 +549,8 @@ app.patch('/user/manage/ban' , async (req, res) => {
 //unban user
 app.patch('/user/manage/unban' , async (req, res) => {
     try {
-        const { token, user_id, reason} = req.body;
-        if (!token || !user_id || !reason) {
+        const { token, user_id } = req.body;
+        if (!token || !user_id ) {
             return res.status(400).json({ error: 'Information all is required' });
         }
         const decodedToken = await jwt.verify(token, 'itkmitl');
@@ -562,9 +562,9 @@ app.patch('/user/manage/unban' , async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         const sql = `UPDATE user SET user_status = 'Normal', user_unban_time = NULL WHERE user_id = ?`;
-        const sql_log = `INSERT INTO log_user_status (user_id, status, reason, manager_user_id) VALUEs (?, ?, ?, ?);`;
+        const sql_log = `INSERT INTO log_user_status (user_id, status, manager_user_id) VALUEs (?, ?, ?);`;
         const unBanUser = await queryDatabase(sql, [user_id]);
-        const savelog = await queryDatabase(sql_log, [user_id, 'Normal', reason, decodedToken.user_id]);
+        const savelog = await queryDatabase(sql_log, [user_id, 'Normal', decodedToken.user_id]);
         res.status(200).json({
             detail: 'Success to unban user',
             details: unBanUser
@@ -1092,17 +1092,46 @@ app.post('/shop/publisher/cart/add' , async (req, res) => {
             return res.status(404).json({ error: 'Book not found' });
         }
 
+        let find_same = await queryDatabase(
+            `SELECT co.* FROM cart c
+             JOIN custom_order co
+             ON c.item_id = co.item_id
+             WHERE c.user_id = ?
+             AND co.book_id = ?`, [decodedToken.user_id, book_id]);
         let create_custom;
+        let update;
         
         if (!custom) {
+            if (find_same.length > 0) {
+                update = await queryDatabase(
+                    `UPDATE custom_order
+                     SET amount = amount + ?
+                     WHERE item_id = ?`, [amount, find_same[0].item_id]);
+                return res.status(201).json({ message: 'Add product to cart successfully'});
+            }
+
             create_custom = await queryDatabase(
                 "INSERT INTO custom_order(book_id, amount, item_price) VALUES (?, ?, ?)",
                 [book_id, amount, book_querry[0].book_price]);
         }
         else {
-            if ( !custom) {
+            if (!custom) {
                 return res.status(400).json({ error: 'Information all is required' });
             }
+
+            if (find_same.length > 0) {
+                if (find_same[0].cover_color == custom.cover_color && find_same[0].cover_type == custom.cover_type &&
+                    find_same[0].font_family == custom.font_family && find_same[0].font_size == custom.font_size &&
+                    find_same[0].paper_type == custom.paper_type &&  find_same[0].marker == custom.marker
+                ){
+                    update = await queryDatabase(
+                        `UPDATE custom_order
+                         SET amount = amount + ?
+                         WHERE item_id = ?`, [amount, find_same[0].item_id]);
+                    return res.status(201).json({ message: 'Add product to cart successfully'});
+                }
+            }
+
             create_custom = await queryDatabase(
                 "INSERT INTO custom_order(book_id, cover_color, cover_type, font_family, font_size, paper_type, marker, amount, item_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 [book_id, custom.cover_color, custom.cover_type , custom.font_family, custom.font_size, custom.paper_type, custom.marker ,amount, book_querry[0].book_price]);
@@ -1215,13 +1244,30 @@ app.post('/shop/seller/cart/add' , async (req, res) => {
             return res.status(404).json({ error: 'Book not found' });
         }
 
-        let create_custom = await queryDatabase(
+
+        let find_same = await queryDatabase(
+            `SELECT so.* FROM seller_cart sc
+             JOIN seller_order so
+             ON sc.seller_item_id = so.seller_item_id
+             WHERE sc.user_id = ?
+             AND so.seller_book_id = ?`, [decodedToken.user_id, seller_book_id]);
+        
+    
+        if (find_same.length > 0) {
+            update = await queryDatabase(
+                `UPDATE seller_order
+                 SET amount = amount + ?
+                 WHERE seller_item_id = ?`, [amount, find_same[0].seller_item_id]);
+            return res.status(201).json({ message: 'Add product to cart successfully'});
+        }
+
+        let create_or = await queryDatabase(
                 "INSERT INTO seller_order(seller_book_id, amount, item_price) VALUES (?, ?, ?)",
                 [seller_book_id, amount, book_querry[0].book_price]);
         
     
 
-        await queryDatabase("INSERT INTO seller_cart(user_id, seller_item_id) VALUES (?, ?)", [decodedToken.user_id, create_custom.insertId]);
+        await queryDatabase("INSERT INTO seller_cart(user_id, seller_item_id) VALUES (?, ?)", [decodedToken.user_id, create_or.insertId]);
         return res.status(201).json({ message: 'Add product to cart successfully'});
     }
     catch (error) {
@@ -1301,7 +1347,7 @@ app.post('/shop/seller/cart/get' , async (req, res) => {
 
 
 //body คือ tokenคนสั่ง เบอร์ เมล์ ที่อยู่ ชื่อเต็ม 
-app.post('/shop/order/create' , async (req, res) => {
+app.post('/shop/publisher/order/create' , async (req, res) => {
     try {
         const { token , phone, email, address, fullname }  = req.body;
 
@@ -1309,9 +1355,7 @@ app.post('/shop/order/create' , async (req, res) => {
             return res.status(400).json({ error: 'Information all is required' });
         }
         const decodedToken = await jwt.verify(token, 'itkmitl');
-
         let cart_publisher_querry = await queryDatabase("SELECT * FROM cart WHERE user_id = ?", [decodedToken.user_id]);
-    
         if(cart_publisher_querry.length != 0){
             let querry_custom = await queryDatabase(
                 `SELECT bd.publisher_id, SUM(co.amount)*bd.book_price AS total_price
@@ -1358,6 +1402,29 @@ app.post('/shop/order/create' , async (req, res) => {
                     }
                 }
         }
+        if (cart_publisher_querry.length == 0) {
+            return res.status(204).json({ message: "No products found in the cart"});
+        }
+
+        return res.status(200).json({ message: "Order created successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to create order',
+            details: error.message
+        });
+    }
+});
+
+app.post('/shop/seller/order/create' , async (req, res) => {
+    try {
+        const { token , phone, email, address, fullname }  = req.body;
+
+        if ( !token || !phone || !email || !address || !fullname ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const decodedToken = await jwt.verify(token, 'itkmitl');
         let cart_seller_querry = await queryDatabase("SELECT * FROM seller_cart WHERE user_id = ?", [decodedToken.user_id]);
         if(cart_seller_querry.length != 0){
             let querry_seller_order = await queryDatabase(
@@ -1402,7 +1469,7 @@ app.post('/shop/order/create' , async (req, res) => {
                 }
         }
 
-        if (cart_publisher_querry.length == 0 && cart_seller_querry.length == 0) {
+        if (cart_seller_querry.length == 0) {
             return res.status(204).json({ message: "No products found in the cart"});
         }
 
