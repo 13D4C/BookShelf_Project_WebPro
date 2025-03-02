@@ -23,9 +23,11 @@
     let replyMode = writable({});
     let custom = false;
     let colorHex = '#ff0000'; // ค่าสีเริ่มต้น
+    let colorHexText = '#fff'; // ค่าสีเริ่มต้น
     let colorJson = ''; // เก็บค่าสีในรูปแบบ JSON
     let inputText = 'New Book';
     let colorPicker;
+    let textSize = 24;
 
     onMount(async () => {
         page.subscribe(async ($page) => {
@@ -56,6 +58,18 @@
                 colorPicker.on('color:change', (color) => {
                     colorHex = color.hexString;
                 });
+
+                colorPicker = new iro.ColorPicker('#colorPickerText', {
+                    width: 280,
+                    color: colorHexText,
+                    borderWidth: 1,
+                    borderColor: '#fff'
+                });
+                
+                // Set up event listener
+                colorPicker.on('color:change', (color) => {
+                    colorHexText = color.hexString;
+                });
             }
         }, 50); // Small delay to ensure DOM is updated
     }
@@ -73,7 +87,9 @@
     // สร้างอ็อบเจ็กต์ที่มีค่าสี
     const colorData = {
         Name: inputText,
-        color: colorHex
+        font: textSize,
+        color: colorHex,
+        colorText: colorHexText
     };
     // แปลงอ็อบเจ็กต์เป็นสตริง JSON
     colorJson = JSON.stringify(colorData);
@@ -355,7 +371,7 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
                     {:else}
                         <div class=" h-96 color-display border rounded-lg items-center object-cover">
                             <div class="h-full border rounded shadow-lg flex pt-12 pb-4 justify-center" style="background-color: {colorHex};">
-                                <h1 class="text-center text-xl font-bold text-white">{inputText}</h1>
+                                <h1 class="text-center text-xl font-bold text-white" style="font-size: {textSize}px; color:{colorHexText};">{inputText}</h1>
                             </div>
                         </div>
                         {/if}
@@ -414,8 +430,14 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
                         
                         {#if custom}
                     <div class="w-full md:w-1/2 space-y-4">
-                        <input type="text" bind:value={inputText} placeholder="ชื่อหนังสื่อ" class="border p-2 w-full"/>
-
+                        <label for="title">Title:</label>
+                        <input type="text" bind:value={inputText} placeholder="ชื่อหนังสื่อ" class="border p-2 w-full" id="title"/>
+                        <label for="font">Font:</label>
+                        <input type="number" bind:value={textSize} placeholder="ขนาดตัวอักษร" min="1" class="border p-2 w-full" id="font"/>
+                        <label for="colorPickerText">Color Text:</label>
+                        <div id="colorPickerText"></div>
+                        <!-- ส่วนของการเลือกสี -->
+                        <label for="colorPicker">Color Cover:</label>
                         <div id="colorPicker"></div>
 
                         <!-- อินพุตสำหรับแก้ไขค่าสี HEX -->
