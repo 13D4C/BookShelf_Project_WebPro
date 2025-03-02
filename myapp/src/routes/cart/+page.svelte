@@ -1,5 +1,5 @@
 <script>
-// @ts-nocheck
+  // @ts-nocheck
 
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
@@ -11,6 +11,7 @@
   const isLoading = writable(true);
 
   let cart = [];
+  let filterType = "all"; // "all", "official", "seller"
 
   function updateQuantity(index, amount) {
     if (cart[index].amount + amount > 0) {
@@ -90,11 +91,25 @@
       }
 
       const data = await response.json();
+      // Assuming your API returns a 'type' field ("official" or "seller") for each item.  If not, you'll need to adjust this.
       cart = data.cart_info;
     } catch (error) {
       console.error("Error fetching cart count:", error);
     }
   }
+
+
+    // Filter the cart based on filterType
+    $: filteredCart = cart.filter(item => {
+      if (filterType === "all") {
+        return true;
+      } else if(filterType === 'official') {
+          return item.type === 'official';
+      } else {
+          return item.type === 'seller'
+      }
+    });
+
 
   onMount(async () => {
     page.subscribe(async ($page) => {
@@ -110,7 +125,22 @@
     <!-- Cart Section -->
     <div class="flex-1 bg-white p-6 rounded-lg shadow">
       <h2 class="text-lg font-semibold mb-4">ตะกร้าสินค้า</h2>
-      {#each cart as item, index}
+
+      <!-- Filter Buttons -->
+      <div class="mb-4">
+        <button
+          class="px-4 py-2 rounded {filterType === 'all' ? 'bg-blue-500 text-white' : 'bg-gray-200'}"
+          on:click={() => (filterType = 'all')}>ทั้งหมด</button>
+        <button
+          class="px-4 py-2 rounded {filterType === 'official' ? 'bg-blue-500 text-white' : 'bg-gray-200'}"
+          on:click={() => (filterType = 'official')}>Official</button>
+        <button
+          class="px-4 py-2 rounded {filterType === 'seller' ? 'bg-blue-500 text-white' : 'bg-gray-200'}"
+          on:click={() => (filterType = 'seller')}>Seller</button>
+      </div>
+
+
+      {#each filteredCart as item, index (item.item_id)}
         <div class="flex items-center gap-4 border-b pb-4 mb-4">
           <img
             src={item.book_image}
@@ -122,23 +152,24 @@
             <p class="text-lg font-semibold text-blue-600">
               {item.book_price} บาท
             </p>
+             <!-- Display item type (optional, for debugging) -->
+            <!-- <p class="text-xs text-gray-500">Type: {item.type}</p>  -->
           </div>
           <div class="flex items-center">
             <button
               class="px-2 py-1 border rounded"
-              on:click={() => updateQuantity(index, -1)}>-</button
-            >
+              on:click={() => updateQuantity(index, -1)}>-</button>
             <span class="px-4">{item.amount}</span>
             <button
               class="px-2 py-1 border rounded"
-              on:click={() => updateQuantity(index, 1)}>+</button
-            >
+              on:click={() => updateQuantity(index, 1)}>+</button>
           </div>
           <button
             class="text-gray-500 hover:text-red-500"
-            on:click={() => removeItem(index)}>🗑️</button
-          >
+            on:click={() => removeItem(index)}>🗑️</button>
         </div>
+      {:else}
+        <p>ไม่มีสินค้าในตะกร้า</p>
       {/each}
     </div>
 
@@ -147,17 +178,18 @@
       <h2 class="text-lg font-semibold mb-4">สรุปการสั่งซื้อ</h2>
       <div class="flex justify-between mb-2">
         <span>จำนวนหนังสือ</span>
-        <span>{cart.reduce((sum, item) => sum + item.amount, 0)} เล่ม</span>
+        <span>{filteredCart.reduce((sum, item) => sum + item.amount, 0)} เล่ม</span>
       </div>
       <div class="flex justify-between font-bold text-lg">
         <span>ยอดสุทธิ</span>
         <span>{getTotalPrice()} บาท</span>
       </div>
 
-      <button class="w-full bg-green-500 text-white py-2 rounded mt-4" on:click={goto('/checkout')}
-        >ดำเนินการต่อ</button
-      >
-      <button class="w-full border mt-2 py-2 rounded" on:click={goto('/all')}>เลือกสินค้าต่อ</button>
+      <button
+        class="w-full bg-green-500 text-white py-2 rounded mt-4"
+        on:click={() => goto("/checkout")}
+        >ดำเนินการต่อ</button>
+      <button class="w-full border mt-2 py-2 rounded" on:click={() => goto("/all")}>เลือกสินค้าต่อ</button>
     </div>
   </div>
 {/if}
