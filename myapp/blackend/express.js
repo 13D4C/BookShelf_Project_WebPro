@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(cors({
-    origin: ['http://localhost:5173'],
+    origin: ['http://localhost:5174'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -132,8 +132,8 @@ app.get('/books/searched/f', async (req, res) => {
             sql += 'FIND_IN_SET(?, book_category) > 0';
             params.push(category);
         } else {
-            sql += 'book_name_en LIKE ? OR book_name_originl LIKE ?';
-            params.push(`%${name}%`, `%${name}%`);
+            sql += 'book_name_en LIKE ? OR book_name_originl LIKE ? OR book_name_th LIKE ?';
+            params.push(`%${name}%`, `%${name}%`, `%${name}%`);
         }
 
         const books = await queryDatabase(sql, params);
@@ -822,6 +822,7 @@ app.patch('/user/update', async (req, res) => {
     try {
         const userData = req.body.user_data;
         const user_id = req.body.user_id;
+        console.log(userData, user_id);
         if(!userData || !user_id){
             return res.status(400).json({ message: 'Information is require' });
         }
@@ -1373,12 +1374,11 @@ app.post('/shop/publisher/order/create' , async (req, res) => {
                         [item.publisher_id]
                     )
                     owner = owner[0]
-
+                    console.log(owner);
                     let insert_order = await queryDatabase(
                         `INSERT INTO order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname, status_time, order_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp());`, 
-                        [decodedToken.user_id, owner, item.total_price, "Payment Pending", phone, email, address, fullname]
+                        [decodedToken.user_id, owner.user_id, item.total_price, "Payment Pending", phone, email, address, fullname]
                     );
-                
                     let traverst_cart = await queryDatabase(
                         `SELECT c.item_id , bd.publisher_id FROM cart c
                         JOIN custom_order co ON c.item_id = co.item_id
