@@ -177,7 +177,7 @@
   async function getAllUsers() {
     try {
       // Assuming you have an endpoint like /admin/users to fetch all users
-      const response = await fetch("http://localhost:3000/admin/users", {
+      const response = await fetch("http://localhost:3000/user", {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${userToken}`, // Send admin token for authorization
@@ -472,12 +472,9 @@ async function banUser(userId: number) {
     await getUser(userToken).then((data) => {
       user = data;
     });
-    if (userToken) { // Only fetch if logged in as admin
+    if (user.user_permission = "Manager") { // Only fetch if logged in as admin
       await getAllUsers();
     }
-
-    // await getSellerRequests(); //Comment out during use mockup data.
-    page.subscribe(($page) => {});
   });
 </script>
 <div class="min-h-screen bg-blue-50">
