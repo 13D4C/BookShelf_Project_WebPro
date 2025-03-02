@@ -46,12 +46,6 @@
 	  goto(`/all?name=${encodeURIComponent(searchInput)}`);
 	}
   
-	  function SettingPage(event: Event) {
-		  event.preventDefault();
-		  goto("/Profile"); // Assuming you have /Profile or a separate /Settings page.  Change this if needed.
-		  closeMenu();
-	  }
-  
 	export async function fetchCartCount() {
 	  user_id = localStorage.getItem("userToken");
 	  user = await getUser(user_id);
@@ -154,7 +148,9 @@
 		  <button on:click={ProfilePage} class="text-2xl"
 			>👤{user?.user_name}</button
 		  >
+		  {#if user && user.user_permission === "Manager"}
 		  <button on:click={AdminPage} class="text-2xl">⚙️</button>
+		  {/if}
 		  <button on:click={Logout} class="text-2xl">Logout</button>
 		</div>
 	  </div>
