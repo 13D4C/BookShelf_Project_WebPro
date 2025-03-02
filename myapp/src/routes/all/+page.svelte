@@ -111,11 +111,6 @@
     // onMount lifecycle hook
     onMount(async () => {
         cards = document.querySelectorAll(".book-card");
-        page.subscribe(($page) => {
-            userToken = localStorage.getItem("userToken");
-            checkAndRedirect(userToken, $page.route.id);
-
-        });
         await getBooks(); // Initial fetch of books
     });
 
@@ -145,16 +140,6 @@
 
     $: $page.url && getBooks();
 
-    function checkAndRedirect(token: string | null, routeId: string | null) {
-        const isAuthRoute = routeId === "/" || routeId === "/Register";
-
-        if (!token && !isAuthRoute) {
-            goto("/");
-        } else {
-             //isLoading.set(false); // moved to getBooks()
-        }
-    }
-
     function clearSearch() {
         isLoading.set(true);
         goto("/all");
@@ -163,10 +148,7 @@
 
 </script>
 
-{#if $isLoading}
-{:else}
-    <Navbar />
-
+{#if !$isLoading}
     <div class="min-h-screen bg-white">
         <div class="max-w-6xl mx-auto p-4">
             <div class="flex items-center justify-between mb-4">

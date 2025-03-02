@@ -116,7 +116,6 @@
 </script>
 
 {#if $isLoading}{:else}
-  <Navbar />
   <div class="flex flex-col md:flex-row gap-6 p-6">
     <!-- Cart Section -->
     <div class="flex-1 bg-white p-6 rounded-lg shadow">

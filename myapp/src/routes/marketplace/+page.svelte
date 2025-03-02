@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import Navbar from "$lib/components/Navbar.svelte";
   import { goto } from "$app/navigation";
   import { writable } from "svelte/store";
   import { page } from "$app/stores";
@@ -80,8 +79,7 @@
   }
 </script>
 
-{#if $isLoading}{:else}
-  <Navbar />
+{#if !$isLoading}
   <div class="container mx-auto p-4">
     <h1 class="text-3xl font-bold mb-4">Marketplace</h1>
 

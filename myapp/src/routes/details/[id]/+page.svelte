@@ -2,7 +2,6 @@
     import { goto } from "$app/navigation";
     import { page } from "$app/stores";
     import { onMount } from "svelte";
-    import Navbar from "$lib/components/navbar.svelte";
     import { writable } from "svelte/store";
     import { generateStars, getUser } from "$lib/utils";
     import iro from '@jaames/iro';
@@ -320,7 +319,7 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
                 const errorData = await response.json();
                 throw new Error(`Failed to add to cart: ${errorData.error} - ${errorData.details}`);
             }
-            window.location.reload();
+            goto($page.url);
         } catch (error) {
             console.error('Error adding to cart:', error);
            alert('Add to cart failed');
@@ -329,7 +328,6 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
 </script>
 
 {#if $isLoading}{:else}
-    <Navbar />
     <div class="min-h-screen bg-blue-50">
         <div class="max-w-5xl mx-auto p-6">
             {#if errorMessage}

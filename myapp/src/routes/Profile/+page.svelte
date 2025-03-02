@@ -2,14 +2,11 @@
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
-  import Navbar from "$lib/components/navbar.svelte";
 
   // --- State & Variables ---
   let user: any = {};
   let address = "คุณยังไม่ได้ระบุที่อยู่ใดๆ";
   let activeMenu = "sellerRequests"; // Start on sellerRequests
-  let newsLetter = "คุณยังไม่ได้สมัครรับจดหมายข่าวของเรา";
-  let invoiceAddress = "คุณยังไม่ได้ระบุที่อยู่ใดๆ";
   let userToken: string | null;
   let qrCodeImage: string | null = null;
   let idCardImage: string | null = null;
@@ -507,9 +504,6 @@ async function banUser(userId: number) {
     page.subscribe(($page) => {});
   });
 </script>
-
-<Navbar />
-
 <div class="min-h-screen bg-blue-50">
   <div class="container mx-auto px-4 py-8 flex flex-col sm:flex-row">
     <!-- Sidebar (Mobile) -->

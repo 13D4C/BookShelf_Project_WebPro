@@ -2,11 +2,13 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/stores";
 	import { getUser } from "$lib/utils";
+	import { afterNavigate } from "$app/navigation";
 
 	let searchInput: string = "";
 	let cartCount = 0;
 	let isOpen = false;
 	let user_id :any;
+	let user : any;
 
 	function toggleMenu() {
 		isOpen = !isOpen;
@@ -35,8 +37,9 @@
 		goto(`/all?name=${encodeURIComponent(searchInput)}`);
 	}
 
-	async function fetchCartCount() {
+	export async function fetchCartCount() {
         user_id = localStorage.getItem('userToken');
+		user = await getUser(user_id);
         if (user_id) {
             try {
                 const response = await fetch('http://localhost:3000/shop/publisher/cart/get', {
@@ -62,12 +65,15 @@
             cartCount = 0;
         }
 	}
-	$: if ($page) {
-		fetchCartCount();
-	}
+	afterNavigate(async () => {
+    if ($page && $page.url.pathname !== "/" && $page.url.pathname !== "/Register") {
+        await fetchCartCount();
+        console.log("afterNavigate: After any navigation (including initial)");
+    }
+});
 </script>
 
-{#if $page.url.pathname !== "/"}
+{#if $page.url.pathname !== "/" && $page.url.pathname !== "/Register"}
 	<header class="bg-blue-900 text-white py-4 shadow-lg relative z-50">
 		<div class="container mx-auto flex items-center justify-between">
 			<!-- ชื่อร้าน -->
@@ -120,7 +126,7 @@
 					>
 				</div>
 				<a href="/cart" class="text-2xl">🛒<sup>{cartCount}</sup></a>
-				<button on:click={ProfilePage} class="text-2xl">👤</button>
+				<button on:click={ProfilePage} class="text-2xl">👤{user?.user_name}</button>
 				<button on:click={Logout} class="text-2xl">Logout</button>
 			</div>
 		</div>

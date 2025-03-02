@@ -5,7 +5,6 @@
 	import Swiper from "swiper/bundle";
 	import { writable } from "svelte/store";
 	import "swiper/css/bundle";
-	import Navbar from "$lib/components/navbar.svelte";
 	import { generateStars } from "$lib/utils";
 
 	let products: any[] = [];
@@ -163,11 +162,6 @@
 	let resizeListener: () => void;
 
 	onMount(async () => {
-		page.subscribe(($page) => {
-			userToken = localStorage.getItem("userToken");
-			checkAndRedirect(userToken, $page.route.id);
-		});
-
 		await getBooks();
 		updateItemsPerPage();
 		resizeListener = updateItemsPerPage;
@@ -263,18 +257,9 @@
 		"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0IUgoI9H2LpPoSSvg5nJxns3acKbS-gdQjQ&s",
 
 	];
-
-	function checkAndRedirect(token: string | null, routeId: string | null) {
-		const isAuthRoute = routeId === "/" || routeId === "/Register";
-
-		if (!token && !isAuthRoute) {
-			goto("/");
-		}
-	}
 </script>
 
 {#if $isLoading}{:else}
-<Navbar />
 	<div class="h-full bg-blue-50">
 		<!-- Main Content -->
 		<main class="container mx-auto py-8">

@@ -1,6 +1,5 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    import Navbar from "$lib/components/navbar.svelte";
     import { onMount } from "svelte";
     import { writable } from "svelte/store";
     import { page } from "$app/stores";
@@ -355,10 +354,7 @@
     
 </script>
 
-{#if $isLoading}
-{:else}
-    <Navbar />
-    
+{#if !$isLoading}
     <div class="min-h-screen bg-white">
         <div class="max-w-6xl mx-auto p-4">
             <div class="flex items-center justify-between mb-4">
