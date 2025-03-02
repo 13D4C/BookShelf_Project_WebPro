@@ -935,6 +935,105 @@ app.post('/user/getUserId', async (req, res) => {
     }
 });
 
+//ส่งคำขอ ขอเป็น seller
+app.post('/user/request-seller', async (req, res) => {
+    try {
+        const { user_id, proof_image, qr_code} = req.body;
+        if ( !user_id || !proof_image ){
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const check = await queryDatabase(
+            `SELECT * FROM seller_register WHERE user_id = ?`, [user_id]
+        )
+
+        if(check.length == 0) {
+            return res.status(400).json({message: "There is a request from this user already"});
+        }
+
+        const request = await queryDatabase(
+            `INSERT INTO seller_register(user_id, status, proof_image, qr_code)
+            VALUES (?, 'Pending', ?, ?)`, [user_id, proof_image, qr_code]);
+            return res.status(200).json({message: "Seller request successfuldly"});
+    }
+    catch {
+        console.log(error);
+        res.status(500).json({ error: 'Failed to seller request' });
+    }
+    
+});
+
+//เเอดมินยอมรับคำขอ
+app.post('/user/request-seller/approve', async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        if ( !user_id ){
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const request_info = await queryDatabase(
+            `SELECT * FROM seller_register WHERE user_id = ?`, [user_id]
+        );
+
+        const approve = await queryDatabase(
+            `UPDATE seller_register SET status = ? WHERE user_id = ?`, ['Permitted', user_id]);
+        const addShop = await queryDatabase(
+            `INSERT INTO shop_list(owner_id, qr_code)
+             VALUES (?, ?)`,[user_id, request_info[0].qr_code]
+        );
+        return res.status(200).json({message: "Seller request successfuldly"});
+    }
+    catch {
+        console.log(error);
+        res.status(500).json({ error: 'Failed to seller request' });
+    }
+});
+
+//เเอดมินปฏิเสธคำขอ
+app.post('/user/request-seller/reject', async (req, res) => {
+    try {
+        const { user_id } = req.body;
+        if ( !user_id ){
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const reject = await queryDatabase(
+            `DELETE FROM seller_register WHERE user_id = ?`, [user_id]);
+        return res.status(200).json({message: "Reject seller request successfuldly"});
+    }
+    catch {
+        console.log(error);
+        res.status(500).json({ error: 'Failed to reject seller request' });
+    }
+});
+
+//ดึงข้อมูลคำของ ผู้ใช้ทั้งหมด เเต่จะไม่ดึงคำขอ ของคนที่ approve ไปเเล้ว
+app.get('/user/request-seller/get', async (req, res) => {
+    try {
+        const get = await queryDatabase(
+            `SELECT * FROM seller_register WHERE  status != 'Permitted';`);
+        return res.status(200).json({seller_register:get[0]});
+    }
+    catch {
+        console.log(error);
+        res.status(500).json({ error: 'Failed to get information' });
+    }
+});
+
+//ดึงข้อมูลคำขอ ของผู้ใช้เป็นรายบุคคล
+app.get('/user/request-seller/get/:userId', async (req, res) => {
+    try {
+        const user_id = req.params.userId;
+        if ( !user_id ){
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const get = await queryDatabase(
+            `SELECT * FROM seller_register WHERE user_id = ?`, [user_id]);
+        return res.status(200).json({seller_register:get[0]});
+    }
+    catch {
+        console.log(error);
+        res.status(500).json({ error: 'Failed to get information' });
+    }
+});
+
 // Comment
 app.post('/books/:bookId/comments', async (req, res) => {
     try {
