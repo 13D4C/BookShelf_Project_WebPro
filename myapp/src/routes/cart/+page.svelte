@@ -1,13 +1,12 @@
 <script>
+// @ts-nocheck
+
   import { goto } from "$app/navigation";
-  import Navbar from "$lib/components/navbar.svelte";
   import { page } from "$app/stores";
   import { onMount } from "svelte";
   import { writable } from "svelte/store";
 
   let selectAll = false;
-  let discountCode = "";
-  let discountApplied = false;
   let userToken = null;
   const isLoading = writable(true);
 
@@ -24,20 +23,11 @@
     cart = cart.map((item) => ({ ...item, selected: selectAll }));
   }
 
-  function applyDiscount() {
-    if (discountCode === "ManopAV8888") {
-      discountApplied = true;
-    } else {
-      discountApplied = false;
-      alert("โค้ดไม่ถูกต้อง!");
-    }
-  }
-
   function getTotalPrice() {
     let total = cart.reduce((sum, item) => {
       return sum + item.book_price * item.amount;
     }, 0);
-    return discountApplied ? (total * 0.85).toFixed(2) : total.toFixed(2);
+    return total.toFixed(2);
   }
 
   function checkAndRedirect(token, routeId) {
@@ -159,32 +149,15 @@
         <span>ราคา</span>
         <span>{getTotalPrice()} บาท</span>
       </div>
-
-      <div class="flex mb-4">
-        <input
-          bind:value={discountCode}
-          placeholder="โค้ดส่วนลด"
-          class="border px-2 py-1 flex-1 rounded-l"
-        />
-        <button
-          class="bg-blue-500 text-white px-3 rounded-r"
-          on:click={applyDiscount}>ใช้</button
-        >
-      </div>
-
-      {#if discountApplied}
-        <p class="text-green-500">✅ ใช้ส่วนลด 15% แล้ว!</p>
-      {/if}
-
       <div class="flex justify-between font-bold text-lg">
         <span>ยอดสุทธิ</span>
         <span>{getTotalPrice()} บาท</span>
       </div>
 
-      <button class="w-full bg-green-500 text-white py-2 rounded mt-4"
+      <button class="w-full bg-green-500 text-white py-2 rounded mt-4" on:click={checkout()}
         >ดำเนินการต่อ</button
       >
-      <button class="w-full border mt-2 py-2 rounded">เลือกสินค้าต่อ</button>
+      <button class="w-full border mt-2 py-2 rounded" on:click={goto('/all')}>เลือกสินค้าต่อ</button>
     </div>
   </div>
 {/if}

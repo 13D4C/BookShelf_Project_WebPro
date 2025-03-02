@@ -1,7 +1,12 @@
 <script>
+    import { goto } from "$app/navigation";
+  import { page } from "$app/stores";
+  import { onMount } from "svelte";
+  import { writable } from "svelte/store";
     // State variables for form inputs
-    let firstName = "";
-    let lastName = "";
+    let userToken = "";
+    let cart = [];
+    let Name = "";
     let email = "";
     let phone = "";
     let address = "";
@@ -85,7 +90,72 @@
         postalCode = "";
         taxOption = "no-tax";
     };
+    function getTotalPrice() {
+    let total = cart.reduce((sum, item) => {
+      return sum + item.book_price * item.amount;
+    }, 0);
+    return  total.toFixed(2);
+  }
+  async function fetchCart() {
+    try {
+      const response = await fetch(
+        "http://localhost:3000/shop/publisher/cart/get",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token: userToken }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.status}`);
+      }
+
+      const data = await response.json();
+      cart = data.cart_info;
+    } catch (error) {
+      console.error("Error fetching cart count:", error);
+    }
+  }
+
+  onMount(async () => {
+      userToken = localStorage.getItem("userToken");
+      await fetchCart();
+    });
 </script>
+  <div class="flex flex-col md:flex-row gap-6 p-6">
+    <div class="flex-1 bg-white p-6 rounded-lg shadow">
+      <h2 class="text-lg font-semibold mb-4">ตะกร้าสินค้า</h2>
+      {#each cart as item, index}
+        <div class="flex items-center gap-4 border-b pb-4 mb-4">
+          <img
+            src={item.book_image}
+            alt="Product"
+            class="w-20 h-20 object-cover rounded-lg"
+          />
+          <div class="flex-1">
+            <h3 class="text-sm font-medium">{item.book_name_th}</h3>
+            <p class="text-lg font-semibold text-blue-600">
+              {item.book_price} บาท
+            </p>
+          </div>
+          <div class="flex items-center">
+            <span class="px-4">{item.amount}</span>
+          </div>
+        </div>
+      {/each}
+    </div>
+
+    <div class="w-full md:w-1/3 bg-white p-6 rounded-lg shadow self-start">
+      <h2 class="text-lg font-semibold mb-4">สรุปการสั่งซื้อ</h2>
+      <div class="flex justify-between mb-2">
+        <span>ราคา</span>
+        <span>{getTotalPrice()} บาท</span>
+      </div>
+    </div>
+  </div>
 
 <div class="container mx-auto p-4">
     <h1 class="text-2xl font-bold mb-4">ข้อมูลการจัดส่ง</h1>
@@ -97,26 +167,12 @@
         <div>
             <label
                 for="firstName"
-                class="block text-sm font-medium text-gray-700">ชื่อ</label
+                class="block text-sm font-medium text-gray-700">ชื่อ - นามสกุล</label
             >
             <input
                 type="text"
                 id="firstName"
-                bind:value={firstName}
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                required
-            />
-        </div>
-
-        <div>
-            <label
-                for="lastName"
-                class="block text-sm font-medium text-gray-700">นามสกุล</label
-            >
-            <input
-                type="text"
-                id="lastName"
-                bind:value={lastName}
+                bind:value={Name}
                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 required
             />
@@ -206,46 +262,11 @@
         </div>
 
         <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700"
-                >ใบกำกับภาษี</label
-            >
-            <div class="mt-2 space-y-2">
-                <label class="inline-flex items-center">
-                    <input
-                        type="radio"
-                        bind:group={taxOption}
-                        value="no-tax"
-                        class="form-radio h-4 w-4 text-indigo-600"
-                    />
-                    <span class="ml-2">ไม่ต้องการใบกำกับภาษี</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input
-                        type="radio"
-                        bind:group={taxOption}
-                        value="paper"
-                        class="form-radio h-4 w-4 text-indigo-600"
-                    />
-                    <span class="ml-2">แบบกระดาษ</span>
-                </label>
-                <label class="inline-flex items-center">
-                    <input
-                        type="radio"
-                        bind:group={taxOption}
-                        value="e-tax"
-                        class="form-radio h-4 w-4 text-indigo-600"
-                    />
-                    <span class="ml-2">แบบ E-Tax</span>
-                </label>
-            </div>
-        </div>
-
-        <div class="md:col-span-2">
             <button
                 type="submit"
                 class="w-full bg-indigo-600 border border-transparent rounded-md py-2 px-4 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-                บันทึกข้อมูลการจัดส่ง
+                สั่งซื้อสินค้า
             </button>
         </div>
     </form>
