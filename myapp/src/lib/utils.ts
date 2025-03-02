@@ -38,22 +38,3 @@ export async function getUser(userToken: string): any{
         return null;
     }
 }
-
-import { goto } from '$app/navigation';
-import { page } from '$app/stores';
-import { writable } from 'svelte/store';
-
-
-export const isLoading = writable(true); // Export isLoading
-
-export function checkAuthAndRedirect(userToken) {
-  page.subscribe(($page) => {
-       const isAuthRoute = $page.route.id === "/" || $page.route.id === "/Register";
-
-        if (!userToken && !isAuthRoute) {
-            goto("/");
-        } else {
-          isLoading.set(false); // Set isLoading to false when authentication is checked
-       }
-  });
-}

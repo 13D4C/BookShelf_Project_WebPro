@@ -2,6 +2,13 @@
 	import "../app.css";
 	import { onNavigate } from "$app/navigation";
 	let { children } = $props();
+	import { goto } from "$app/navigation";
+	import Navbar from "$lib/components/navbar.svelte";
+	import { onMount } from "svelte";
+	import { writable } from "svelte/store";
+
+	const isLoading = writable(true);
+	let userToken = null;
 	onNavigate((navigation) => {
 		if (!document.startViewTransition) return;
 
@@ -12,9 +19,26 @@
 			});
 		});
 	});
+	function checkAndRedirect(token, routeId) {
+    const isAuthRoute = routeId === "/" || routeId === "/register";
+    if (!token && !isAuthRoute) {
+      goto("/");
+    } else {
+      isLoading.set(false);
+    }
+  }
+  onMount(() => {
+    userToken = localStorage.getItem("userToken");
+    checkAndRedirect(userToken, window.location.pathname);
+  });
 </script>
 
-{@render children()}
+{#if $isLoading}
+{:else}
+  <Navbar />
+  {@render children()} <!-- This renders the child page content -->
+{/if}
+
 
 <style>
 	@keyframes fade-in {
