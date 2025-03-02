@@ -7,8 +7,8 @@
 	let searchInput: string = "";
 	let cartCount = 0;
 	let isOpen = false;
-	let user_id :any;
-	let user : any;
+	let user_id: any;
+	let user: any;
 
 	function toggleMenu() {
 		isOpen = !isOpen;
@@ -31,6 +31,7 @@
 	}
 	function Logout() {
 		localStorage.removeItem("userToken");
+		sessionStorage.clear();
 		goto("/"); // use goto
 	}
 	function handleSearch() {
@@ -38,39 +39,49 @@
 	}
 
 	export async function fetchCartCount() {
-        user_id = localStorage.getItem('userToken');
+		user_id = localStorage.getItem("userToken");
 		user = await getUser(user_id);
-        if (user_id) {
-            try {
-                const response = await fetch('http://localhost:3000/shop/publisher/cart/get', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ token: user_id })
-                });
+		if (user_id) {
+			try {
+				const response = await fetch(
+					"http://localhost:3000/shop/publisher/cart/get",
+					{
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({ token: user_id }),
+					},
+				);
 
-                if (!response.ok) {
-                    throw new Error(`Network response was not ok: ${response.status}`);
-                }
+				if (!response.ok) {
+					throw new Error(
+						`Network response was not ok: ${response.status}`,
+					);
+				}
 
-                const data = await response.json();
-                cartCount = data.cart_info.reduce((total, item) => total + item.amount, 0);
-
-            } catch (error) {
-                console.error('Error fetching cart count:', error);
-                cartCount = 0;
-            }
-        } else {
-            cartCount = 0;
-        }
+				const data = await response.json();
+				cartCount = data.cart_info.reduce(
+					(total, item) => total + item.amount,
+					0,
+				);
+			} catch (error) {
+				console.error("Error fetching cart count:", error);
+				cartCount = 0;
+			}
+		} else {
+			cartCount = 0;
+		}
 	}
 	afterNavigate(async () => {
-    if ($page && $page.url.pathname !== "/" && $page.url.pathname !== "/Register") {
-        await fetchCartCount();
-        console.log("afterNavigate: After any navigation (including initial)");
-    }
-});
+		if (
+			$page &&
+			$page.url.pathname !== "/" &&
+			$page.url.pathname !== "/Register"
+		) {
+			await fetchCartCount();
+		}
+	});
 </script>
 
 {#if $page.url.pathname !== "/" && $page.url.pathname !== "/Register"}
@@ -126,7 +137,9 @@
 					>
 				</div>
 				<a href="/cart" class="text-2xl">🛒<sup>{cartCount}</sup></a>
-				<button on:click={ProfilePage} class="text-2xl">👤{user?.user_name}</button>
+				<button on:click={ProfilePage} class="text-2xl"
+					>👤{user?.user_name}</button
+				>
 				<button on:click={Logout} class="text-2xl">Logout</button>
 			</div>
 		</div>
@@ -186,7 +199,9 @@
 			<a href="/main" class="hover:underline">หน้าหลัก</a>
 			<a href="/all" class="hover:underline">หนังสือทั้งหมด</a>
 			<a href="/marketplace" class="hover:underline">ร้านค้าชุมชน</a>
-			<a href="/managebook" class="hover:underline">จัดการหนังสือ</a>
+			{#if user && user.user_permission === "Manager"}
+				<a href="/managebook" class="hover:underline">จัดการหนังสือ</a>
+			{/if}
 		</div>
 	</nav>
 {/if}

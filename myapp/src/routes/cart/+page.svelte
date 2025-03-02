@@ -35,7 +35,7 @@
 
   function getTotalPrice() {
     let total = cart.reduce((sum, item) => {
-      return item.selected ? sum + item.book_price * item.amount : sum;
+      return sum + item.book_price * item.amount;
     }, 0);
     return discountApplied ? (total * 0.85).toFixed(2) : total.toFixed(2);
   }
@@ -120,28 +120,15 @@
     <!-- Cart Section -->
     <div class="flex-1 bg-white p-6 rounded-lg shadow">
       <h2 class="text-lg font-semibold mb-4">ตะกร้าสินค้า</h2>
-      <div class="border-b pb-4 mb-4">
-        <input
-          type="checkbox"
-          bind:checked={selectAll}
-          on:click={toggleSelectAll}
-          class="mr-2"
-        />
-        <span class="text-blue-500 cursor-pointer" on:click={toggleSelectAll}>
-          {selectAll ? "ยกเลิกเลือกทั้งหมด" : "เลือกสินค้าทั้งหมด"} ({cart.length})
-        </span>
-      </div>
-
       {#each cart as item, index}
         <div class="flex items-center gap-4 border-b pb-4 mb-4">
-          <input type="checkbox" bind:checked={item.selected} class="mr-2" />
           <img
             src={item.book_image}
             alt="Product"
             class="w-20 h-20 object-cover rounded-lg"
           />
           <div class="flex-1">
-            <h3 class="text-sm font-medium">{item.book_name_originl}</h3>
+            <h3 class="text-sm font-medium">{item.book_name_th}</h3>
             <p class="text-lg font-semibold text-blue-600">
               {item.book_price} บาท
             </p>
