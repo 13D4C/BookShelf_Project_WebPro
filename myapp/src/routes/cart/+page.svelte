@@ -146,15 +146,15 @@
     <div class="w-full md:w-1/3 bg-white p-6 rounded-lg shadow self-start">
       <h2 class="text-lg font-semibold mb-4">สรุปการสั่งซื้อ</h2>
       <div class="flex justify-between mb-2">
-        <span>ราคา</span>
-        <span>{getTotalPrice()} บาท</span>
+        <span>จำนวนหนังสือ</span>
+        <span>{cart.reduce((sum, item) => sum + item.amount, 0)} เล่ม</span>
       </div>
       <div class="flex justify-between font-bold text-lg">
         <span>ยอดสุทธิ</span>
         <span>{getTotalPrice()} บาท</span>
       </div>
 
-      <button class="w-full bg-green-500 text-white py-2 rounded mt-4" on:click={checkout()}
+      <button class="w-full bg-green-500 text-white py-2 rounded mt-4" on:click={goto('/checkout')}
         >ดำเนินการต่อ</button
       >
       <button class="w-full border mt-2 py-2 rounded" on:click={goto('/all')}>เลือกสินค้าต่อ</button>

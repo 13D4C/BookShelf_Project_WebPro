@@ -91,6 +91,7 @@
 
     // Reactive statement to fetch data
     $: if ($page.params.id || update) {
+        quantity = 1;
         bookId = $page.params.id;
         fetchBookData(bookId);
         fetchComments();
@@ -370,7 +371,7 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
                         <div class="flex items-center">
                             {@html generateStars(book.book_score)}
                             <span class="text-gray-800 ml-7 text-lg"
-                                >({book.book_score})</span
+                                >({(book.book_score).toFixed(2)})</span
                             >
                         </div>
                         <p class="text-2xl text-red-600 font-semibold">
@@ -445,7 +446,7 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
                 <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="bg-gray-100 p-4 rounded-lg">
                         <p class="text-3xl font-bold">
-                            {Math.round(book.book_score * 10) / 10}
+                            {book.book_score.toFixed(2)}
                         </p>
                         <div class="mt-2">
                             {@html generateStars(book.book_score)}
