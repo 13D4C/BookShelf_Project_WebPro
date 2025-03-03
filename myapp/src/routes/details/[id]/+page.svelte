@@ -5,6 +5,7 @@
     import { writable } from "svelte/store";
     import { generateStars, getUser } from "$lib/utils";
     import iro from '@jaames/iro';
+    import { fly } from 'svelte/transition';
 
     let book = {}; // Initialize as an empty object
     let quantity = 1;
@@ -28,6 +29,64 @@
     let inputText = 'New Book';
     let colorPicker;
     let textSize = 24;
+    let isOpen = false;
+    let isOpen1 = false;
+    let menuElementText: HTMLElement;
+    let menuElementCover: HTMLElement;
+
+
+    function toggleMenu(event: MouseEvent) {
+    event.stopPropagation();
+    isOpen = !isOpen;
+    if (isOpen) {
+      isOpen1 = false; // ปิดเมนูอื่น
+      // ใช้ timeout เล็กน้อยเพื่อให้ DOM อัปเดตแล้ว
+      setTimeout(() => {
+        if (document.getElementById('colorPickerText')) {
+          // สร้างอินสแตนซ์ใหม่สำหรับ ColorPickerText
+          const colorPickerText = new iro.ColorPicker('#colorPickerText', {
+            width: 280,
+            color: colorHexText,
+            borderWidth: 1,
+            borderColor: '#fff'
+          });
+          colorPickerText.on('color:change', (color) => {
+            colorHexText = color.hexString;
+          });
+        }
+      }, 50);
+    }
+  }
+
+  // ฟังก์ชัน toggle สำหรับ ColorCover
+  function toggleMenu1(event: MouseEvent) {
+    event.stopPropagation();
+    isOpen1 = !isOpen1;
+    if (isOpen1) {
+      isOpen = false; // ปิดเมนูอื่น
+      setTimeout(() => {
+        if (document.getElementById('colorPicker')) {
+          const colorPicker = new iro.ColorPicker('#colorPicker', {
+            width: 280,
+            color: colorHex,
+            borderWidth: 1,
+            borderColor: '#fff'
+          });
+          colorPicker.on('color:change', (color) => {
+            colorHex = color.hexString;
+          });
+        }
+      }, 50);
+    }
+  }
+  function handleClickOutside(event: MouseEvent) {
+    if (menuElementText && !menuElementText.contains(event.target as Node)) {
+      isOpen = false;
+    }
+    if (menuElementCover && !menuElementCover.contains(event.target as Node)) {
+      isOpen1 = false;
+    }
+  }
 
     onMount(async () => {
         page.subscribe(async ($page) => {
@@ -37,53 +96,31 @@
                 userId = user.user_id;
             });
         });
+        document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+
     });
 
    function customPage() {
     custom = !custom;
-    
-    // If we're switching to custom mode, initialize the color picker
-    // but with a small delay to ensure the DOM element exists
-    if (custom) {
-        setTimeout(() => {
-            if (document.getElementById('colorPicker')) {
-                colorPicker = new iro.ColorPicker('#colorPicker', {
-                    width: 280,
-                    color: colorHex,
-                    borderWidth: 1,
-                    borderColor: '#fff'
-                });
-                
-                // Set up event listener
-                colorPicker.on('color:change', (color) => {
-                    colorHex = color.hexString;
-                });
-
-                colorPicker = new iro.ColorPicker('#colorPickerText', {
-                    width: 280,
-                    color: colorHexText,
-                    borderWidth: 1,
-                    borderColor: '#fff'
-                });
-                
-                // Set up event listener
-                colorPicker.on('color:change', (color) => {
-                    colorHexText = color.hexString;
-                });
-            }
-        }, 50); // Small delay to ensure DOM is updated
-    }
-    
     console.log(custom);
 }
 
     function updateColor(event) {
-    const newColor = event.target.value;
+    let newColor = event.target.value;
     colorPicker.color.hexString = newColor;
+  }
+  function updateColorText(event) {
+    let newColor = event.target.value;
+    colorPickerText.color.hexString = newColor;
   }
 
   // ฟังก์ชันที่ถูกเรียกเมื่อกดปุ่ม "ตกลง"
   function submitColor() {
+    // let button = document.getElementById('submitComplete');
+    // button.innerText = "Custom Complete";
     // สร้างอ็อบเจ็กต์ที่มีค่าสี
     const colorData = {
         Name: inputText,
@@ -95,6 +132,10 @@
     colorJson = JSON.stringify(colorData);
     // แสดงผลหรือส่งค่า colorJson ตามต้องการ
     console.log(colorJson);
+    // button.disabled = true;
+    //     setTimeout(function() { 
+    //       location.reload();
+    //     }, 3000);
   }
 
     $: discountedPrice = book.discount
@@ -429,32 +470,71 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
                         </div>
                         
                         {#if custom}
-                    <div class="w-full md:w-1/2 space-y-4">
-                        <label for="title">Title:</label>
-                        <input type="text" bind:value={inputText} placeholder="ชื่อหนังสื่อ" class="border p-2 w-full" id="title"/>
-                        <label for="font">Font:</label>
-                        <input type="number" bind:value={textSize} placeholder="ขนาดตัวอักษร" min="1" class="border p-2 w-full" id="font"/>
-                        <label for="colorPickerText">Color Text:</label>
-                        <div id="colorPickerText"></div>
-                        <!-- ส่วนของการเลือกสี -->
-                        <label for="colorPicker">Color Cover:</label>
-                        <div id="colorPicker"></div>
+    <div class="w-full md:w-1/2 space-y-4">
+      <label for="title" class="block">Title:</label>
+      <input type="text" bind:value={inputText} placeholder="ชื่อหนังสือ" class="border p-2 w-full" id="title"/>
+      <label for="font" class="block">Font size (px):</label>
+      <input type="number" bind:value={textSize} min="1" class="border p-2 w-full" id="font"/>
+      
+      <!-- เมนูสำหรับเลือกสีข้อความ -->
+      <div class="relative" bind:this={menuElementText}>
+        <button 
+          type="button" 
+          class="inline-flex items-center gap-x-1 text-sm font-semibold text-gray-900" 
+          aria-expanded={isOpen} 
+          on:click|stopPropagation={toggleMenu}
+        >
+          <span>Color Text</span>
+          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z" clip-rule="evenodd" />
+          </svg>
+        </button>
 
-                        <!-- อินพุตสำหรับแก้ไขค่าสี HEX -->
-                        <input type="text" bind:value={colorHex} on:input={updateColor} placeholder="#ffffff" class="border p-2 w-full"/>
+        {#if isOpen}
+          <div class="mt-5 px-4">
+            <div class="w-80 max-w-md mx-auto overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-gray-900/5 p-4 " transition:fly={{ y: 5, duration: 200 }}>
+              <!-- เนื้อหาของ ColorPickerText -->
+              <div id="colorPickerText"></div><br>
+                <input type="text" bind:value={colorHexText} placeholder="#000000" class="border p-2 w-full"/>
+            </div>
+          </div>
+        {/if}
+      </div>
 
-                        <!-- ปุ่มตกลงส่งค่าสีเป็น JSON -->
-                        <button on:click={submitColor} class="px-4 py-2 bg-blue-500 text-white rounded border border-slate-300 hover:border-slate-400 hover:bg-blue-400">ตกลง</button>
+      <!-- เมนูสำหรับเลือกสี cover -->
+      <div class="relative" bind:this={menuElementCover}>
+        <button 
+          type="button" 
+          class="inline-flex items-center gap-x-1 text-sm font-semibold text-gray-900" 
+          aria-expanded={isOpen1} 
+          on:click|stopPropagation={toggleMenu1}
+        >
+          <span>Color Cover</span>
+          <svg class="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z" clip-rule="evenodd" />
+          </svg>
+        </button>
 
-                        <!-- แสดงค่าสีในรูปแบบ JSON -->
-                        {#if colorJson}
-                            <div class="p-4 bg-white border rounded shadow">
-                            <h2 class="text-lg font-semibold mb-2">ค่าสีในรูปแบบ JSON:</h2>
-                            <pre class="text-sm whitespace-pre-wrap">{colorJson}</pre>
-                            </div>
-                        {/if}
-                    </div>
-                    {/if}
+        {#if isOpen1}
+          <div class="mt-5 px-4">
+            <div class="w-80 max-w-md mx-auto overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-gray-900/5 p-4" transition:fly={{ y: 5, duration: 200 }}>
+              <!-- เนื้อหาของ ColorCover -->
+              <div id="colorPicker"></div>
+              <br>
+                <input type="text" bind:value={colorHex} placeholder="#ffffff" class="border p-2 w-full"/>
+            </div>
+          </div>
+        {/if}
+      </div>
+
+      <!-- อินพุตสำหรับแก้ไขค่าสี HEX ของ cover -->
+
+      <!-- ปุ่มตกลงส่งค่าสีเป็น JSON -->
+      <button on:click={submitColor} id="submitComplete" class="px-4 py-2 bg-blue-500 text-white rounded border border-slate-300 hover:border-slate-400 hover:bg-blue-400">
+        ตกลง
+      </button>
+    </div>
+  {/if}
                     </div>
                 </div>
 

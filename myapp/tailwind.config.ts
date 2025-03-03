@@ -4,11 +4,18 @@ import typography from '@tailwindcss/typography';
 import type { Config } from 'tailwindcss';
 
 export default {
-  content: ['./src/**/*.{html,js,svelte,ts}'],
+  content: ["./src/**/*.{html,js,svelte,ts}"],
 
   theme: {
-    extend: {}
+    extend: {},
   },
 
-  plugins: [typography, forms, containerQueries]
+  plugins: [
+    typography,
+    forms,
+    containerQueries,
+    require("@tailwindcss/forms"),
+    require("@tailwindcss/typography"),
+    require("@tailwindcss/aspect-ratio"),
+  ],
 } satisfies Config;
