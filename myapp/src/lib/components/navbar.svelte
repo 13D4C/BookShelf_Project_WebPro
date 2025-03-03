@@ -207,7 +207,7 @@
   
 	<!-- Navigation -->
 	<nav class="bg-blue-700 text-white py-2">
-	  <div class="container mx-auto flex space-x-4">
+	  <div class="container mx-auto flex space-x-4 text-sm md:text-base">
 		<a href="/main" class="hover:underline">หน้าหลัก</a>
 		<a href="/all" class="hover:underline">หนังสือทั้งหมด</a>
 		<a href="/marketplace" class="hover:underline">ร้านค้าชุมชน</a>

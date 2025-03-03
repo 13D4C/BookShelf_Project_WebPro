@@ -559,38 +559,40 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
                         <p class="text-gray-600 mt-2">{book.reviewText}</p>
                     </div>
                 </div>
-                <div class="comments-section">
-                    <h3 class="comments-section-title">Comments</h3>
+                <div class="mt-8 p-4 border-solid border-gray-50 rounded-lg bg-slate-200">
+                    <h3 class="text-2xl font-bold mb-4 text-stone-800">Comments</h3>
             
                     <div class="post-comment">
-                        <form on:submit|preventDefault={submitComment} class="comment-form">
+                        <form on:submit|preventDefault={submitComment} class="flex flex-col">
                             <textarea
                                 bind:value={newComment}
                                 rows="4"
                                 placeholder="Write your comment here..."
-                                class="comment-textarea"
+                                class="comment-textarea w-full p-2 mb-2 border-solid border-slate-300 rounded"
                                 required
                             ></textarea>
             
-                            <div class="comment-form-controls">
-                                <div>
-                                        <label for="score" class="score-label"
-                                            >Score:</label
-                                        >
-                                        <select
-                                            bind:value={newScore}
-                                            class="score-select"
-                                            required
-                                        >
-                                            {#each [1, 2, 3, 4, 5] as s}
-                                                <option value={s}>{s}</option>
-                                            {/each}
-                                        </select>
-                                    </div>
-                                <button type="submit" class="submit-comment-button"
-                                    >Submit Comment</button
-                                >
-                            </div>
+                            <div class="comment-form-controls flex items-center space-x-4">
+  <div class="flex flex-col">
+    <label for="score" class="text-sm font-medium text-gray-700">Score</label>
+    <select
+      bind:value={newScore}
+      id="score"
+      class="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+      required
+    >
+      {#each [1, 2, 3, 4, 5] as s}
+        <option value={s}>{s}</option>
+      {/each}
+    </select>
+  </div>
+  <button
+    type="submit"
+    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+  >
+    Submit Comment
+  </button>
+</div>
                         </form>
                     </div>
             
@@ -616,37 +618,39 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
                                         <p>{comment.comment_detail}</p>
                                     </div>
             
-                                    <div class="comment-footer">
-                                        {#if comment.user_id === userId}
+                                    <div class="comment-footer"> 
+                                        <div>
+                                            {#if comment.user_id === userId}
+                                        
+                                                <button
+                                                    on:click|stopPropagation={() =>
+                                                        deleteComment(comment.comment_id)}
+                                                    class="delete-button"
+                                                >
+                                                    Delete
+                                                </button>
+                                            {/if}
                                             <button
                                                 on:click|stopPropagation={() =>
-                                                    deleteComment(comment.comment_id)}
-                                                class="delete-button"
+                                                    toggleReply(comment.comment_id)}
+                                                class="reply-button"
                                             >
-                                                Delete
+                                                Reply
                                             </button>
-                                        {/if}
-                                        <button
-                                            on:click|stopPropagation={() =>
-                                                toggleReply(comment.comment_id)}
-                                            class="reply-button"
-                                        >
-                                            Reply
-                                        </button>
-            
+                                        </div><br>
                                         {#if $replyMode[comment.comment_id]}
-                                            <div class="reply-section">
+                                            <div class="border p-4 rounded bg-white my-2">
                                                 <textarea
                                                     bind:value={replyComment}
                                                     rows="2"
                                                     placeholder="Write your reply here..."
-                                                    class="reply-textarea"
+                                                    class="w-full border rounded p-2"
                                                     required
                                                 ></textarea>
                                                 <button
                                                     on:click|stopPropagation={() =>
                                                         submitReply(comment.comment_id)}
-                                                    class="submit-reply-button"
+                                                    class="mt-1 px-3 py-1 bg-gray-500 text-white rounded text-sm"
                                                 >
                                                     Submit Reply
                                                 </button>
@@ -721,7 +725,7 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
                             >
                                 {#if related.book_image}
                                     <img
-                                        class="h-full w-full object-cover"
+                                        class="h-48 w-96 object-scale-down place-content-center"
                                         src={related.book_image}
                                         alt={related.book_name_originl ||
                                             "Related Book"}
@@ -740,62 +744,11 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
 {/if}
 
 <style>
-	/* General Styles */
-	.container {
-		max-width: 1200px;
-		margin-left: auto;
-		margin-right: auto;
-		padding-left: 1rem;
-		padding-right: 1rem;
-	}
-
-	/* Comments Section */
-	.comments-section {
-		margin-top: 2rem;
-		padding: 1rem;
-		border: 1px solid #e2e8f0; /* Light gray border */
-		border-radius: 0.5rem;
-		background-color: #f8fafc; /* Very light gray background */
-	}
-
-	.comments-section-title {
-		font-size: 1.5rem;
-		font-weight: bold;
-		margin-bottom: 1rem;
-		color: #2d3748; /* Dark gray for titles */
-	}
-
-	/* Post Comment Section */
-	.post-comment {
-		margin-bottom: 1.5rem;
-		padding: 1rem;
-		border: 1px solid #cbd5e0; /* Slightly darker gray border */
-		border-radius: 0.375rem;
-		background-color: #fff; /* White background for input area */
-	}
-
-	.post-comment-title {
-		font-size: 1.25rem;
-		font-weight: 600;
-		margin-bottom: 0.75rem;
-		color: #4a5568; /* Medium gray for subtitles */
-	}
-
-	.comment-form {
-		display: flex;
-		flex-direction: column;
-	}
 
 	.comment-textarea {
-		width: 100%;
-		padding: 0.5rem;
-		margin-bottom: 0.5rem;
-		border: 1px solid #cbd5e0;
-		border-radius: 0.25rem;
 		resize: vertical; /* Allow vertical resizing */
 	}
 	.comment-form-controls {
-		display: flex;
 		align-items: center;
 		gap: 1rem;
 		margin-bottom: 0.5rem;
@@ -893,12 +846,6 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
 		color: #4a5568;
 		word-wrap: break-word; /* Handle long words */
 	}
-	.comment-footer {
-		display: flex;
-		align-items: center;
-		justify-content: flex-start; /* Align buttons to the start */
-		gap: 0.75rem; /* Spacing between buttons */
-	}
 
 	.delete-button,
 	.reply-button {
@@ -982,4 +929,7 @@ async function addToCart(bookId: number, amount: number, custom?: any) {
 		color: #718096;
 		font-style: italic;
 	}
+    textarea {
+        resize: none;
+    }
 </style>

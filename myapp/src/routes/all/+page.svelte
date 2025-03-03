@@ -218,7 +218,7 @@
 
                                 <!-- Text and button container -->
                                 <div class="px-4 pb-4 flex-grow">
-                                    <p class="font-semibold text-blue-700">
+                                    <p class="font-semibold text-blue-700 truncate">
                                         {book.book_name_originl}
                                     </p>
                                     {@html generateStars(book.book_score)}
