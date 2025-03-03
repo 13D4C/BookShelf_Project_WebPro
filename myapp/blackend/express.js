@@ -1458,7 +1458,7 @@ app.post('/shop/publisher/order/create' , async (req, res) => {
         let cart_publisher_querry = await queryDatabase("SELECT * FROM cart WHERE user_id = ?", [decodedToken.user_id]);
         if(cart_publisher_querry.length != 0){
             let querry_custom = await queryDatabase(
-                `SELECT bd.publisher_id, SUM(co.amount)*bd.book_price AS total_price
+                `SELECT bd.publisher_id, SUM(co.amount * bd.book_price) AS total_price
                 FROM cart c
                 JOIN custom_order co ON c.item_id = co.item_id
                 JOIN book_detail bd ON co.book_id = bd.book_id
@@ -1527,7 +1527,7 @@ app.post('/shop/seller/order/create' , async (req, res) => {
         let cart_seller_querry = await queryDatabase("SELECT * FROM seller_cart WHERE user_id = ?", [decodedToken.user_id]);
         if(cart_seller_querry.length != 0){
             let querry_seller_order = await queryDatabase(
-                `SELECT sbd.owner_id, SUM(so.amount)*sbd.book_price AS total_price
+                `SELECT sbd.owner_id, SUM(so.amount *sbd.book_price) AS total_price
                 FROM seller_cart c
                 JOIN seller_order so ON c.seller_item_id = so.seller_item_id
                 JOIN seller_book_detail sbd ON so.seller_book_id = sbd.seller_book_id
