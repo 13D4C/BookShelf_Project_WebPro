@@ -15,32 +15,22 @@
     let err = false;
 
     let book_upload: any = {
-        book_name_th: "",
-        book_name_en: "",
-        book_name_originl: "",
+        book_name: "",
         book_category : [],
-        book_descriptions: "",
+        description: "",
         book_price: 0,
-        book_pages: 0,
         book_image: "",
-        release_date: "",
-        language: "",
-        publisher_id: "",
-        stock: 0
+        stock: 0,
+        owner_id: ""
     }
 
     let book_update: any = {
-        book_name_th: "",
-        book_name_en: "",
-        book_name_originl: "",
+        book_name: "",
         book_category : [],
-        book_descriptions: "",
+        description: "",
         book_price: 0,
-        book_pages: 0,
         book_image: "",
-        release_date: "",
-        language: "",
-        stock: 0
+        stock: 0,
     }
 
     let DeleteisOpen = false;
@@ -73,13 +63,14 @@
             
             if(userData) {
                 switch (userData.user_permission) {
-                    case "Manager":
-                        url = `http://localhost:3000/books?all=true`;
+                    case "Seller":
+                        url = `http://localhost:3000/seller/books?ownerId=${userData.user_id}`
                         break;
-                    case "Publisher":
-                        url = `http://localhost:3000/books?publisher_id=${userData.publisher_id}`
+                    case "Manager":
+                        url = `http://localhost:3000/seller/books?all=true`
                         break;
                 }
+                
             }else {
                 return null
             }
@@ -198,20 +189,18 @@
     }
 
     async function deleteBook() {
-        const response = await fetch(`http://localhost:3000/books/drop/book/${deleteBookId}`);
-    
+        const response = await fetch(`http://localhost:3000/seller/books/delete/${deleteBookId}`);
         if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
         }
         deleteBookId = 0;
         closeDeleteModal();
-
         await getBooks();
     }
   
-    function openDeleteModal(book_id:any) {
+    function openDeleteModal(seller_book_id:any) {
         DeleteisOpen = true;
-        deleteBookId = book_id
+        deleteBookId = seller_book_id
     };
   
     function closeDeleteModal() {
@@ -230,23 +219,18 @@
         err = false;
     };
 
-    async function openUpdateModal(book_id:any) {
-        const response = await fetch(`http://localhost:3000/books?id=${book_id}`);
+    async function openUpdateModal(seller_book_id:any) {
+        const response = await fetch(`http://localhost:3000/seller/books?id=${seller_book_id}`);
         const data = await response.json();
-        book_update.book_name_th = data.book_name_th;
-        book_update.book_name_en = data.book_name_en;
-        book_update.book_name_originl = data.book_name_originl;
+        book_update.book_name = data.book_name
+        book_update.book_category = data.book_category
         book_update.book_category = data.book_category.split(",");
-        book_update.book_descriptions = data.book_descriptions;
-        book_update.book_price = data.book_price;
-        book_update.book_pages = data.book_pages;
-        book_update.book_image = data.book_image;
-        book_update.stock = data.stock;
-        book_update.release_date = data.release_date.split("T")[0];
-        console.log(data.release_date)
-        book_update.language = data.language;
+        book_update.description = data.description
+        book_update.book_price = data.book_price
+        book_update.book_image = data.book_image
+        book_update.stock = data.stock 
         updateisOpen = true;
-        updateBookId = book_id;
+        updateBookId = seller_book_id;
     };
 
   
@@ -259,9 +243,10 @@
 
     async function uploadBook() {
         try {
-            book_upload.publisher_id = await userData.publisher_id;
+            book_upload.owner_id = await userData.user_id;
             book_upload.book_category = await book_upload.book_category.join(',')
-            const response = await fetch("http://localhost:3000/books/add?type=book", {
+
+            const response = await fetch("http://localhost:3000/seller/books/add", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -311,29 +296,27 @@
     }
 
     function resetUpload() {
-        book_upload.book_name_th = ""
-        book_upload.book_name_en = ""
-        book_upload.book_name_originl = ""
+        book_upload.book_name = ""
         book_upload.book_category = []
-        book_upload.book_descriptions = ""
+        book_upload.description = ""
         book_upload.book_price = 0
-        book_upload.book_pages = 0
         book_upload.book_image = ""
-        book_upload.release_date = ""
-        book_upload.language = ""
-        book_upload.stock = ""
+        book_upload.owner_id = ""
+        book_update.stock = 0;
     }
 
     async function updateBook() {
         try {
             book_update.book_category = await book_update.book_category.join(',');
-            const response = await fetch(`http://localhost:3000/books/update/book/${updateBookId}`, {
+            console.log(book_update)
+            const response = await fetch(`http://localhost:3000/seller/books/update/book/${updateBookId}`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify(book_update),
             });
+
             if(response.ok) {
                 closeUpdateModal();
                 getBooks();
@@ -353,7 +336,7 @@
     
 
     function validateForm() {
-        isFormValid = book_upload.book_name_th && book_upload.book_name_originl && book_upload.book_descriptions && book_upload.book_price && book_upload.book_category && book_upload.book_pages && book_upload.language && book_upload.release_date && book_upload.stock;
+        isFormValid = book_upload.book_name && book_upload.description && book_upload.book_price && book_upload.book_category;
     }
     
 </script>
@@ -362,7 +345,7 @@
     <div class="min-h-screen bg-white">
         <div class="max-w-6xl mx-auto p-4">
             <div class="flex items-center justify-between mb-4">
-                <h1 class="text-3xl font-bold text-blue-700">หนังสือทั้งหมดของสำนักพิมพ์</h1>
+                <h1 class="text-3xl font-bold text-blue-700">หนังสือทั้งหมดของผู้ขาย</h1>
             </div>
 
             <!-- Main content area with flex layout -->
@@ -418,7 +401,7 @@
                                 <div class="p-4">
                                     <img
                                         src={book.book_image}
-                                        alt={book.book_name_originl}
+                                        alt={book.book_name}
                                         class="object-contain w-full h-[200px] rounded"
                                     />
                                 </div>
@@ -426,25 +409,25 @@
                                 <!-- Text and button container -->
                                 <div class="px-4 pb-4 flex-grow">
                                     <p class="font-semibold text-blue-700 truncate">
-                                        {book.book_name_originl}
+                                        {book.book_name}
                                     </p>
-                                    {#if userData.user_permission != "User"}
+                                    {#if userData.user_permission != "User" && userData.user_permission != "Publisher"}
                                     <button
                                         class="mt-2 w-full bg-blue-500 text-white py-2 rounded"
                                         on:click={ () =>
-                                            openUpdateModal(book.book_id)
+                                            openUpdateModal(book.seller_book_id)
                                         }
                                     >
                                         เเก้ไขหนังสือ
                                     </button>
                                     {/if}
-                                    {#if userData.user_permission != "User"}
+                                    {#if userData.user_permission != "User" && userData.user_permission != "Publisher"}
                                     <button
                                         data-modal-target="popup-modal"
                                         data-modal-toggle="popup-modal"
                                         class="mt-2 w-full bg-blue-500 text-white py-2 rounded"
                                         on:click={() =>
-                                            openDeleteModal(book.book_id)
+                                            openDeleteModal(book.seller_book_id)
                                         }
                                     >
                                         ลบหนังสือ
@@ -492,32 +475,15 @@
         <form>
             <div class="space-y-4">
                 <div>
-                    <label for="bookNameTH" class="block text-gray-600">ชื่อหนังสือภาษาไทย</label>
+                    <label for="bookName" class="block text-gray-600">ชื่อหนังสือ</label>
                     <input
-                    bind:value={book_upload.book_name_th}
-                    id="bookNameTH"
+                    bind:value={book_upload.book_name}
+                    id="bookName"
                     type="text"
                     on:input={validateForm}
                     class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
                 </div>
 
-                <div>
-                    <label for="bookNameENG" class="block text-gray-600">ชื่อหนังสือภาษาอังกฤษ (ไม่บังคับ)</label>
-                    <input
-                    bind:value={book_upload.book_name_en}
-                    id="bookNameENG"
-                    type="text"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm"/>
-                </div>
-
-                <div>
-                    <label for="bookNameOG" class="block text-gray-600">ชื่อหนังสือภาษาต้นฉบับ</label>
-                    <input id="bookNameOG"
-                    bind:value={book_upload.book_name_originl}
-                    on:input={validateForm}
-                    type="text"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
-                </div>
                 <div>
                     <div class="mt-4">
                         <p class="text-gray-600">หมวดหมู่ที่เลือก:</p>
@@ -541,7 +507,7 @@
                 <div>
                     <label for="description" class="block text-gray-600">รายระเอียดหนังสือ</label>
                     <textarea
-                    bind:value={book_upload.book_descriptions}
+                    bind:value={book_upload.description}
                     on:input={validateForm}
                     id="description"
                     rows="3"
@@ -556,38 +522,10 @@
                     class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
                 </div>
                 <div>
-                    <label for="page" class="block text-gray-600">จำนวนหน้า</label>
-                    <input
-                    bind:value={book_upload.book_pages}
-                    on:input={validateForm}
-                    id="page"
-                    type="number"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
-                </div>
-                <div>
-                    <label for="lang" class="block text-gray-600">ภาษาของหนังสือ</label>
-                    <input
-                    bind:value={book_upload.language}
-                    on:input={validateForm}
-                    id="lang"
-                    type="text"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
-                </div>
-                <div>
-                    <label for="date" class="block text-gray-600">วันปล่อยหนังสือ</label>
-                    <input
-                    bind:value={book_upload.release_date}
-                    on:input={validateForm}
-                    id="date"
-                    type="date"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
-                </div>
-                <div>
                     <label for="stock" class="block text-gray-600">จำนวนสินค้าในคลัง</label>
-                    <input
+                    <input id="stock"
                     bind:value={book_upload.stock}
                     on:input={validateForm}
-                    id="stock"
                     type="number"
                     class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
                 </div>
@@ -629,30 +567,14 @@
         <form>
             <div class="space-y-4">
                 <div>
-                    <label for="bookNameTH" class="block text-gray-600">ชื่อหนังสือภาษาไทย</label>
+                    <label for="bookNameTH" class="block text-gray-600">ชื่อหนังสือ</label>
                     <input
-                    bind:value={book_update.book_name_th}
+                    bind:value={book_update.book_name}
                     id="bookNameTH"
                     type="text"
                     class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
                 </div>
 
-                <div>
-                    <label for="bookNameENG" class="block text-gray-600">ชื่อหนังสือภาษาอังกฤษ (ไม่บังคับ)</label>
-                    <input
-                    bind:value={book_update.book_name_en}
-                    id="bookNameENG"
-                    type="text"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm"/>
-                </div>
-
-                <div>
-                    <label for="bookNameOG" class="block text-gray-600">ชื่อหนังสือภาษาต้นฉบับ</label>
-                    <input id="bookNameOG"
-                    bind:value={book_update.book_name_originl}
-                    type="text"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
-                </div>
                 <div>
                     <div class="mt-4">
                         <p class="text-gray-600">หมวดหมู่ที่เลือก:</p>
@@ -672,14 +594,16 @@
                         {/each}
                     </select>
                 </div>
+
                 <div>
                     <label for="description" class="block text-gray-600">รายระเอียดหนังสือ</label>
                     <textarea
-                    bind:value={book_update.book_descriptions}
+                    bind:value={book_update.description}
                     id="description"
                     rows="3"
                     class="w-full px-4 py-2 border rounded-lg shadow-sm" required></textarea>
                 </div>
+
                 <div>
                     <label for="price" class="block text-gray-600">ราคาหนังสือ</label>
                     <input id="price"
@@ -687,30 +611,7 @@
                     type="number"
                     class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
                 </div>
-                <div>
-                    <label for="page" class="block text-gray-600">จำนวนหน้า</label>
-                    <input
-                    bind:value={book_update.book_pages}
-                    id="page"
-                    type="number"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
-                </div>
-                <div>
-                    <label for="lang" class="block text-gray-600">ภาษาของหนังสือ</label>
-                    <input
-                    bind:value={book_update.language}
-                    id="lang"
-                    type="text"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
-                </div>
-                <div>
-                    <label for="date" class="block text-gray-600">วันปล่อยหนังสือ</label>
-                    <input
-                    bind:value={book_update.release_date}
-                    id="date"
-                    type="date"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
-                </div>
+
                 <div>
                     <label for="stock" class="block text-gray-600">จำนวนสินค้าในคลัง</label>
                     <input
@@ -719,6 +620,7 @@
                     type="number"
                     class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
                 </div>
+
                 <div>
                     <label for="image" class="block text-gray-600">รูปภาพ</label>
                     <input

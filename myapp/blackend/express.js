@@ -407,13 +407,10 @@ app.get('/books/drop/history/:userId', async (req, res) => {
 app.get('/books/drop/book/:bookId', async (req, res) => {
     try {
         const bookId = req.params.bookId;
-
         const deleteBookSql = 'DELETE FROM book_detail WHERE book_id = ?';
-        const deleteShopsSql = 'DELETE FROM book_shop WHERE book_id = ?';
 
-        const [deleteBookResult, deleteShopsResult] = await Promise.all([
+        const [deleteBookResult] = await Promise.all([
             queryDatabase(deleteBookSql, [bookId]),
-            queryDatabase(deleteShopsSql, [bookId])
         ]);
         if (deleteBookResult.affectedRows === 0) {
             res.status(404).json({ error: 'Book not found' });
@@ -457,6 +454,98 @@ app.get('/books/voting-status/:userId', async (req, res) => {
     } catch (error) {
         console.error('Error fetching voting status:', error);
         res.status(500).json({ error: 'Failed to fetch voting status' });
+    }
+});
+
+// -- book seller -- 
+app.get('/seller/books', async (req, res) => {
+    try {
+        const sellerBookId = req.query.id;
+        const allBooks = req.query.all;
+        const ownerId = req.query.ownerId
+
+        let sql;
+        let params = [];
+
+        if (sellerBookId) {
+            sql = `SELECT * FROM seller_book_detail WHERE seller_book_id=?;`;
+            params = [sellerBookId];
+        }
+        else if (ownerId){
+            sql = `SELECT * FROM seller_book_detail WHERE owner_id =?`;
+            params = [ownerId];
+        }
+        else if (allBooks) {
+            sql = 'SELECT * FROM seller_book_detail';
+        }
+
+        const books = await queryDatabase(sql, params);
+
+        if (books.length > 0 && sellerBookId) {
+            res.json(books[0]);
+        } else {
+            res.json(books);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/seller/books/add', async (req, res) => {
+    try {
+        const book_upload = req.body;
+        const keys = Object.keys(book_upload);
+        const values = Object.values(book_upload);
+        const placeholders = keys.map(() => '?').join(', ');
+        const sql = `INSERT INTO seller_book_detail(${keys.join(', ')}) VALUES (${placeholders})`;
+        const result = await queryDatabase(sql, values);
+        res.status(201).json({ message: 'Book added successfully', seller_book_id: result.insertId });
+    } catch (error) {
+        console.error('Error adding entity:', error);
+        res.status(500).json({ error: 'Failed to add book' });
+    }
+});
+
+app.get('/seller/books/delete/:bookId', async (req, res) => {
+    try {
+        const bookId = req.params.bookId;
+        const deleteBookSql = 'DELETE FROM seller_book_detail WHERE seller_book_id = ?';
+
+        const [deleteBookResult] = await Promise.all([
+            queryDatabase(deleteBookSql, [bookId]),
+        ]);
+        if (deleteBookResult.affectedRows === 0) {
+            res.status(404).json({ error: 'Book not found' });
+        } else {
+            res.json({ message: 'Book and associated shops dropped successfully' });
+        }
+    } catch (error) {
+        console.error('Error dropping book:', error);
+        res.status(500).json({ error: 'Failed to drop book' });
+    }
+});
+
+app.post('/seller/books/update/book/:bookId', async (req, res) => {
+    try {
+        const bookId = req.params.bookId;
+        const bookData = req.body;
+
+        const keys = Object.keys(bookData);
+        const values = Object.values(bookData);
+        const setClause = keys.map(key => `${key} = ?`).join(', ');
+
+        const sql = `UPDATE seller_book_detail SET ${setClause} WHERE seller_book_id = ?`;
+        values.push(bookId);
+
+        const result = await queryDatabase(sql, values);
+
+        if (result.affectedRows === 0) {
+            res.status(404).json({ error: 'Book not found' });
+        } else {
+            res.json({ message: 'Book updated successfully' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -975,10 +1064,15 @@ app.post('/user/request-seller/approve', async (req, res) => {
 
         const approve = await queryDatabase(
             `UPDATE seller_register SET status = ? WHERE user_id = ?`, ['Permitted', user_id]);
+        const updateStatus = await queryDatabase(
+            `UPDATE user SET user_permission = 'Seller' WHERE user_id = ?`, [user_id]
+        );
+
         const addShop = await queryDatabase(
             `INSERT INTO shop_list(owner_id, qr_code)
              VALUES (?, ?)`,[user_id, request_info[0].qr_code]
         );
+        
         return res.status(200).json({message: "Seller request successfuldly"});
     }
     catch {

@@ -211,8 +211,17 @@
 		<a href="/main" class="hover:underline">หน้าหลัก</a>
 		<a href="/all" class="hover:underline">หนังสือทั้งหมด</a>
 		<a href="/marketplace" class="hover:underline">ร้านค้าชุมชน</a>
-		{#if user && user.user_permission === "Manager"}
+		{#if user && (user.user_permission === "Publisher") }
 		  <a href="/managebook" class="hover:underline">จัดการหนังสือ</a>
+		{/if}
+		{#if user && (user.user_permission === "Seller") }
+		<a href="/managesellerbook" class="hover:underline">จัดการหนังสือ</a>
+		{/if}
+		{#if user && (user.user_permission === "Manager") }
+		  <a href="/managebook" class="hover:underline">จัดการหนังสือของสำนักพิมพ์</a>
+		{/if}
+		{#if user && (user.user_permission === "Manager") }
+		<a href="/managesellerbook" class="hover:underline">จัดการหนังสือของผู้ขาย</a>
 		{/if}
 	  </div>
 	</nav>
