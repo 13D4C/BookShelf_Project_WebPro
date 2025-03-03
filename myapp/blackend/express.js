@@ -1898,6 +1898,50 @@ app.post('/shop/buyer/order/getall' , async (req, res) => {
     }
 });
 
+//เมื่อผู้ใช้กดได้รับของ ของ publisher เเล้ว
+app.patch('/shop/buyer/publisher/order/received' , async (req, res) => {
+    try {
+        const { order_id }  = req.body;
+
+        if ( !order_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const update = await queryDatabase(
+            `UPDATE order_list SET order_status='Received', status_time=current_timestamp()
+             WHERE order_id = ?`, [order_id]);
+        return res.status(200).json({message: "Status updated successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Status update failed',
+            details: error.message
+        });
+    }
+});
+
+//เมื่อผู้ใช้กดได้รับของ ของ seller เเล้ว
+app.patch('/shop/buyer/seller/order/received' , async (req, res) => {
+    try {
+        const { seller_order_id }  = req.body;
+
+        if ( !seller_order_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const update = await queryDatabase(
+            `UPDATE seller_order_list SET order_status='Received', status_time=current_timestamp()
+             WHERE seller_order_id = ?`, [seller_order_id]);
+        return res.status(200).json({message: "Status updated successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Status update failed',
+            details: error.message
+        });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
