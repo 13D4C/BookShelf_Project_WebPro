@@ -5,6 +5,16 @@
     import { writable } from "svelte/store";
     import { page } from "$app/stores";
     import { generateStars } from "$lib/utils";
+    import { Sidebar, SidebarBrand, SidebarCta, SidebarDropdownItem, SidebarDropdownWrapper, SidebarGroup, SidebarItem, SidebarWrapper } from 'flowbite-svelte';
+    import { Drawer, Button, CloseButton } from 'flowbite-svelte';
+    import {FilterSolid } from 'flowbite-svelte-icons';
+  import { sineIn } from 'svelte/easing';
+  let hidden1 = true;
+  let transitionParams = {
+    x: -320,
+    duration: 200,
+    easing: sineIn
+  };
 
     let books: any[] = [];
     let userToken: string | null;
@@ -159,7 +169,7 @@
             <div class="flex gap-4">
                 <!-- Sidebar -->
                 <aside
-                    class="w-[20%] border border-blue-500 p-4 rounded-lg bg-blue-50 h-fit"
+                    class="hidden lg:block w-[20%] border border-blue-500 p-4 rounded-lg bg-blue-50 h-fit"
                 >
                     <h2 class="text-xl font-semibold text-blue-700">
                         หมวดหมู่
@@ -187,17 +197,51 @@
                 <div class="w-[80%]">
                     <!-- Checkbox (placed above the book grid) -->
                     <div class="mb-4">
-                        <label class="flex items-center space-x-2">
-                            {#if search}<button on:click={clearSearch}  class="btn btn-primary" >{search} ❌</button>{/if}
-                            <input
-                                type="checkbox"
-                                bind:checked={showTrustedOnly}
-                                class="form-checkbox h-5 w-5 text-blue-600"
-                            />
-                            <span class="text-sm text-gray-700"
-                                >แสดงเฉพาะร้านค้าที่น่าเชื่อถือ</span
+                        <label class="flex items-center w-full justify-between">
+    <div class="flex items-center space-x-2">
+        {#if search}
+            <button on:click={clearSearch} class="btn btn-primary">{search} ❌</button>
+        {/if}
+        <input
+            type="checkbox"
+            bind:checked={showTrustedOnly}
+            class="form-checkbox h-5 w-5 text-blue-600"
+        />
+        <span class="text-sm text-gray-700">แสดงเฉพาะร้านค้าที่น่าเชื่อถือ</span>
+    </div>
+    <Button class="block lg:hidden" on:click={() => (hidden1 = false)}>
+        <FilterSolid class="w-5 h-5 me-2.5" />Filter
+    </Button>
+</label>
+
+<Drawer transitionType="fly" {transitionParams} bind:hidden={hidden1} id="sidebar1">
+  <div class="flex items-center">
+    <h5 id="drawer-label" class="inline-flex items-center mb-4 text-base font-semibold text-gray-500 dark:text-gray-400">
+      <FilterSolid class="w-5 h-5 me-2.5" />Filter
+    </h5>
+    <CloseButton on:click={() => (hidden1 = true)} class="mb-4 dark:text-white" />
+  </div>
+  <h2 class="text-xl font-semibold text-blue-700">
+                        หมวดหมู่
+                    </h2>
+                    <ul class="mt-2 space-y-2">
+                        <li
+                            class="text-blue-600 cursor-pointer hover:underline"
+                            on:click={() => filterBooks(null)}
+                        >
+                            ทั้งหมด
+                        </li>
+                        {#each uniqueCategories as category}
+                            <li
+                                class="text-blue-600 cursor-pointer hover:underline"
+                                on:click={() => filterBooks(category)}
+                                class:font-bold={selectedCategory === category}
                             >
-                        </label>
+                                {category}
+                            </li>
+                        {/each}
+                    </ul>
+</Drawer>
                     </div>
                     <!-- Book grid -->
                     <div
