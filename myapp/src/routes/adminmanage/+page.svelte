@@ -18,6 +18,8 @@
     let currentRequest: SellerRequest | null = null;
     let showReportModal = false; // Modal for report details
     let currentReport: Report | null = null; // Current report for the modal
+    let showBanModal = false;
+    let showDeleteModal =false;
   
     // --- Seller Requests Data (Mockup) ---
     interface SellerRequest {
@@ -48,6 +50,13 @@
       report_details: string;        // Details of the report
       status: "pending" | "reviewed";   // Add status to the report
     }
+
+    // Temp Variables
+    let manageUserId = null;
+    let reason:any = null;
+
+    // ban Variables
+    let date:any;
     
       // Mockup data (Keep this)
       let sellerRequests: SellerRequest[] = [
@@ -166,27 +175,22 @@
   
   
     // --- Helper Functions ---
-      // Get all user (for ban management)
-    async function getAllUsers() {
-      try {
-        // Assuming you have an endpoint like /admin/users to fetch all users
-        const response = await fetch("http://localhost:3000/admin/users", {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${userToken}`, // Send admin token for authorization
-          }
-        });
-  
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-  
-        users = await response.json();
-        filteredUsers = [...users]; // Initialize filteredUsers with all users
-      } catch (error) {
-        console.error("Error fetching users:", error);
+       // Get all user (for ban management)
+  async function getAllUsers() {
+    try {
+      // Assuming you have an endpoint like /admin/users to fetch all users
+      const response = await fetch("http://localhost:3000/user");
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
       }
+
+      users = await response.json();
+      filteredUsers = [...users]; // Initialize filteredUsers with all users
+    } catch (error) {
+      console.error("Error fetching users:", error);
     }
+  }
   
   
     //Comment out during use mockup data.
@@ -201,7 +205,7 @@
       filteredUsers = users.filter(
         (user) =>
           user.user_name.toLowerCase().includes(term) || // Search by username
-          user.id.toString().includes(term), // Search by user ID
+          user.user_id.toString().includes(term), // Search by user ID
       );
     }
   
@@ -247,66 +251,128 @@
     }
   
     // --- Ban User ---
-  async function banUser(userId: number) {
+    async function banUser() {
     try {
       if (!userToken) {
         return; // Or show an error
       }
-  
-      const response = await fetch(`http://localhost:3000/admin/users/${userId}/ban`, {
-        method: "PUT", // Or POST
+
+      const response = await fetch(`http://localhost:3000/user/manage/ban`, {
+        method: "PATCH", 
         headers: {
-          "Authorization": `Bearer ${userToken}`,
           "Content-Type": "application/json",
         },
-        // body: JSON.stringify({ reason: "Some reason" }),  // Optional: Add if needed
+        body: JSON.stringify(
+        { 
+            token: userToken,
+            user_id: manageUserId!,
+            reason: reason,
+            user_unban_time: date
+
+        }),
       });
-  
+
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-  
+
       users = users.map((u) =>
-        u.id === userId ? { ...u, is_banned: true } : u
+        u.user_id === manageUserId! ? { ...u, user_status: "Banned" } : u
       );
-        filteredUsers = filteredUsers.map((u) =>
-        u.id === userId ? { ...u, is_banned: true } : u
+      filteredUsers = filteredUsers.map((u) =>
+        u.user_id === manageUserId! ? { ...u, user_status: "Banned" } : u
       );
-  
+      manageUserId = null;
+      date = null;
+      reason = null;
+      closeBanModal();
       alert("User banned successfully!");
     } catch (error) {
+      manageUserId = null;
+      reason = null;
+      date = null;
       console.error("Error banning user:", error);
       alert("Failed to ban user.");
     }
   }
   
     // --- Unban User ---
-    async function unbanUser(userId: number) {
+    async function unbanUser(user_id:any) {
       try {
         if (!userToken) {
             return; // Or show an error
         }
-        const response = await fetch(`http://localhost:3000/admin/users/${userId}/unban`, {
-          method: 'PUT',
+        const response = await fetch(`http://localhost:3000/user/manage/unban`, {
+          method: 'PATCH',
           headers: {
-            "Authorization": `Bearer ${userToken}`,
             "Content-Type": "application/json"
-          }
+          },
+          body: JSON.stringify(
+          { 
+              token: userToken,
+              user_id: user_id,
+          }),
         });
-  
+
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
-  
-        users = users.map(u => u.id === userId ? { ...u, is_banned: false } : u);
-        filteredUsers = filteredUsers.map(u => u.id === userId ? { ...u, is_banned: false} : u);
-  
+
+        users = users.map((u) =>
+        u.user_id === user_id! ? { ...u, user_status: "Normal" } : u
+        );
+        filteredUsers = filteredUsers.map((u) =>
+          u.user_id === user_id! ? { ...u, user_status: "Normal" } : u
+        );
+
         alert("User unbanned successfully!");
       } catch(error) {
         console.error("Error unbanning user:", error);
         alert("Failed to unban user.");
       }
+  }
+
+    // --- Delete User ---
+async function deleteUser() {
+  try {
+    if (!userToken) {
+      return; // Or show an error
     }
+    if(!reason) {
+      alert("กรุณากรอกข้อมูลให้ครบ");
+      return;
+    }
+
+    const response = await fetch(`http://localhost:3000/user/manage/delete`, {
+      method: "POST", 
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(
+      { 
+          token: userToken,
+          user_id: manageUserId!,
+          reason: reason,
+      }),
+    });
+    console.log(response);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    users = users.filter((u) => u.user_id !== manageUserId!);
+    filteredUsers = filteredUsers.filter((u) => u.user_id !== manageUserId!);
+    manageUserId = null;
+    reason = null;
+    closeDeleteModal();
+    alert("User Delete successfully!");
+  } catch (error) {
+    manageUserId = null;
+    reason = null;
+    console.error("Error delete user:", error);
+    alert("Failed to delete user.");
+  }
+}
   
   
     // --- Modal Functions ---
@@ -319,6 +385,30 @@
     function closeModal() {
       showModal = false;
       currentRequest = null;
+    }
+
+    // --- Manage user Modal Functions ---
+    async function openBanModal(user_id:any){
+      manageUserId = await user_id;
+      showBanModal = true;
+    }
+
+    function closeBanModal(){
+      manageUserId = null;
+      reason = null;
+      date = null;
+      showBanModal = false;
+    }
+
+    async function openDeleteModal(user_id:any){
+      manageUserId = await user_id;
+      showDeleteModal = true;
+    }
+
+    function closeDeleteModal(){
+      manageUserId = null;
+      reason = null;
+      showDeleteModal = false;
     }
   
     // --- Report Modal Functions ---
@@ -580,28 +670,29 @@
           </tr>
       </thead>
       <tbody>
-          {#each filteredUsers as user (user.id)}
-          <tr class="border-b">
-              <td class="py-2 px-4">{user.id}</td>
-              <td class="py-2 px-4">{user.user_name}</td>
-              <td class="py-2 px-4">{user.user_email}</td>
-              <td class="py-2 px-4">
-                {#if user.is_banned}
-                  <span class="text-red-500">Banned</span>
-                {:else}
-                  <span class="text-green-500">Active</span>
-                {/if}
-              </td>
-              <td class="py-2 px-4">
-                {#if user.is_banned}
-                  <button on:click={() => unbanUser(user.id)} class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded">Unban</button>
-                {:else}
-                  <button on:click={() => banUser(user.id)} class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded">Ban</button>
-                {/if}
-              </td>
-          </tr>
-          {/each}
-      </tbody>
+        {#each filteredUsers as user (user.user_id)}
+         <tr class="border-b">
+             <td class="py-2 px-4">{user.user_id}</td>
+             <td class="py-2 px-4">{user.user_name}</td>
+             <td class="py-2 px-4">{user.user_email}</td>
+             <td class="py-2 px-4">
+               {#if user.user_status == "Banned"}
+                 <span class="text-red-500">เเบน</span>
+               {:else}
+                 <span class="text-green-500">ปกติ</span>
+               {/if}
+             </td>
+             <td class="py-2 px-4">
+               {#if user.user_status == "Banned"}
+                 <button on:click={() => unbanUser(user.user_id)} class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded">ปลดเเบน</button>
+               {:else}
+                 <button on:click={() => openBanModal(user.user_id)} class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-1 px-2 rounded">เเบน</button>
+               {/if}
+               <button on:click={() => openDeleteModal(user.user_id)} class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded">ลบบัญชี</button>
+             </td>
+         </tr>
+        {/each}
+     </tbody>
       </table>
   </div>
     {:else if activeMenu === "reportManagement"}
@@ -766,6 +857,88 @@
       </div>
   {/if}
   
+  <!-- ฺban modal -->
+{#if showBanModal}
+<div
+  class="fixed inset-0 bg-gray-500 bg-opacity-40 flex justify-center items-center z-50 transform">
+  <div 
+    class="bg-white p-10 rounded-lg shadow-xl w-[65vw] max-w-xl max-h-[50vh] space-y-6 border overflow-y-auto">
+      <h2 
+        class="text-2xl font-semibold text-gray-800">เเบนผู้ใช้</h2>
+    <form>
+      <div class="space-y-4">
+        <div>
+            <label for="reason" class="block text-gray-600">เหตุผลที่ทำการเเบน</label>
+            <textarea
+              id="reason"
+              bind:value={reason}
+              class="w-full px-4 py-2 border rounded-lg shadow-sm" required></textarea>
+        </div>
+      </div>
+      <div class="space-y-4">
+        <div>
+            <label for="date" class="block text-gray-600">เเบนจนถึงวันที่</label>
+            <input
+              id="date"
+              bind:value={date}
+              type="date"
+              class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-4 mt-6">
+        <button
+        type="button"
+        on:click={closeBanModal}
+        class="bg-red-500 text-white p-2 pl-5 pr-5 rounded-lg hover:bg-red-600">ยกเลิก</button>
+
+        <button
+        type="submit"
+        on:click={banUser}
+        class="bg-green-500 text-white p-2 pl-5 pr-5 rounded-lg hover:bg-green-600">เเบน</button>
+      </div>
+
+    </form>
+  </div>
+</div>
+{/if}
+
+
+<!-- delete book -->
+{#if showDeleteModal}
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-40 flex justify-center items-center z-50 transform">
+  <div 
+    class="bg-white p-10 rounded-lg shadow-xl w-[65vw] max-w-xl max-h-[50vh] space-y-6 border overflow-y-auto">
+      <h2 
+        class="text-2xl font-semibold text-gray-800">ลบบัญชีผู้ใช้</h2>
+    <form>
+      <div class="space-y-4">
+        <div>
+            <label for="reason" class="block text-gray-600">เหตุผลที่ทำการลบ</label>
+            <textarea
+              id="reason"
+              bind:value={reason}
+              class="w-full px-4 py-2 border rounded-lg shadow-sm" required></textarea>
+              <p>⚠️ คำเตือนการลบจะไม่สามารถย้อนกลับได้</p>
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-4 mt-6">
+        <button
+        type="button"
+        on:click={closeDeleteModal}
+        class="bg-red-500 text-white p-2 pl-5 pr-5 rounded-lg hover:bg-red-600">ยกเลิก</button>
+
+        <button
+        type="button"
+        on:click={deleteUser}
+        class="bg-green-500 text-white p-2 pl-5 pr-5 rounded-lg hover:bg-green-600">ลบ</button>
+      </div>
+    </form>
+  </div>
+</div>
+{/if}
+
   </div>
   
   <link
