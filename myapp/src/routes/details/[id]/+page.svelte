@@ -445,7 +445,8 @@
               {book.book_name_originl}
             </h1>
             <div class="flex items-center">
-              <Rating id="example-3" total={5} rating={book.book_score}></Rating>
+              <Rating id="example-3" total={5} rating={book.book_score}
+              ></Rating>
 
               <!-- {@html generateStars(book.book_score)}
                             <span class="text-gray-800 ml-7 text-lg"
