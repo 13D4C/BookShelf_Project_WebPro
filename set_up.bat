@@ -25,12 +25,22 @@ if errorlevel 1 (
     )
 
     echo Node.js (and npm) installed successfully.
-    echo You may need to restart your command prompt or terminal for the changes to take effect.
-    pause  REM Allow user to see the message
-    exit /b 1  REM Exit so they can restart the command prompt
+    echo.
+    echo IMPORTANT:  The PATH environment variable may not be updated in this window.
+    echo Please close this window and open a NEW command prompt.
+    echo Then, re-run this script, or run 'npm -v' and 'node -v' to verify.
+    echo.
+    pause
+    exit /b 1  REM Exit so they can restart
 )
 
 echo npm is installed.
+
+REM --- Refresh PATH (Attempt, but not guaranteed in this session) ---
+set "PATH=%PATH%;C:\Program Files\nodejs\"
+REM This next line is LESS likely to be needed, but might help in some cases
+set "PATH=%PATH%;%USERPROFILE%\AppData\Roaming\npm"
+echo Attempting to refresh PATH in this session (may not work).
 
 REM --- Navigate to myapp ---
 pushd "%~dp0myapp" 2>nul
