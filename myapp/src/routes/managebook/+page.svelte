@@ -36,7 +36,6 @@
         release_date: "",
         language: "",
         publisher_id: "",
-        stock: 0
     }
 
     let book_update: any = {
@@ -50,7 +49,6 @@
         book_image: "",
         release_date: "",
         language: "",
-        stock: 0
     }
 
     let DeleteisOpen = false;
@@ -247,7 +245,6 @@
         book_update.book_price = data.book_price;
         book_update.book_pages = data.book_pages;
         book_update.book_image = data.book_image;
-        book_update.stock = data.stock;
         book_update.release_date = data.release_date.split("T")[0];
         console.log(data.release_date)
         book_update.language = data.language;
@@ -327,7 +324,6 @@
         book_upload.book_image = ""
         book_upload.release_date = ""
         book_upload.language = ""
-        book_upload.stock = ""
     }
 
     async function updateBook() {
@@ -359,7 +355,7 @@
     
 
     function validateForm() {
-        isFormValid = book_upload.book_name_th && book_upload.book_name_originl && book_upload.book_descriptions && book_upload.book_price && book_upload.book_category && book_upload.book_pages && book_upload.language && book_upload.release_date && book_upload.stock;
+        isFormValid = book_upload.book_name_th && book_upload.book_name_originl && book_upload.book_descriptions && book_upload.book_price && book_upload.book_category && book_upload.book_pages && book_upload.language && book_upload.release_date;
     }
     
 </script>
@@ -619,15 +615,6 @@
                     class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
                 </div>
                 <div>
-                    <label for="stock" class="block text-gray-600">จำนวนสินค้าในคลัง</label>
-                    <input
-                    bind:value={book_upload.stock}
-                    on:input={validateForm}
-                    id="stock"
-                    type="number"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
-                </div>
-                <div>
                     <label for="image" class="block text-gray-600">รูปภาพ</label>
                     <input
                     on:change={handleFileChange}
@@ -745,14 +732,6 @@
                     bind:value={book_update.release_date}
                     id="date"
                     type="date"
-                    class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
-                </div>
-                <div>
-                    <label for="stock" class="block text-gray-600">จำนวนสินค้าในคลัง</label>
-                    <input
-                    bind:value={book_update.stock}
-                    id="stock"
-                    type="number"
                     class="w-full px-4 py-2 border rounded-lg shadow-sm" required />
                 </div>
                 <div>

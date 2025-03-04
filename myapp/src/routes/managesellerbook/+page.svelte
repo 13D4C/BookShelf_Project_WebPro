@@ -20,7 +20,6 @@
         description: "",
         book_price: 0,
         book_image: "",
-        stock: 0,
         owner_id: "",
     };
 
@@ -30,7 +29,6 @@
         description: "",
         book_price: 0,
         book_image: "",
-        stock: 0,
     };
 
     let DeleteisOpen = false;
@@ -268,7 +266,6 @@
         book_update.description = data.description;
         book_update.book_price = data.book_price;
         book_update.book_image = data.book_image;
-        book_update.stock = data.stock;
         updateisOpen = true;
         updateBookId = seller_book_id;
     }
@@ -341,7 +338,6 @@
         book_upload.book_price = 0;
         book_upload.book_image = "";
         book_upload.owner_id = "";
-        book_update.stock = 0;
     }
 
     async function updateBook() {
@@ -604,19 +600,6 @@
                             />
                         </div>
                         <div>
-                            <label for="stock" class="block text-gray-600"
-                                >จำนวนสินค้าในคลัง</label
-                            >
-                            <input
-                                id="stock"
-                                bind:value={book_upload.stock}
-                                on:input={validateForm}
-                                type="number"
-                                class="w-full px-4 py-2 border rounded-lg shadow-sm"
-                                required
-                            />
-                        </div>
-                        <div>
                             <label for="image" class="block text-gray-600"
                                 >รูปภาพ</label
                             >
@@ -731,20 +714,6 @@
                                 required
                             />
                         </div>
-
-                        <div>
-                            <label for="stock" class="block text-gray-600"
-                                >จำนวนสินค้าในคลัง</label
-                            >
-                            <input
-                                bind:value={book_update.stock}
-                                id="stock"
-                                type="number"
-                                class="w-full px-4 py-2 border rounded-lg shadow-sm"
-                                required
-                            />
-                        </div>
-
                         <div>
                             <label for="image" class="block text-gray-600"
                                 >รูปภาพ</label
