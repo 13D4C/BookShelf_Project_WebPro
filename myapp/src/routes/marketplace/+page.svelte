@@ -33,13 +33,13 @@
   }
 
   $: filteredProducts = selectedCategory
-    ? products.filter((product) => product.category === selectedCategory)
+    ? products.filter((product) => product.book_category === selectedCategory)
     : products;
 
   $: searchedProducts = searchTerm
     ? filteredProducts.filter(
         (product) =>
-          product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          product.book_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           product.description.toLowerCase().includes(searchTerm.toLowerCase()),
       )
     : filteredProducts;
@@ -47,35 +47,21 @@
   $: sortedProducts = (() => {
     let sorted = [...searchedProducts];
     if (sortBy === "price-asc") {
-      sorted.sort((a, b) => a.price - b.price);
+      sorted.sort((a, b) => a.book_price - b.book_price);
     } else if (sortBy === "price-desc") {
-      sorted.sort((a, b) => b.price - a.price);
+      sorted.sort((a, b) => b.book_price - a.book_price);
     } else if (sortBy === "newest") {
-      sorted.sort((a, b) => b.id - a.id);
+      sorted.sort((a, b) => b.seller_book_idid - a.seller_book_idid);
     }
     return sorted;
   })();
 
-  $: categories = [...new Set(products.map((product) => product.category))];
+  $: categories = [...new Set(products.map((product) => product.book_category))];
 
-  function checkAndRedirect(token, routeId) {
-    const isAuthRoute = routeId === "/" || routeId === "/Register";
-
-    if (!token && !isAuthRoute) {
-      goto("/");
-    } else {
-      isLoading.set(false);
-    }
-  }
   onMount(async () => {
       userToken = localStorage.getItem("userToken");
       await fetchProducts();
     });
-
-  // Function to navigate to the seller's profile  --  UPDATED!
-  function goToSellerProfile(userId: string) {
-    goto(`/storeProfile/${userId}`); //  <--  CHANGED HERE
-  }
 
   function goToBookDetail(bookId) {
     goto(`/marketdetails/${bookId}`);
@@ -130,22 +116,17 @@
             <div class="p-4">
               <h2 class="text-xl font-semibold mb-2">{product.book_name}</h2>
               <p class="text-gray-600 mb-2">{product.description}</p>
+              <div class="flex items-center">
+                <img
+                  src={product.user_image}
+                  alt={product.user_name}
+                  class="w-8 h-8 rounded-full mr-2"
+                />
+                <p>{product.user_name}</p>
+              </div>
               <p class="text-green-600 font-bold text-lg mb-2">
                 ฿{product.book_price.toLocaleString()}
               </p>
-              <!-- <div class="flex items-center">
-                <img
-                  src={product.seller.profilePic}
-                  alt={product.seller.name}
-                  class="w-8 h-8 rounded-full mr-2"
-                />
-                <button
-                  on:click={() => goToSellerProfile(product.seller.userId)}
-                  class="text-sm text-blue-600 hover:underline focus:outline-none"
-                >
-                  {product.seller.name}
-                </button>
-              </div> -->
               <button
                     class="mt-2 w-full bg-blue-500 text-white py-2 rounded"
                     on:click={() => goToBookDetail(product.seller_book_id)}

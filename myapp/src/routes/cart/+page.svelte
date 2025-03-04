@@ -26,15 +26,10 @@
     }
   }
 
-  function toggleSelectAll() {
-    selectAll = !selectAll;
-    cart = cart.map((item) => ({ ...item, selected: selectAll }));
-  }
 
   //  Modify getTotalPrice to use filteredCart
   function getTotalPrice() {
     let total = filteredCart.reduce((sum, item) => {
-      // Use filteredCart
       return sum + item.book_price * item.amount;
     }, 0);
     return total.toFixed(2);
@@ -56,16 +51,45 @@
       (item) => item.item_id === filteredCart[index].item_id,
     );
     const itemToRemove = cart[originalIndex];
+    if (itemToRemove.type === "official"){
+      try {
+        const response = await fetch(
+          "http://localhost:3000/shop/publisher/cart/delete",
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ item_id: itemToRemove.item_id }),
+          },
+        );
 
+        if (!response.ok) {
+          if (response.status === 400) {
+            const errorData = await response.json();
+            alert(errorData.error);
+          } else {
+            throw new Error(`Network response was not ok: ${response.status}`);
+          }
+        }
+
+        const data = await response.json();
+        //  Remove the item from the local cart array using the original index
+        cart = cart.filter((_, i) => i !== originalIndex);
+      } catch (error) {
+        alert("Failed to remove item from cart. Please try again.");
+      }
+    }
+  else {
     try {
       const response = await fetch(
-        "http://localhost:3000/shop/publisher/cart/delete",
+        "http://localhost:3000/shop/seller/cart/delete",
         {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ item_id: itemToRemove.item_id }),
+          body: JSON.stringify({ seller_item_id: itemToRemove.seller_item_id }),
         },
       );
 
@@ -79,11 +103,11 @@
       }
 
       const data = await response.json();
-      //  Remove the item from the local cart array using the original index
       cart = cart.filter((_, i) => i !== originalIndex);
     } catch (error) {
       alert("Failed to remove item from cart. Please try again.");
     }
+  }
   }
 
   async function fetchCart() {
@@ -120,7 +144,6 @@
       }
 
       const data2 = await response2.json();
-      // Assuming 'cart_info' contains both official and seller items
       let officialCart = data.cart_info
         ? data.cart_info.map((item) => ({ ...item, type: "official" }))
         : [];
@@ -129,7 +152,6 @@
         : [];
 
       cart = [...officialCart, ...sellerCart];
-      console.log(cart);
     } catch (error) {
       console.error("Skibidi Error", error);
     }
@@ -220,7 +242,7 @@
           Seller
         </button>
       </div>
-
+      {#if filterType === "official"}
       {#each filteredCart as item, index (item.item_id)}
         <div class="flex items-center gap-4 border-b pb-4 mb-4">
           <img
@@ -261,6 +283,48 @@
       {:else}
         <p>ไม่มีสินค้าในตะกร้า</p>
       {/each}
+      {:else}
+      {#each filteredCart as item, index (item.seller_item_id)}
+        <div class="flex items-center gap-4 border-b pb-4 mb-4">
+          <img
+            src={item.book_image}
+            alt="Product"
+            class="w-20 h-20 object-cover rounded-lg"
+          />
+          <div class="flex-1">
+            <h3 class="text-sm font-medium">{item.book_name_th}</h3>
+            <p class="text-lg font-semibold text-blue-600">
+              {item.book_price} บาท
+            </p>
+            <!-- Display item type (optional, for debugging) -->
+            <!-- <p class="text-xs text-gray-500">Type: {item.type}</p>  -->
+          </div>
+          <div class="flex items-center">
+            <button
+              class="px-2 py-1 border rounded"
+              on:click={() => updateQuantity(index, -1)}
+            >
+              -
+            </button>
+            <span class="px-4">{item.amount}</span>
+            <button
+              class="px-2 py-1 border rounded"
+              on:click={() => updateQuantity(index, 1)}
+            >
+              +
+            </button>
+          </div>
+          <button
+            class="text-gray-500 hover:text-red-500"
+            on:click={() => removeItem(index)}
+          >
+            🗑️
+          </button>
+        </div>
+      {:else}
+        <p>ไม่มีสินค้าในตะกร้า</p>
+      {/each}
+      {/if}
     </div>
 
     <!-- Order Summary -->
@@ -279,7 +343,7 @@
 
       <button
         class="w-full bg-green-500 text-white py-2 rounded mt-4"
-        on:click={() => goto("/checkout")}
+        on:click={() => goto(`/checkout?type=${filterType}`)}
       >
         ดำเนินการต่อ
       </button>

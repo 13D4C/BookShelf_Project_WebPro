@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
-  import { getUser } from "$lib/utils";
+  import { getUser } from "$lib/utils"; // Make sure this path is correct
   import { writable } from "svelte/store";
 
   // --- State & Variables ---
@@ -13,10 +13,11 @@
   let qrCodeImage: string | null = null;
   let idCardImage: string | null = null;
   let isOpen = false; // For mobile menu
-  let expandedOrder: null = null;
+  let expandedOrderId = null;
 
-  // --- Orders Data (Example) ---
-  let orders: string | any[] = [];
+  // --- Orders Data ---
+  let orders: any[] = []; //  Use any[] for more flexibility
+  let seller_orders: any[] = []; // Use any[]
 
   // --- Helper Functions ---
 
@@ -29,9 +30,13 @@
     switch (status) {
       case "กำลังดำเนินการ":
         return "text-yellow-500";
+      case "Waiting for review": // Added to handle new status
+        return "text-blue-500";
       case "จัดส่งแล้ว":
         return "text-green-500";
-      case "คืนสินค้า":
+      case "สำเร็จ":  // Consider adding "สำเร็จ"
+        return "text-green-500"
+      case "คืนสินค้า": // Or "ยกเลิก" if that's what you use
         return "text-red-500";
       default:
         return "text-gray-500";
@@ -46,6 +51,22 @@
   }
 
   // --- Event Handlers ---
+  // ... (updateUser, handleFileUpload, submitShopRequest remain the same) ...
+
+  function handleFileUpload(event: Event, type: "qr" | "id") {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (type === "qr") {
+          qrCodeImage = e.target?.result as string;
+        } else {
+          idCardImage = e.target?.result as string;
+        }
+      };
+      reader.readAsDataURL(target.files[0]);
+    }
+  }
 
   async function updateUser(event: Event) {
     event.preventDefault();
@@ -92,22 +113,6 @@
       alert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล!");
     }
   }
-
-  function handleFileUpload(event: Event, type: "qr" | "id") {
-    const target = event.target as HTMLInputElement;
-    if (target.files && target.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (type === "qr") {
-          qrCodeImage = e.target?.result as string;
-        } else {
-          idCardImage = e.target?.result as string;
-        }
-      };
-      reader.readAsDataURL(target.files[0]);
-    }
-  }
-
   async function submitShopRequest(event: Event) {
     event.preventDefault();
 
@@ -168,43 +173,169 @@
   function closeMenu() {
     isOpen = false;
   }
-  function toggleOrderDetails(orderId) {
-    if (expandedOrder === orderId) {
-      expandedOrder = null;
-    } else {
-      expandedOrder = orderId;
+
+  // --- Order Details Toggle ---
+  function toggleOrderDetails(orderId: string | number) {
+      // Use type assertion since expandedOrder can be string | number | null
+      expandedOrderId = expandedOrderId === orderId ? null : orderId;
+  }
+
+  // --- Image Upload for Orders (Integrated) ---
+  let fileInputs = {};  // Store file input refs per orderId
+  let base64Images = {}; // Store Base64 strings per orderId
+
+    function handleFileChangeOrder(orderId: string | number, event: Event) {
+    const target = event.target as HTMLInputElement;
+    const file = target.files && target.files[0];
+    if (!file) {
+      base64Images = { ...base64Images, [orderId]: "" }; // Clear if no file
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+       base64Images = { ...base64Images, [orderId]: "" }; // Clear if no file
+      if (fileInputs[orderId]) {
+        fileInputs[orderId].value = ""; // Clear input
+      }
+      return;
+    }
+
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if(file.size > maxSize){
+            alert("File size exceeds the limit (5MB).");
+            base64Images = { ...base64Images, [orderId]: "" }; // Clear if no file
+            if (fileInputs[orderId]) {
+                fileInputs[orderId].value = ""; // Clear input
+            }
+            return;
+        }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Use object spread for immutability
+      base64Images = { ...base64Images, [orderId]: reader.result as string };
+    };
+     reader.onerror = () => {
+        base64Images = { ...base64Images, [orderId]: "" };
+        alert("Error reading file.");
+        if (fileInputs[orderId]) {
+            fileInputs[orderId].value = ""; // Clear input
+        }
+      };
+    reader.readAsDataURL(file);
+  }
+
+
+   async function uploadSlip(orderId: string | number) {
+    if (!base64Images[orderId]) {
+      alert("Please select a payment slip image.");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://localhost:3000/shop/publisher/payment/upload-proof",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            order_id: orderId,
+            payment_slip: base64Images[orderId],
+            // payment_time: new Date().toISOString()  // No need, backend handles this
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMessage =
+          errorData.message || "Failed to upload payment proof.";
+        alert(errorMessage);
+        return;
+      }
+
+      // Success!  Update UI (e.g., refetch orders, show a message)
+      alert("Payment proof submitted successfully!");
+
+       // Find the order in the 'orders' array and update its status *and* payment_slip
+        orders = orders.map(order => {
+            if (order.order_id === orderId) {
+                return { ...order, payment_slip: base64Images[orderId], order_status: "Waiting for review" }; //Update status
+            }
+            return order;
+        });
+
+
+    } catch (error) {
+        console.error("Error uploading slip:", error);
+      alert(`Error: ${error.message}`); // Display error to user
     }
   }
 
+  // --- Fetch Orders ---
   async function getOrder() {
     try {
       const response = await fetch(
-        `http://localhost:3000/shop/publisher/order?token=${userToken}`,
+        `http://localhost:3000/shop/publisher/order?token=${userToken}`
       );
-      const data = await response.json();
-      if (data) {
-        orders = data;
-      } else {
-        orders = [];
-      }
+      if (!response.ok) {
+          throw new Error(`Publisher API Error: ${response.status} - ${await response.text()}`);
+        }
+      const publisherData = await response.json();
+      orders = publisherData;
+
+
+      const response2 = await fetch(
+        `http://localhost:3000/shop/seller/order?token=${userToken}`
+      );
+       if (!response2.ok) {
+          throw new Error(`Seller API Error: ${response2.status} - ${await response2.text()}`);
+        }
+      const sellerData = await response2.json();
+      seller_orders = sellerData;
+
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching orders:", err);
+      orders = [];
+      seller_orders = [];
+      alert(`Error fetching orders: ${err.message}`); // Show error to the user
     }
   }
 
+  // --- Lifecycle Hook ---
   onMount(async () => {
     userToken = localStorage.getItem("userToken");
-    await getUser(userToken).then((data) => {
-      user = data;
-      user.user_name = user.user_name || "N/A";
-      user.user_firstname = user.user_firstname || "N/A";
-      user.user_lastname = user.user_lastname || "N/A";
-      user.user_email = user.user_email || "N/A";
-      user.user_image = user.user_image || "/placeholder-profile.png"; // Default image
-    });
+    if (!userToken) {
+        goto("/login"); // Redirect to login if no token
+        return;
+    }
+    try {
+        const userData = await getUser(userToken);
+        if (userData) {
+          user = userData;
+          user.user_name = user.user_name || "N/A";
+          user.user_firstname = user.user_firstname || "N/A";
+          user.user_lastname = user.user_lastname || "N/A";
+          user.user_email = user.user_email || "N/A";
+          user.user_image = user.user_image || "/placeholder-profile.png"; // Default image
+        } else {
+          // Handle case where getUser returns null (e.g., invalid token)
+          console.error("Failed to fetch user data");
+          goto("/login"); // Redirect to login
+          return;
+        }
+    }
+    catch (error){
+        console.error("On mount error", error);
+        goto("/login");
+        return;
+    }
+
     await getOrder();
     isLoading.set(false);
-    console.log(orders);
   });
 </script>
 
@@ -324,8 +455,7 @@
                     ชื่อบัญชี: <span class="font-normal">{user.user_name}</span>
                   </p>
                   <p class="text-gray-600">
-                    ชื่อจริง: {user.user_firstname}
-                    {user.user_lastname}
+                    ชื่อจริง: {user.user_firstname} {user.user_lastname}
                   </p>
                   <p class="text-gray-600">อีเมล: {user.user_email}</p>
                 </div>
@@ -389,64 +519,138 @@
               </form>
             </div>
           {:else if activeMenu === "orders"}
-            <div class="bg-white rounded-lg shadow-md p-6">
+           <div class="bg-white rounded-lg shadow-md p-6">
               <h1 class="text-2xl font-semibold mb-4">คำสั่งซื้อของฉัน</h1>
-              {#if orders.length === 0}
+
+              {#if orders.length === 0 && seller_orders.length === 0}
                 <p class="text-gray-600">ไม่มีคำสั่งซื้อในขณะนี้</p>
               {:else}
+               {#if orders.length > 0}
+                <h2 class="text-lg font-semibold mb-2">Publisher Orders</h2>
                 <div class="overflow-x-auto">
                   <table class="min-w-full">
                     <thead class="bg-gray-100">
                       <tr>
-                        <th
-                          class="py-2 px-4 text-left text-sm font-medium text-gray-600"
-                        >
-                          Order ID
-                        </th>
-                        <th
-                          class="py-2 px-4 text-left text-sm font-medium text-gray-600"
-                        >
-                          วันที่
-                        </th>
-                        <th
-                          class="py-2 px-4 text-left text-sm font-medium text-gray-600"
-                        >
-                          สถานะ
-                        </th>
-                        <th
-                          class="py-2 px-4 text-left text-sm font-medium text-gray-600"
-                        >
-                          ยอดรวม
-                        </th>
-                        <!-- Removed the "รายการ" header -->
+                        <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">Order ID</th>
+                        <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">วันที่</th>
+                        <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">สถานะ</th>
+                        <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">ยอดรวม</th>
+                        <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">การจ่ายเงิน</th>
+                        <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">รายละเอียด</th>
                       </tr>
                     </thead>
                     <tbody>
                       {#each orders as order (order.order_id)}
-                        <tr
-                          class="border-b cursor-pointer"
-                          on:click={() => toggleOrderDetails(order.order_id)}
-                        >
+                        <tr class="border-b">
                           <td class="py-2 px-4 text-sm">{order.order_id}</td>
+                          <td class="py-2 px-4 text-sm">{formatDate(order.order_time)}</td>
+                          <td class="py-2 px-4 text-sm {getStatusColor(order.order_status)}">{order.order_status}</td>
+                          <td class="py-2 px-4 text-sm">{formatCurrency(order.total_price)}</td>
                           <td class="py-2 px-4 text-sm">
-                            {formatDate(order.order_time)}
+                            {#if order.payment_slip}
+                              <span class="text-green-500">ส่งสลิปแล้ว</span>
+                            {:else}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                bind:this={fileInputs[order.order_id]}
+                                on:change={(event) => handleFileChangeOrder(order.order_id, event)}
+                              />
+                              <button on:click|stopPropagation={() => uploadSlip(order.order_id)} class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mt-1">Upload</button>
+                            {/if}
                           </td>
-                          <td
-                            class="py-2 px-4 text-sm {getStatusColor(
-                              order.order_status,
-                            )}"
-                          >
-                            {order.order_status}
-                          </td>
-                          <td class="py-2 px-4 text-sm">
-                            {formatCurrency(order.total_price)}
-                          </td>
-                          <!-- Removed the "Show/Hide Details" cell -->
+                           <td class="py-2 px-4"><button on:click={() => toggleOrderDetails(order.order_id)} class="text-blue-500 hover:underline">
+                                {expandedOrderId === order.order_id ? 'Hide Details' : 'Show Details'}
+                            </button></td>
                         </tr>
-                        {#if expandedOrder === order.order_id}
+                        {#if expandedOrderId === order.order_id}
                           <tr>
-                            <td colspan="4">
+                            <td colspan="6" class="p-4 bg-gray-50">
+                               {#if base64Images[order.order_id]}
+                                   <img src={base64Images[order.order_id]} alt="Uploaded Slip" style="max-width: 200px;"/>
+                                {/if}
+                              <!-- Display other order details here -->
+                              <p>Fullname: {order.fullname}</p>
+                              <p>Email: {order.email}</p>
+                               <p>Phone: {order.phone}</p>
+                               <p>Address: {order.address}</p>
+                               {#each order.items as item}
+                                  <div
+                                    class="mb-2 border-b pb-2 flex items-start"
+                                  >
+                                    {#if item.book_image}
+                                      <img
+                                        src={item.book_image}
+                                        alt={item.book_name}
+                                        class="w-24 h-auto mr-4"
+                                      />
+                                    {/if}
+                                    <div>
+                                      <p class="font-semibold">
+                                        {item.book_name}
+                                      </p>
+                                      <p>
+                                        <span class="font-semibold">Price:</span
+                                        >
+                                        {formatCurrency(item.book_price)} x {item.amount}
+                                      </p>
+                                      <p>
+                                        <span class="font-semibold">Total:</span
+                                        >
+                                        {formatCurrency(
+                                          item.book_price * item.amount,
+                                        )}
+                                      </p>
+                                    </div>
+                                  </div>
+                                {/each}
+                            </td>
+                          </tr>
+                        {/if}
+                      {/each}
+                    </tbody>
+                  </table>
+                </div>
+                {/if}
+
+                {#if seller_orders.length > 0}
+                 <h2 class="text-lg font-semibold mb-2 mt-6">Seller Orders</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                      <thead class="bg-gray-100">
+                        <tr>
+                          <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">Order ID</th>
+                          <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">วันที่</th>
+                          <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">สถานะ</th>
+                          <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">ยอดรวม</th>
+                          <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">การจ่ายเงิน</th>
+                          <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">รายละเอียด</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                      {#each seller_orders as order (order.order_id)}
+                        <tr class="border-b">
+                        <td class="py-2 px-4 text-sm">{order.order_id}</td>
+                          <td class="py-2 px-4 text-sm">{formatDate(order.order_time)}</td>
+                          <td class="py-2 px-4 text-sm {getStatusColor(order.order_status)}">{order.order_status}</td>
+                          <td class="py-2 px-4 text-sm">{formatCurrency(order.total_price)}</td>
+                          <td class="py-2 px-4 text-sm">
+                           {#if order.payment_slip}
+                              <span class="text-green-500">ส่งสลิปแล้ว</span>
+                            {:else}
+                             <p>Feature coming soon</p>
+                            {/if}
+                          </td>
+                           <td class="py-2 px-4"><button on:click={() => toggleOrderDetails(order.order_id)} class="text-blue-500 hover:underline">
+                                {expandedOrderId === order.order_id ? 'Hide Details' : 'Show Details'}
+                            </button></td>
+                        </tr>
+
+                        {#if expandedOrderId === order.order_id}
+                          <tr>
+                            <td colspan="5">
                               <div class="p-4 bg-gray-50">
+
                                 {#each order.items as item}
                                   <div
                                     class="mb-2 border-b pb-2 flex items-start"
@@ -454,13 +658,13 @@
                                     {#if item.book_image}
                                       <img
                                         src={item.book_image}
-                                        alt={item.book_name_th}
+                                        alt={item.book_name}
                                         class="w-24 h-auto mr-4"
                                       />
                                     {/if}
                                     <div>
                                       <p class="font-semibold">
-                                        {item.book_name_th}
+                                        {item.book_name}
                                       </p>
                                       <p>
                                         <span class="font-semibold">Price:</span
@@ -482,9 +686,10 @@
                           </tr>
                         {/if}
                       {/each}
-                    </tbody>
-                  </table>
-                </div>
+                      </tbody>
+                    </table>
+                  </div>
+                {/if}
               {/if}
             </div>
           {:else if activeMenu === "shopRequest"}

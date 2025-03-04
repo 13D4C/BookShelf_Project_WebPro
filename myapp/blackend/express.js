@@ -1465,6 +1465,7 @@ app.post('/shop/seller/cart/add' , async (req, res) => {
 app.delete('/shop/seller/cart/delete' , async (req, res) => {
     try {
         const { seller_item_id }  = req.body;
+        console.log(req.body);
 
         if ( !seller_item_id) {
             return res.status(400).json({ error: 'Information all is required' });
@@ -1507,6 +1508,7 @@ app.post('/shop/seller/cart/get' , async (req, res) => {
                 c.user_id,
                 co.seller_item_id,
                 co.seller_book_id,
+                co.amount,
                 b.book_name,
                 b.book_price,
                 b.book_image
@@ -1558,7 +1560,7 @@ app.post('/shop/publisher/order/create' , async (req, res) => {
                     console.log(owner);
                     let insert_order = await queryDatabase(
                         `INSERT INTO order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname, status_time, order_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp());`, 
-                        [decodedToken.user_id, owner.user_id, item.total_price, "กำลังดำเนินการ", phone, email, address, fullname]
+                        [decodedToken.user_id, owner.user_id, item.total_price, "รอการชำระเงิน", phone, email, address, fullname]
                     );
                     let traverst_cart = await queryDatabase(
                         `SELECT c.item_id , bd.publisher_id FROM cart c
@@ -1616,7 +1618,6 @@ app.get('/shop/publisher/order', async (req, res) => {
         if (orders.length === 0) {
             return res.status(204).json({ message: "No orders found for this user" });
         }
-
         const ordersWithDetails = [];
 
         for (const order of orders) {
@@ -1663,7 +1664,8 @@ app.get('/shop/publisher/order', async (req, res) => {
                 fullname: order.fullname,
                 status_time: order.status_time,
                 order_time: order.order_time,
-                items: itemDetails, // Add the array of item details
+                payment_slip: order.payment_slip,
+                items: itemDetails,
             });
         }
 
@@ -1677,6 +1679,84 @@ app.get('/shop/publisher/order', async (req, res) => {
         });
     }
 });
+
+app.get('/shop/seller/order', async (req, res) => {
+    try {
+        const { token } = req.query;
+
+        if (!token) {
+            return res.status(400).json({ error: 'Token is required' });
+        }
+
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+
+        const orders = await queryDatabase(
+            `SELECT * FROM seller_order_list WHERE user_id = ? ORDER BY order_time DESC`,
+            [decodedToken.user_id]
+        );
+
+        if (orders.length === 0) {
+            return res.status(204).json({ message: "No orders found for this user" });
+        }
+
+        const ordersWithDetails = [];
+
+        for (const order of orders) {
+            const orderItems = await queryDatabase(
+                `SELECT seller_item_id FROM seller_order_bridge WHERE seller_order_id = ?`,
+                [order.seller_order_id]
+            );
+
+            const itemDetails = [];
+
+            for (const orderItem of orderItems) {
+                const itemDetail = await queryDatabase(
+                    `SELECT 
+                        co.seller_item_id,
+                        co.seller_book_id,
+                        co.amount,
+                        bd.book_name,
+                        bd.book_price,
+                        bd.owner_id,
+                        u.user_name,
+                        bd.book_image
+                     FROM seller_order co
+                     JOIN seller_book_detail bd ON co.seller_book_id = bd.seller_book_id
+                     JOIN user u ON bd.owner_id = u.user_id
+                     WHERE co.seller_item_id = ?`,
+                    [orderItem.seller_item_id]
+                );
+
+                if (itemDetail.length > 0) {
+                    itemDetails.push(itemDetail[0]);
+                }
+            }
+                ordersWithDetails.push({
+                  order_id: order.seller_order_id,
+                  owner_id: order.owner_id,
+                  total_price: order.total_price,
+                  order_status: order.order_status,
+                  phone: order.phone,
+                  email: order.email,
+                  address: order.address,
+                  fullname: order.fullname,
+                  status_time: order.status_time,
+                  order_time: order.order_time,
+                  payment_slip: order.payment_slip,
+                  items: itemDetails,
+                });
+        }
+        res.status(200).json(ordersWithDetails);
+
+    } catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to retrieve seller orders',
+            details: error.message
+        });
+    }
+});
+
 
 app.post('/shop/seller/order/create' , async (req, res) => {
     try {
@@ -1699,9 +1779,8 @@ app.post('/shop/seller/order/create' , async (req, res) => {
                 [decodedToken.user_id]);
                 for (const item of querry_seller_order) {
                     let insert_order = await queryDatabase(
-                        current_timestamp()
                         `INSERT INTO seller_order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname, order_time, status_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp());`, 
-                        [decodedToken.user_id, item.owner_id, item.total_price, "Payment Pending", phone, email, address, fullname]
+                        [decodedToken.user_id, item.owner_id, item.total_price, "รอการชำระเงิน", phone, email, address, fullname]
                     );
                 
                     console.log(insert_order);
@@ -1811,9 +1890,9 @@ app.get('/seller/all', async (req, res) => {
 
 app.post('/shop/publisher/payment/upload-proof' , async (req, res) => {
     try {
-        const { order_id, payment_slip, payment_time}  = req.body;
+        const { order_id, payment_slip}  = req.body;
 
-        if ( !order_id || !payment_slip || !payment_time) {
+        if ( !order_id || !payment_slip) {
             return res.status(400).json({ error: 'Information all is required' });
         }
 
@@ -1822,7 +1901,7 @@ app.post('/shop/publisher/payment/upload-proof' , async (req, res) => {
             return res.status(400).json({message: "Please wait for review"})
         }
 
-        await queryDatabase("UPDATE order_list SET payment_slip=?, payment_time=?, order_status=?, status_time=current_timestamp() WHERE order_id=?", [payment_slip, payment_time, "Waiting for review", order_id]);
+        await queryDatabase("UPDATE order_list SET payment_slip=?, payment_time=current_timestamp(), order_status=?, status_time=current_timestamp() WHERE order_id=?", [payment_slip, "กำลังดำเนินการ", order_id]);
         return res.status(200).json({message: "Payment proof submitted successfully"});
     }
     catch (error) {

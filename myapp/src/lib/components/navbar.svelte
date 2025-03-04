@@ -94,7 +94,10 @@
 		  }
   
 		  const data2 = await response2.json();
-		  cartCount += data2.cart_info.length;
+		  cartCount += data2.cart_info.reduce(
+			(total, item) => total + item.amount,
+			0,
+		  );
 		} catch (error) {
 		  console.error("Error fetching cart count:", error);
 		  cartCount = 0;

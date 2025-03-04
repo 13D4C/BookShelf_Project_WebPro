@@ -133,25 +133,27 @@
       address + " " + city + " " + province + " " + postalCode;
     // @ts-ignore
     try {
-      const response = await fetch(
-        "http://localhost:3000/shop/publisher/order/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token: userToken,
-            fullname: Name,
-            email,
-            phone,
-            address: shippingData,
-          }),
+      let url;
+      if ($page.url.searchParams.get("type") === "official") {
+        url = "http://localhost:3000/shop/publisher/order/create";
+      } else {
+        url = "http://localhost:3000/shop/seller/order/create";
+      }
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
-
+        body: JSON.stringify({
+          token: userToken,
+          fullname: Name,
+          email,
+          phone,
+          address: shippingData,
+        }),
+      });
       if (!response.ok) {
-        const errorData = await response.json(); // Get error details from response
+        const errorData = await response.json();
         throw new Error(
           errorData.error || "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ",
         ); // Throw error with server message
@@ -162,7 +164,6 @@
       email = "";
       phone = "";
       address = "";
-
       goto("/payment"); // Example redirect
     } catch (error) {
       console.error("Error creating order:", error);
@@ -175,26 +176,50 @@
     return total.toFixed(2);
   }
   async function fetchCart() {
-    try {
-      const response = await fetch(
-        "http://localhost:3000/shop/publisher/cart/get",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+    if ($page.url.searchParams.get("type") == "official") {
+      try {
+        const response = await fetch(
+          "http://localhost:3000/shop/publisher/cart/get",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token: userToken }),
           },
-          body: JSON.stringify({ token: userToken }),
-        },
-      );
+        );
 
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.status}`);
+        }
+
+        const data = await response.json();
+        cart = data.cart_info;
+      } catch (error) {
+        console.error("Error fetching cart count:", error);
       }
+    } else {
+      try {
+        const response = await fetch(
+          "http://localhost:3000/shop/seller/cart/get",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token: userToken }),
+          },
+        );
 
-      const data = await response.json();
-      cart = data.cart_info;
-    } catch (error) {
-      console.error("Error fetching cart count:", error);
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.status}`);
+        }
+
+        const data = await response.json();
+        cart = data.cart_info;
+      } catch (error) {
+        console.error("Error fetching cart count:", error);
+      }
     }
   }
 
