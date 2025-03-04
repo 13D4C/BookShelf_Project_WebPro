@@ -1,8 +1,36 @@
-npm Check and Installation (Global):
+@echo off
 
-Checks if npm is in the system's PATH.
+REM --- Check for npm and install if needed ---
+echo Checking for npm...
+where npm > nul 2>&1
+if errorlevel 1 (
+    echo npm is not installed. Installing using winget...
 
-If not found, it provides instructions for installing Node.js (which includes npm) and exits. This is a user-friendly approach.
+    REM Check if winget is available
+    where winget > nul 2>&1
+    if errorlevel 1 (
+        echo Error: winget (Windows Package Manager) is not available.
+        echo Please install Node.js manually from https://nodejs.org/
+        pause
+        exit /b 1
+    )
+
+    REM Install Node.js LTS using winget
+    winget install -e --id OpenJS.NodeJS.LTS
+    if errorlevel 1 (
+        echo Error: Failed to install Node.js using winget.
+        echo Please install Node.js manually from https://nodejs.org/
+        pause
+        exit /b 1
+    )
+
+    echo Node.js (and npm) installed successfully.
+    echo You may need to restart your command prompt or terminal for the changes to take effect.
+    pause  REM Allow user to see the message
+    exit /b 1  REM Exit so they can restart the command prompt
+)
+
+echo npm is installed.
 
 REM --- Check for Vite and install if needed ---
 echo Checking for Vite...
