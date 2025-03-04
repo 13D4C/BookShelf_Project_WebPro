@@ -2266,6 +2266,28 @@ app.patch('/shop/buyer/seller/order/received' , async (req, res) => {
     }
 });
 
+//เอาข้อมูลรายระเอียดร้านค่าต่างๆ เช่น = ชื่อ , QR_CODE เป็นต้น
+// user_id ใน param คือ user_id ของ publisher, seller
+app.get('/shop/information/get/:userId', async(req, res) => {
+    try {
+        const userId = req.params.userId;
+        if ( !userId ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+        const response = await queryDatabase(
+            `SELECT * FROM shop_list WHERE owner_id=?`, [userId]);
+        
+        return res.status(200).json({ shop_info: response});
+    }
+    catch(error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to get shop information',
+            details: error.message
+        });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
