@@ -20,14 +20,11 @@
 
 
   onMount(async () => {
-    page.subscribe(async ($page) => {
       userToken = localStorage.getItem("userToken");
-      checkAndRedirect(userToken, $page.route.id);
       await getUser(userToken).then((user) => {
         userId = user.user_id;
       });
     });
-  });
 
 
 
@@ -65,6 +62,7 @@
       errorMessage = "Failed to load book details. Please try again later.";
     } finally {
       isLoadingBook = false;
+      isLoading.set(false);
     }
 
     if (book.owner_id) {
@@ -85,22 +83,12 @@
         isLoadingRelatedBooks = false;
       }
     } else {
-      relatedBooks = []; // Clear related books if no serie_id
+      relatedBooks = [];
       isLoadingRelatedBooks = false;
     }
   }
 
-  function checkAndRedirect(token: string | null, routeId: string | null) {
-    const isAuthRoute = routeId === "/" || routeId === "/Register";
-
-    if (!token && !isAuthRoute) {
-      goto("/");
-    } else {
-      isLoading.set(false);
-    }
-  }
   const isLoading = writable(true);
-
   const API_BASE = "http://localhost:3000";
 
 

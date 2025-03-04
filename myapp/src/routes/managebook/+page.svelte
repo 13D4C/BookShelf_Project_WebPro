@@ -169,11 +169,7 @@
     onMount(async () => {
         if (browser) {
             cards = document.querySelectorAll(".book-card");
-            page.subscribe(($page) => {
-                userToken = localStorage.getItem("userToken");
-                checkAndRedirect(userToken, $page.route.id);
-
-            });
+            userToken = localStorage.getItem("userToken");
         }
         
         await getBooks();

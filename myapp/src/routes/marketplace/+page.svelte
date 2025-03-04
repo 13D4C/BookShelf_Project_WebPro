@@ -68,12 +68,9 @@
     }
   }
   onMount(async () => {
-    page.subscribe(async ($page) => {
       userToken = localStorage.getItem("userToken");
-      checkAndRedirect(userToken, $page.route.id);
       await fetchProducts();
     });
-  });
 
   // Function to navigate to the seller's profile  --  UPDATED!
   function goToSellerProfile(userId: string) {

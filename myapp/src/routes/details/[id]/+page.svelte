@@ -89,13 +89,11 @@
   }
 
   onMount(async () => {
-    page.subscribe(async ($page) => {
       userToken = localStorage.getItem("userToken");
-      checkAndRedirect(userToken, $page.route.id);
       await getUser(userToken).then((user) => {
         userId = user.user_id;
       });
-    });
+      isLoading.set(false);
     document.addEventListener("click", handleClickOutside);
     return () => {
       document.removeEventListener("click", handleClickOutside);

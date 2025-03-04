@@ -120,7 +120,6 @@
       }
 
       const data2 = await response2.json();
-      console.log(data2);
       // Assuming 'cart_info' contains both official and seller items
       let officialCart = data.cart_info
         ? data.cart_info.map((item) => ({ ...item, type: "official" }))
@@ -130,6 +129,7 @@
         : [];
 
       cart = [...officialCart, ...sellerCart];
+      console.log(cart);
     } catch (error) {
       console.error("Skibidi Error", error);
     }
@@ -187,12 +187,10 @@
   }
 
   onMount(async () => {
-    page.subscribe(async ($page) => {
-      userToken = localStorage.getItem("userToken");
-      checkAndRedirect(userToken, $page.route.id);
-      await fetchCart();
+    userToken = localStorage.getItem("userToken");
+    checkAndRedirect(userToken, $page.route.id);
+    await fetchCart();
     });
-  });
 </script>
 
 {#if $isLoading}
@@ -206,14 +204,18 @@
       <!-- Filter Buttons -->
       <div class="mb-4">
         <button
-          class="px-4 py-2 rounded {filterType === 'official' ? 'bg-blue-500 text-white' : 'bg-gray-200'}"
-          on:click={() => (filterType = 'official')}
+          class="px-4 py-2 rounded {filterType === 'official'
+            ? 'bg-blue-500 text-white'
+            : 'bg-gray-200'}"
+          on:click={() => (filterType = "official")}
         >
           Official
         </button>
         <button
-          class="px-4 py-2 rounded {filterType === 'seller' ? 'bg-blue-500 text-white' : 'bg-gray-200'}"
-          on:click={() => (filterType = 'seller')}
+          class="px-4 py-2 rounded {filterType === 'seller'
+            ? 'bg-blue-500 text-white'
+            : 'bg-gray-200'}"
+          on:click={() => (filterType = "seller")}
         >
           Seller
         </button>
@@ -266,7 +268,9 @@
       <h2 class="text-lg font-semibold mb-4">สรุปการสั่งซื้อ</h2>
       <div class="flex justify-between mb-2">
         <span>จำนวนหนังสือ</span>
-        <span>{filteredCart.reduce((sum, item) => sum + item.amount, 0)} เล่ม</span>
+        <span
+          >{filteredCart.reduce((sum, item) => sum + item.amount, 0)} เล่ม</span
+        >
       </div>
       <div class="flex justify-between font-bold text-lg">
         <span>ยอดสุทธิ</span>
@@ -275,13 +279,13 @@
 
       <button
         class="w-full bg-green-500 text-white py-2 rounded mt-4"
-        on:click={() => goto('/checkout')}
+        on:click={() => goto("/checkout")}
       >
         ดำเนินการต่อ
       </button>
       <button
         class="w-full border mt-2 py-2 rounded"
-        on:click={() => goto('/all')}
+        on:click={() => goto("/all")}
       >
         เลือกสินค้าต่อ
       </button>

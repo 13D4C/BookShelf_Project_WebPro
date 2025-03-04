@@ -569,9 +569,6 @@ async function deleteUser() {
       // Only fetch if logged in as admin
       await getAllUsers();
     }
-
-    // await getSellerRequests(); //Comment out during use mockup data.
-    page.subscribe(($page) => {});
   });
 </script>
 
