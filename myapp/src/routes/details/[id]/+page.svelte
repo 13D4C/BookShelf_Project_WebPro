@@ -427,9 +427,9 @@
                       style="background-color: {colorHex};"
                     >
                       <h1
-                        class="text-center text-xl font-bold text-white"
-                        style="font-size: {textSize}px; color:{colorHexText};"
-                      >
+    class="text-center text-xl font-bold text-white text-wrap whitespace-normal text-clip break-words w-full"
+    style="font-size: {textSize}px; color:{colorHexText};"
+  >
                         {inputText}
                       </h1>
                     </div>
@@ -500,17 +500,22 @@
                   bind:value={inputText}
                   placeholder="ชื่อหนังสือ"
                   class="border p-2 w-full"
-                  id="title"
+                  id="title" maxlength="50"
                 />
                 <label for="font" class="block">Font size (px):</label>
-                <input
-                  type="number"
-                  bind:value={textSize}
-                  min="1"
-                  class="border p-2 w-full"
-                  id="font"
-                />
-
+<input
+  type="number"
+  bind:value={textSize}
+  min="1"
+  max="100"
+  class="border p-2 w-full"
+  id="font"
+  on:input={(e) => {
+    if (e.target.value > 100) e.target.value = 100;
+    if (e.target.value < 1) e.target.value = 1;
+    textSize = parseInt(e.target.value);
+  }}
+/>
                 <!-- เมนูสำหรับเลือกสีข้อความ -->
                 <div class="relative" bind:this={menuElementText}>
                   <button
