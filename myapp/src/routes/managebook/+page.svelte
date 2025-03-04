@@ -426,7 +426,7 @@
                     </ul>
 </Drawer>
                 <!-- Book list and checkbox container -->
-                <div class="w-[80%]">
+                <div class="md:container md:mx-auto">
                     <!-- Checkbox (placed above the book grid) -->
                     {#if userData.user_permission != "Manager"  && userData.user_permission != "User"}
                         <div class="mb-4">
@@ -440,7 +440,7 @@
                     {/if}
                     <!-- Book grid -->
                     <div
-                        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
+                        class="md:container md:mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
                     >
                         {#each filteredBooks as book}
                             <div

@@ -6,7 +6,15 @@
   import { generateStars, getUser } from "$lib/utils";
   import iro from "@jaames/iro";
   import { fly } from "svelte/transition";
-  import { Rating, AdvancedRating, ScoreRating } from "flowbite-svelte";
+  import {
+    Rating,
+    AdvancedRating,
+    ScoreRating,
+    Radio,
+    Select,
+    Label,
+    Textarea,
+  } from "flowbite-svelte";
 
   let book = {}; // Initialize as an empty object
   let quantity = 1;
@@ -26,7 +34,7 @@
   let custom = false;
   let colorHex = "#ff0000"; // ค่าสีเริ่มต้น
   let colorHexText = "#fff"; // ค่าสีเริ่มต้น
-  let colorJson = ""; // เก็บค่าสีในรูปแบบ JSON
+  let dataJson = ""; // เก็บค่าสีในรูปแบบ JSON
   let inputText = "New Book";
   let colorPicker;
   let textSize = 24;
@@ -34,6 +42,20 @@
   let isOpen1 = false;
   let menuElementText: HTMLElement;
   let menuElementCover: HTMLElement;
+  let paperUse = "1";
+  let selectedFont = "Arial";
+  let fonts = [
+    { value: "Arial", name: "Arial" },
+    { value: "Verdana", name: "Verdana" },
+    { value: "Helvetica", name: "Helvetica" },
+    { value: "Times New Roman", name: "Times New Roman" },
+    { value: "Courier New", name: "Courier New" },
+    { value: "Georgia", name: "Georgia" },
+    { value: "Tahoma", name: "Tahoma" },
+    { value: "Trebuchet MS", name: "Trebuchet MS" },
+  ];
+  let paperCover = "paperback";
+  let textp = "";
 
   function toggleMenu(event: MouseEvent) {
     event.stopPropagation();
@@ -119,16 +141,20 @@
     // let button = document.getElementById('submitComplete');
     // button.innerText = "Custom Complete";
     // สร้างอ็อบเจ็กต์ที่มีค่าสี
-    const colorData = {
+    const data = {
       Name: inputText,
       font: textSize,
       color: colorHex,
       colorText: colorHexText,
+      paperType: paperUse,
+      fontType: selectedFont,
+      paperCover: paperCover,
+      text: textp,
     };
     // แปลงอ็อบเจ็กต์เป็นสตริง JSON
-    colorJson = JSON.stringify(colorData);
+    dataJson = JSON.stringify(data);
     // แสดงผลหรือส่งค่า colorJson ตามต้องการ
-    console.log(colorJson);
+    console.log(dataJson);
     // button.disabled = true;
     //     setTimeout(function() {
     //       location.reload();
@@ -179,7 +205,7 @@
     if (book.serie_id) {
       try {
         const response = await fetch(
-          `http://localhost:3000/books/series/${book.serie_id}`,
+          `http://localhost:3000/books/series/${book.serie_id}`
         );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -340,7 +366,7 @@
               "Content-Type": "application/json",
             },
             body: JSON.stringify({}),
-          },
+          }
         );
 
         if (!response.ok) {
@@ -367,7 +393,7 @@
             amount,
             custom,
           }),
-        },
+        }
       );
 
       if (!response.ok) {
@@ -377,7 +403,7 @@
         }
         const errorData = await response.json();
         throw new Error(
-          `Failed to add to cart: ${errorData.error} - ${errorData.details}`,
+          `Failed to add to cart: ${errorData.error} - ${errorData.details}`
         );
       }
       goto($page.url);
@@ -418,18 +444,33 @@
                   />
                 {:else}
                   <div
-                    class=" h-96 color-display border rounded-lg items-center object-cover"
+                    class="h-[462px] color-display border rounded-lg items-center"
                   >
                     <div
-                      class="h-full border rounded shadow-lg flex pt-12 pb-4 justify-center"
+                      class="h-full border rounded shadow-lg flex flex-col px-4 pt-12 pb-4 overflow-hidden"
                       style="background-color: {colorHex};"
                     >
                       <h1
-                        class="text-center text-xl font-bold text-white text-wrap whitespace-normal text-clip break-words w-full"
-                        style="font-size: {textSize}px; color:{colorHexText};"
+                        class="text-center text-xl font-bold text-white mb-4 break-words w-full overflow-hidden"
+                        style="font-size: {textSize}px; color:{colorHexText}; font-family: '{selectedFont}', sans-serif;"
                       >
                         {inputText}
                       </h1>
+                      <p
+                        class="whitespace-pre-wrap text-center overflow-hidden break-words"
+                        style="font-family: '{selectedFont}'"
+                      >
+                        {textp}
+                      </p>
+                      <!-- เพิ่ม mt-auto เพื่อผลัก h6 ลงด้านล่าง -->
+                      <div
+                        class="mt-auto text-center"
+                        style="color:{colorHexText}"
+                      >
+                        <h6 style="font-family: '{selectedFont}'">
+                          {book.book_name_originl}
+                        </h6>
+                      </div>
                     </div>
                   </div>
                 {/if}
@@ -501,6 +542,23 @@
                   id="title"
                   maxlength="50"
                 />
+                <Label for="fonts">เลือก Font Family</Label>
+                <Select
+                  id="fonts"
+                  class="mt-2 font-select"
+                  bind:value={selectedFont}
+                >
+                  {#each fonts as font}
+                    <option
+                      value={font.value}
+                      class="option-{font.value
+                        .replace(/\s+/g, '-')
+                        .toLowerCase()}"
+                    >
+                      {font.name}
+                    </option>
+                  {/each}
+                </Select>
                 <label for="font" class="block">Font size (px):</label>
                 <input
                   type="number"
@@ -514,6 +572,16 @@
                     if (e.target.value < 1) e.target.value = 1;
                     textSize = parseInt(e.target.value);
                   }}
+                />
+
+                <Label for="textarea-id" class="mb-2">ข้อความ</Label>
+                <Textarea
+                  id="textarea-id"
+                  placeholder="Your message"
+                  rows="4"
+                  name="message"
+                  maxlength="450"
+                  bind:value={textp}
                 />
                 <!-- เมนูสำหรับเลือกสีข้อความ -->
                 <div class="relative" bind:this={menuElementText}>
@@ -601,7 +669,44 @@
                   {/if}
                 </div>
 
-                <!-- อินพุตสำหรับแก้ไขค่าสี HEX ของ cover -->
+                <div class="w-80 grid grid-cols-2 gap-6">
+                  <div
+                    class="rounded-sm border border-gray-200 dark:border-gray-700 flex items-center justify-center"
+                  >
+                    <Radio
+                      name="bordered"
+                      value="1"
+                      bind:group={paperUse}
+                      class="w-full p-4 text-center"
+                    >
+                      กระดาษปกติ
+                    </Radio>
+                  </div>
+                  <div
+                    class="rounded-sm border border-gray-200 dark:border-gray-700 flex items-center justify-center"
+                  >
+                    <Radio
+                      name="bordered"
+                      value="2"
+                      bind:group={paperUse}
+                      class="w-full p-4 text-center"
+                    >
+                      กระดาษถนอมสายตา
+                    </Radio>
+                  </div>
+                </div>
+                <h5><b>ชนิดปกติ</b></h5>
+                <div class="flex flex-wrap items-center gap-6 w-auto">
+                  <Radio bind:group={paperCover} value="paperback"
+                    >ปกอ่อน (Paperback)</Radio
+                  >
+                  <Radio bind:group={paperCover} value="hardcover"
+                    >ปกแข็ง (Hardcover)</Radio
+                  >
+                  <Radio bind:group={paperCover} value="semi-hardcover"
+                    >ปกกึ่งอ่อนกึ่งแข็ง (Semi-Hardcover)</Radio
+                  >
+                </div>
 
                 <!-- ปุ่มตกลงส่งค่าสีเป็น JSON -->
                 <button
@@ -701,7 +806,7 @@
                     <div class="user-info">
                       <p class="user-name">
                         {comment.user_name} &ensp; {@html generateStars(
-                          comment.score,
+                          comment.score
                         )}
                       </p>
                       <p class="timestamp">

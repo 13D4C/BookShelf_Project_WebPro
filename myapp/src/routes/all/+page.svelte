@@ -194,7 +194,7 @@
         </aside>
 
         <!-- Book list and checkbox container -->
-        <div class="w-[80%]">
+        <div class="md:container md:mx-auto">
           <!-- Checkbox (placed above the book grid) -->
           <div class="mb-4">
             <label class="flex items-center w-full justify-between">
@@ -260,7 +260,7 @@
             </Drawer>
           </div>
           <!-- Book grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="md:container md:mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {#each filteredBooks as book}
               <div
                 class="book-card border border-blue-500 rounded-lg shadow-lg bg-white flex flex-col"

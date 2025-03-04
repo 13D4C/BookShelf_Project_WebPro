@@ -29,11 +29,11 @@
 
 <main class="flex h-screen">
     <div
-        class="flex-1 bg-cover bg-center"
+        class="hidden md:flex flex-1 bg-cover bg-center"
         style="background-image: url('https://static1.srcdn.com/wordpress/wp-content/uploads/2017/04/Family-Guy-the-Griffin-House.jpg');"
     ></div>
 
-    <div class="flex items-center justify-center w-1/3 bg-white shadow-lg">
+    <div class="flex items-center justify-center w-full md:w-1/3 bg-white shadow-lg">
         <div class="w-full max-w-md p-8 space-y-6">
             <div class="text-center">
                 <img
