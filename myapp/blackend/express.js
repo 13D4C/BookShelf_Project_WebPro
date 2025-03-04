@@ -468,15 +468,19 @@ app.get('/seller/books', async (req, res) => {
         let params = [];
 
         if (sellerBookId) {
-            sql = `SELECT * FROM seller_book_detail WHERE seller_book_id=?;`;
+            sql = `SELECT sd.*, u.user_id, u.user_name, u.user_image FROM seller_book_detail sd
+                   JOIN user u ON sd.owner_id=u.user_id
+                   WHERE sd.seller_book_id=?; `;
             params = [sellerBookId];
         }
         else if (ownerId){
-            sql = `SELECT * FROM seller_book_detail WHERE owner_id =?`;
+            sql = `SELECT sd.*, u.user_id, u.user_name, u.user_image FROM seller_book_detail sd
+                   JOIN user u ON sd.owner_id=u.user_id
+                   WHERE sd.owner_id =?`;
             params = [ownerId];
         }
         else if (allBooks) {
-            sql = 'SELECT * FROM seller_book_detail';
+            sql = 'SELECT sd.*, u.user_id, u.user_name, u.user_image FROM seller_book_detail sd JOIN user u ON sd.owner_id=u.user_id';
         }
 
         const books = await queryDatabase(sql, params);
