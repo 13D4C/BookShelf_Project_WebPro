@@ -287,7 +287,10 @@
       const publisherData = await response.json();
       orders = publisherData;
 
-
+    } catch (err) {
+      orders = [];
+    }
+    try {
       const response2 = await fetch(
         `http://localhost:3000/shop/seller/order?token=${userToken}`
       );
@@ -298,10 +301,7 @@
       seller_orders = sellerData;
 
     } catch (err) {
-      console.error("Error fetching orders:", err);
-      orders = [];
       seller_orders = [];
-      alert(`Error fetching orders: ${err.message}`); // Show error to the user
     }
   }
 
