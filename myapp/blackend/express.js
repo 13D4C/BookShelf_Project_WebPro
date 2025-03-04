@@ -1570,7 +1570,7 @@ app.post('/shop/publisher/order/create' , async (req, res) => {
                     console.log(owner);
                     let insert_order = await queryDatabase(
                         `INSERT INTO order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname, status_time, order_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp());`, 
-                        [decodedToken.user_id, owner.user_id, item.total_price, "Payment Pending", phone, email, address, fullname]
+                        [decodedToken.user_id, owner.user_id, item.total_price, "กำลังดำเนินการ", phone, email, address, fullname]
                     );
                     let traverst_cart = await queryDatabase(
                         `SELECT c.item_id , bd.publisher_id FROM cart c
@@ -1605,6 +1605,86 @@ app.post('/shop/publisher/order/create' , async (req, res) => {
         console.error('ERROR', error);
         res.status(500).json({
             error: 'Fail to create order',
+            details: error.message
+        });
+    }
+});
+
+app.get('/shop/publisher/order', async (req, res) => {
+    try {
+        const { token } = req.query;
+
+        if (!token) {
+            return res.status(400).json({ error: 'Token is required' });
+        }
+
+        const decodedToken = await jwt.verify(token, 'itkmitl');
+
+        const orders = await queryDatabase(
+            `SELECT * FROM order_list WHERE user_id = ? ORDER BY order_time DESC`,
+            [decodedToken.user_id]
+        );
+
+        if (orders.length === 0) {
+            return res.status(204).json({ message: "No orders found for this user" });
+        }
+
+        const ordersWithDetails = [];
+
+        for (const order of orders) {
+            // Get item_ids associated with the order
+            const orderItems = await queryDatabase(
+                `SELECT item_id FROM order_bridge WHERE order_id = ?`,
+                [order.order_id]
+            );
+            const itemDetails = [];
+
+            // Get details for each item in the order
+            for (const orderItem of orderItems) {
+                const itemDetail = await queryDatabase(
+                    `SELECT 
+                        co.item_id,
+                        co.book_id,
+                        co.amount,
+                        bd.book_name_th,
+                        bd.book_price,
+                        bd.publisher_id,
+                        u.user_name AS publisher_name,
+                        bd.book_image
+                     FROM custom_order co
+                     JOIN book_detail bd ON co.book_id = bd.book_id
+                     JOIN user u ON bd.publisher_id = u.publisher_id
+                     WHERE co.item_id = ?`,
+                    [orderItem.item_id]
+                );
+                if (itemDetail.length > 0) {
+                  itemDetails.push(itemDetail[0]); // Add the item detail (there should only be one)
+                }
+            }
+
+
+            //combine order information.
+            ordersWithDetails.push({
+                order_id: order.order_id,
+                owner_id: order.owner_id,
+                total_price: order.total_price,
+                order_status: order.order_status,
+                phone: order.phone,
+                email: order.email,
+                address: order.address,
+                fullname: order.fullname,
+                status_time: order.status_time,
+                order_time: order.order_time,
+                items: itemDetails, // Add the array of item details
+            });
+        }
+
+        res.status(200).json(ordersWithDetails);
+
+    } catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to retrieve orders',
             details: error.message
         });
     }
@@ -1750,7 +1830,7 @@ app.post('/shop/publisher/payment/upload-proof' , async (req, res) => {
         }
 
         const querry_status = await queryDatabase("SELECT order_status FROM order_list WHERE order_id=?", [order_id]);
-        if (querry_status[0].order_status != "Payment Pending") {
+        if (querry_status[0].order_status != "กำลังดำเนินการ") {
             return res.status(400).json({message: "Please wait for review"})
         }
 
@@ -1775,7 +1855,7 @@ app.post('/shop/seller/payment/upload-proof' , async (req, res) => {
         }
 
         const querry_status = await queryDatabase("SELECT order_status FROM seller_order_list WHERE seller_order_id=?", [seller_order_id]);
-        if (querry_status[0].order_status != "Payment Pending") {
+        if (querry_status[0].order_status != "กำลังดำเนินการ") {
             return res.status(400).json({message: "Please wait for review"})
         }
 

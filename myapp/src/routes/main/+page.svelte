@@ -40,13 +40,6 @@
     );
   }
 
-  function ProfilePage() {
-    goto("/Profile");
-  }
-
-  function MainPage() {
-    goto("/main");
-  }
   const footerLinks = [
     { title: "เกี่ยวกับเรา", url: "/about" }, // เปลี่ยน URL
     { title: "ติดต่อเรา", url: "/contact" }, // เปลี่ยน URL

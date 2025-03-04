@@ -13,34 +13,10 @@
   let qrCodeImage: string | null = null;
   let idCardImage: string | null = null;
   let isOpen = false; // For mobile menu
+  let expandedOrder: null = null;
 
   // --- Orders Data (Example) ---
-  let orders = [
-    {
-      id: "ORD-2023-001",
-      date: "2023-12-20",
-      status: "กำลังดำเนินการ",
-      total: 1290,
-      items: [
-        { name: "หนังสือ A", price: 250, quantity: 2 },
-        { name: "หนังสือ B", price: 790, quantity: 1 },
-      ],
-    },
-    {
-      id: "ORD-2023-002",
-      date: "2024-01-15",
-      status: "จัดส่งแล้ว",
-      total: 450,
-      items: [{ name: "หนังสือ C", price: 450, quantity: 1 }],
-    },
-    {
-      id: "ORD-2024-003",
-      date: "2024-02-28",
-      status: "คืนสินค้า",
-      total: 300,
-      items: [{ name: "หนังสือ D", price: 150, quantity: 2 }],
-    },
-  ];
+  let orders: string | any[] = [];
 
   // --- Helper Functions ---
 
@@ -63,7 +39,10 @@
   }
 
   function formatCurrency(amount: number) {
-    return amount.toLocaleString("th-TH", { style: "currency", currency: "THB" });
+    return amount.toLocaleString("th-TH", {
+      style: "currency",
+      currency: "THB",
+    });
   }
 
   // --- Event Handlers ---
@@ -76,10 +55,14 @@
     const updatedUserData = {
       user_name: formData.get("name")?.toString().trim(), // Use optional chaining and trim
       user_email: formData.get("email")?.toString().trim(), // Use optional chaining and trim
-      user_pass: formData.get("pass")?.toString().trim(),   // Get password (even if empty), and trim
+      user_pass: formData.get("pass")?.toString().trim(), // Get password (even if empty), and trim
     };
 
-    if (!updatedUserData.user_name || !updatedUserData.user_email || !updatedUserData.user_pass) {
+    if (
+      !updatedUserData.user_name ||
+      !updatedUserData.user_email ||
+      !updatedUserData.user_pass
+    ) {
       alert("กรุณากรอกข้อมูลให้ครบทุกช่อง");
       return;
     }
@@ -185,21 +168,43 @@
   function closeMenu() {
     isOpen = false;
   }
+  function toggleOrderDetails(orderId) {
+    if (expandedOrder === orderId) {
+      expandedOrder = null;
+    } else {
+      expandedOrder = orderId;
+    }
+  }
 
-  // --- Lifecycle Hooks ---
+  async function getOrder() {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/shop/publisher/order?token=${userToken}`,
+      );
+      const data = await response.json();
+      if (data) {
+        orders = data;
+      } else {
+        orders = [];
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   onMount(async () => {
     userToken = localStorage.getItem("userToken");
     await getUser(userToken).then((data) => {
       user = data;
-      // Provide default values if data is missing:
       user.user_name = user.user_name || "N/A";
       user.user_firstname = user.user_firstname || "N/A";
       user.user_lastname = user.user_lastname || "N/A";
       user.user_email = user.user_email || "N/A";
       user.user_image = user.user_image || "/placeholder-profile.png"; // Default image
     });
+    await getOrder();
     isLoading.set(false);
+    console.log(orders);
   });
 </script>
 
@@ -232,7 +237,7 @@
                     ? 'bg-blue-800 text-white'
                     : 'text-white'}"
                   on:click={() => {
-                    activeMenu = 'account';
+                    activeMenu = "account";
                     closeMenu();
                   }}
                 >
@@ -244,7 +249,7 @@
                     ? 'bg-blue-800 text-white'
                     : 'text-white'}"
                   on:click={() => {
-                    activeMenu = 'orders';
+                    activeMenu = "orders";
                     closeMenu();
                   }}
                 >
@@ -256,11 +261,12 @@
                     ? 'bg-blue-800 text-white'
                     : 'text-white'}"
                   on:click={() => {
-                    activeMenu = 'shopRequest';
+                    activeMenu = "shopRequest";
                     closeMenu();
                   }}
                 >
                   <i class="fa-solid fa-store mr-2"></i>การขอเปิดร้านค้า
+                </li>
               </ul>
             </div>
           {/if}
@@ -277,7 +283,7 @@
               'account'
                 ? 'bg-blue-800 text-white'
                 : 'text-white'}"
-              on:click={() => (activeMenu = 'account')}
+              on:click={() => (activeMenu = "account")}
             >
               <i class="fa-solid fa-user mr-2"></i>บัญชีผู้ใช้
             </li>
@@ -286,7 +292,7 @@
               'orders'
                 ? 'bg-blue-800 text-white'
                 : 'text-white'}"
-              on:click={() => (activeMenu = 'orders')}
+              on:click={() => (activeMenu = "orders")}
             >
               <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของฉัน
             </li>
@@ -295,11 +301,10 @@
               'shopRequest'
                 ? 'bg-blue-800 text-white'
                 : 'text-white'}"
-              on:click={() => (activeMenu = 'shopRequest')}
+              on:click={() => (activeMenu = "shopRequest")}
             >
               <i class="fa-solid fa-store mr-2"></i>การขอเปิดร้านค้า
             </li>
-
           </ul>
         </div>
 
@@ -319,7 +324,8 @@
                     ชื่อบัญชี: <span class="font-normal">{user.user_name}</span>
                   </p>
                   <p class="text-gray-600">
-                    ชื่อจริง: {user.user_firstname} {user.user_lastname}
+                    ชื่อจริง: {user.user_firstname}
+                    {user.user_lastname}
                   </p>
                   <p class="text-gray-600">อีเมล: {user.user_email}</p>
                 </div>
@@ -412,41 +418,69 @@
                         >
                           ยอดรวม
                         </th>
-                        <th
-                          class="py-2 px-4 text-left text-sm font-medium text-gray-600"
-                        >
-                          รายการ
-                        </th>
+                        <!-- Removed the "รายการ" header -->
                       </tr>
                     </thead>
                     <tbody>
-                      {#each orders as order (order.id)}
-                        <tr class="border-b">
-                          <td class="py-2 px-4 text-sm">{order.id}</td>
+                      {#each orders as order (order.order_id)}
+                        <tr
+                          class="border-b cursor-pointer"
+                          on:click={() => toggleOrderDetails(order.order_id)}
+                        >
+                          <td class="py-2 px-4 text-sm">{order.order_id}</td>
                           <td class="py-2 px-4 text-sm">
-                            {formatDate(order.date)}
+                            {formatDate(order.order_time)}
                           </td>
                           <td
                             class="py-2 px-4 text-sm {getStatusColor(
-                              order.status,
+                              order.order_status,
                             )}"
                           >
-                            {order.status}
+                            {order.order_status}
                           </td>
                           <td class="py-2 px-4 text-sm">
-                            {formatCurrency(order.total)}
+                            {formatCurrency(order.total_price)}
                           </td>
-                          <td class="py-2 px-4">
-                            <ul class="list-disc list-inside">
-                              {#each order.items as item}
-                                <li class="text-sm">
-                                  {item.name} (x{item.quantity}) -
-                                  {formatCurrency(item.price)}
-                                </li>
-                              {/each}
-                            </ul>
-                          </td>
+                          <!-- Removed the "Show/Hide Details" cell -->
                         </tr>
+                        {#if expandedOrder === order.order_id}
+                          <tr>
+                            <td colspan="4">
+                              <div class="p-4 bg-gray-50">
+                                {#each order.items as item}
+                                  <div
+                                    class="mb-2 border-b pb-2 flex items-start"
+                                  >
+                                    {#if item.book_image}
+                                      <img
+                                        src={item.book_image}
+                                        alt={item.book_name_th}
+                                        class="w-24 h-auto mr-4"
+                                      />
+                                    {/if}
+                                    <div>
+                                      <p class="font-semibold">
+                                        {item.book_name_th}
+                                      </p>
+                                      <p>
+                                        <span class="font-semibold">Price:</span
+                                        >
+                                        {formatCurrency(item.book_price)} x {item.amount}
+                                      </p>
+                                      <p>
+                                        <span class="font-semibold">Total:</span
+                                        >
+                                        {formatCurrency(
+                                          item.book_price * item.amount,
+                                        )}
+                                      </p>
+                                    </div>
+                                  </div>
+                                {/each}
+                              </div>
+                            </td>
+                          </tr>
+                        {/if}
                       {/each}
                     </tbody>
                   </table>
@@ -509,12 +543,10 @@
                 </button>
               </form>
             </div>
-            {:else if activeMenu === "banManagement"}
+          {:else if activeMenu === "banManagement"}
             <div class="bg-white rounded-lg shadow-md p-6">
-                <h1 class="text-2xl font-semibold mb-4">จัดการการแบน</h1>
-                <p class="text-gray-600">
-                 (เนื้อหาส่วนนี้จะถูกพัฒนาในภายหลัง)
-                </p>
+              <h1 class="text-2xl font-semibold mb-4">จัดการการแบน</h1>
+              <p class="text-gray-600">(เนื้อหาส่วนนี้จะถูกพัฒนาในภายหลัง)</p>
             </div>
           {/if}
         </div>
