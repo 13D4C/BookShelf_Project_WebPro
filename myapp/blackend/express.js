@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(cors({
-    origin: ['http://localhost:5174'],
+    origin: ['http://localhost:5173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -889,8 +889,8 @@ app.post('/user/getUserProfile', async (req, res) => {
             return res.status(401).json({ error: 'Invalid token' });
         }
 
-        const userSql = 'SELECT * FROM user WHERE user_name = ?';
-        const users = await queryDatabase(userSql, [decodedToken.user_name]);
+        const userSql = 'SELECT * FROM user WHERE user_id = ?';
+        const users = await queryDatabase(userSql, [decodedToken.user_id]);
 
         if (users.length === 0) {
             return res.status(404).json({ error: 'User not found' });

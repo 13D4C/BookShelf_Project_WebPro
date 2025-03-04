@@ -85,6 +85,7 @@
 	  if (
 		$page &&
 		$page.url.pathname !== "/" &&
+		$page.url.pathname !== "" &&
 		$page.url.pathname !== "/Register"
 	  ) {
 		await fetchCartCount();

@@ -1,15 +1,14 @@
 // src/routes/+layout.js
 import { redirect } from '@sveltejs/kit';
-import { browser } from '$app/environment'; // Import browser
+import { browser } from '$app/environment';
 
-export async function load({ route, url }) {
-    if (browser) {  // ✅  Only run this on the client!
+export async function load({ route, url, fetch }) { // <--- Add fetch here
+    if (browser && !(route.id === "/" || route.id === "/Register" || route.id === "/Register/promax")) {
         const userToken = localStorage.getItem("userToken");
-        const isAuthRoute = route.id === "/" || route.id === "/Register" || route.id === "/Register/promax";
         let userData;
 
         try {
-            const response = await fetch("http://localhost:3000/user/getUserProfile", {
+            const response = await fetch("http://localhost:3000/user/getUserProfile", { // <--- Use the provided fetch
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
@@ -17,24 +16,27 @@ export async function load({ route, url }) {
                 body: JSON.stringify({
                   token: userToken,
                 }),
-            })
-    
-            userData = await response.json();
+            });
+
+            if (response.ok) { // Important: Check for successful response
+              userData = await response.json();
+            } else {
+              // Handle errors (e.g., 401 Unauthorized, 404 Not Found, 500 Internal Server Error)
+              console.error("Error fetching user profile:", response.status, response.statusText);
+              // Optionally redirect or show an error message to the user
+              if (response.status === 401) {
+                localStorage.removeItem("userToken"); // Clear potentially invalid token
+                throw redirect(307, "/");
+              }
+            }
+
         }
         catch(error) {
-            console.log(error)
-        }
-        
-
-        if (!userToken && !isAuthRoute) {
-            throw redirect(307, '/');
+            console.error("Network error:", error); // More descriptive error message
+            // Handle network errors, server unreachable, etc.
         }
 
-        if ( (userData && userData.user_status === "Banned") && !isAuthRoute) {
-            throw redirect(307, '/');
-        }
-        // Make userToken available, even if it's null.
-        return { userToken };
+        return { userToken, userData }; // Return userData too
     }
   return {}; // If not in the browser, return empty object.
 }
