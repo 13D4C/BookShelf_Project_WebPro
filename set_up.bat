@@ -1,18 +1,8 @@
-@echo off
+npm Check and Installation (Global):
 
-REM --- Check for npm and install if needed ---
-echo Checking for npm...
-where npm > nul 2>&1
-if errorlevel 1 (
-    echo npm is not installed. Installing...
-    echo Please follow the instructions to install Node.js and npm.
-    echo You can download Node.js from: https://nodejs.org/
-    echo After installation, please run this script again.
-    pause
-    exit /b 1
-)
+Checks if npm is in the system's PATH.
 
-echo npm is installed.
+If not found, it provides instructions for installing Node.js (which includes npm) and exits. This is a user-friendly approach.
 
 REM --- Check for Vite and install if needed ---
 echo Checking for Vite...
