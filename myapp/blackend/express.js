@@ -480,7 +480,6 @@ app.get('/seller/books', async (req, res) => {
         }
 
         const books = await queryDatabase(sql, params);
-
         if (books.length > 0 && sellerBookId) {
             res.json(books[0]);
         } else {
@@ -804,22 +803,8 @@ app.post('/user/login', async (req, res) => {
             return res.status(400).json({ error: 'Username and password are required' });
         }
 
-        console.log('Login attempt:', {
-            user_name,
-            passwordLength: user_pass?.length || 0
-        });
-
         const userSql = 'SELECT * FROM user WHERE user_name = ? OR user_email = ?';
         const users = await queryDatabase(userSql, [user_name, user_name]);
-
-        console.log('Database query result:', {
-            usersFound: users.length,
-            userDetails: users.length > 0 ? {
-                id: users[0].user_id,
-                name: users[0].user_name,
-                hasPassword: !!users[0].user_pass
-            } : null
-        });
 
         if (users.length === 0) {
             return res.status(401).json({
@@ -830,8 +815,6 @@ app.post('/user/login', async (req, res) => {
 
         const user = users[0];
         const match = await bcrypt.compare(user_pass, user.user_pass);
-
-        console.log('Password verification:', { match });
 
         if (!match) {
             return res.status(401).json({
@@ -1422,6 +1405,7 @@ app.post('/shop/publisher/cart/get' , async (req, res) => {
 app.post('/shop/seller/cart/add' , async (req, res) => {
     try {
         const { seller_book_id, token, amount}  = req.body;
+        console.log(req.body);
 
         if ( !seller_book_id || !token || !amount) {
             return res.status(400).json({ error: 'Information all is required' });

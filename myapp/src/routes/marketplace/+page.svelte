@@ -3,6 +3,7 @@
   import { goto } from "$app/navigation";
   import { writable } from "svelte/store";
   import { page } from "$app/stores";
+    import { load } from "../+layout";
 
   let products: any[] = [];
   const isLoading = writable(true);
@@ -15,13 +16,14 @@
 
   async function fetchProducts() {
     try {
-            let url = "http://localhost:3000/seller/all";
+            let url = "http://localhost:3000/seller/books?all=true";
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
 
             products = await response.json();
+            loading = false;
         } catch (error) {
             console.error("Error fetching books:", error);
             products = [];
@@ -77,6 +79,10 @@
   function goToSellerProfile(userId: string) {
     goto(`/storeProfile/${userId}`); //  <--  CHANGED HERE
   }
+
+  function goToBookDetail(bookId) {
+    goto(`/marketdetails/${bookId}`);
+  }
 </script>
 
 {#if !$isLoading}
@@ -111,32 +117,26 @@
 
     {#if loading}
       <p>Loading products...</p>
-    {:else if error}
-      <p class="text-red-500">Error: {error}</p>
     {:else}
       <div
         class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
       >
-        {#each sortedProducts as product (product.id)}
+        {#each sortedProducts as product (product.seller_book_id)}
           <div
             class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition duration-200"
           >
             <img
-              src={product.image}
-              alt={product.title}
+              src={product.book_image}
+              alt={product.book_name}
               class="w-full h-48 object-cover rounded-t-lg"
             />
             <div class="p-4">
-              <h2 class="text-xl font-semibold mb-2">{product.title}</h2>
+              <h2 class="text-xl font-semibold mb-2">{product.book_name}</h2>
               <p class="text-gray-600 mb-2">{product.description}</p>
               <p class="text-green-600 font-bold text-lg mb-2">
-                ฿{product.price.toLocaleString()}
+                ฿{product.book_price.toLocaleString()}
               </p>
-              <p class="text-sm text-gray-500 mb-2">
-                <i class="fas fa-map-marker-alt"></i>
-                {product.location}
-              </p>
-              <div class="flex items-center">
+              <!-- <div class="flex items-center">
                 <img
                   src={product.seller.profilePic}
                   alt={product.seller.name}
@@ -148,7 +148,13 @@
                 >
                   {product.seller.name}
                 </button>
-              </div>
+              </div> -->
+              <button
+                    class="mt-2 w-full bg-blue-500 text-white py-2 rounded"
+                    on:click={() => goToBookDetail(product.seller_book_id)}
+                  >
+                    ซื้อเลย
+                  </button>
             </div>
           </div>
         {/each}

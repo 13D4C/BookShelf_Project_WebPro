@@ -11,7 +11,7 @@
   const isLoading = writable(true);
 
   let cart = [];
-  let filterType = "official"; // "all", "official", "seller" - Default to "official"
+  let filterType = "official";
 
   function updateQuantity(index, amount) {
     // Use filteredCart for index calculation, but update the main cart
@@ -104,19 +104,34 @@
       }
 
       const data = await response.json();
+      const response2 = await fetch(
+        "http://localhost:3000/shop/seller/cart/get",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ token: userToken }),
+        },
+      );
 
+      if (!response2.ok) {
+        throw new Error(`Network response was not ok: ${response.status}`);
+      }
+
+      const data2 = await response2.json();
+      console.log(data2);
       // Assuming 'cart_info' contains both official and seller items
       let officialCart = data.cart_info
         ? data.cart_info.map((item) => ({ ...item, type: "official" }))
         : [];
-      let sellerCart = data.seller_cart_info
-        ? data.seller_cart_info.map((item) => ({ ...item, type: "seller" }))
-        : []; //from seller cart
+      let sellerCart = data2.cart_info
+        ? data2.cart_info.map((item) => ({ ...item, type: "seller" }))
+        : [];
 
-      // Combine official and seller cart items
       cart = [...officialCart, ...sellerCart];
     } catch (error) {
-      console.error("Error fetching cart count:", error);
+      console.error("Skibidi Error", error);
     }
   }
 

@@ -63,7 +63,6 @@
       } else {
         url = "http://localhost:3000/books?all=true";
       }
-      console.log(url);
       const response = await fetch(url);
 
       if (!response.ok) {

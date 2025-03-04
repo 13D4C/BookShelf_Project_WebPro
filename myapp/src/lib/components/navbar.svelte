@@ -9,6 +9,7 @@
 	let isOpen = false;
 	let user_id: any;
 	let user: any;
+	let isLoggingOut = false;
   
 	function toggleMenu() {
 	  isOpen = !isOpen;
@@ -36,17 +37,20 @@
 	  closeMenu();
 	}
   
-	function Logout() {
-	  localStorage.removeItem("userToken");
-	  sessionStorage.clear();
-	  goto("/"); // use goto
-	}
+	async function Logout() {
+    isLoggingOut = true
+    localStorage.removeItem("userToken");
+    sessionStorage.clear();
+    await goto("/");
+    isLoggingOut = false;
+}
   
 	function handleSearch() {
 	  goto(`/all?name=${encodeURIComponent(searchInput)}`);
 	}
   
 	export async function fetchCartCount() {
+		if (isLoggingOut) return;
 	  user_id = localStorage.getItem("userToken");
 	  user = await getUser(user_id);
 	  if (user_id) {
@@ -73,6 +77,24 @@
 			(total, item) => total + item.amount,
 			0,
 		  );
+		  const response2 = await fetch(
+			"http://localhost:3000/shop/seller/cart/get",
+			{
+			  method: "POST",
+			  headers: {
+				"Content-Type": "application/json",
+			  },
+			  body: JSON.stringify({ token: user_id }),
+			},
+		  );
+		  if (!response2.ok) {
+			throw new Error(
+			  `Network response was not ok: ${response.status}`,
+			);
+		  }
+  
+		  const data2 = await response2.json();
+		  cartCount += data2.cart_info.length;
 		} catch (error) {
 		  console.error("Error fetching cart count:", error);
 		  cartCount = 0;
@@ -82,15 +104,17 @@
 	  }
 	}
 	afterNavigate(async () => {
-	  if (
-		$page &&
-		$page.url.pathname !== "/" &&
-		$page.url.pathname !== "" &&
-		$page.url.pathname !== "/Register"
-	  ) {
-		await fetchCartCount();
-	  }
-	});
+    if (isLoggingOut) return;
+
+    if (
+        $page &&
+        $page.url.pathname !== "/" &&
+        $page.url.pathname !== "" &&
+        $page.url.pathname !== "/Register"
+    ) {
+        await fetchCartCount();
+    }
+});
   </script>
   
   {#if $page.url.pathname !== "/" && $page.url.pathname !== "/Register" && $page.url.pathname !== "/Register/promax"}
