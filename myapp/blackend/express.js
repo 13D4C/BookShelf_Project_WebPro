@@ -1405,6 +1405,48 @@ app.post('/shop/publisher/cart/get' , async (req, res) => {
     }
 });
 
+// ตัวอย่างการfetch
+// http://localhost:3000/shop/publisher/cart/adjust/105?reduce=true
+// http://localhost:3000/shop/publisher/cart/adjust/105?increase=true
+
+app.get('/shop/publisher/cart/adjust/:itemId' , async (req, res) => {
+    try {
+        const item_id = req.params.itemId;
+        const increase = req.query.increase;
+        const reduce = req.query.reduce;
+
+        if ( !item_id || (!increase && !reduce)) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        if (increase) {
+            await queryDatabase(
+                `UPDATE custom_order SET amount=amount+1
+                 WHERE item_id=?`, [item_id]);
+        }
+        else if (reduce) {
+            const check = await queryDatabase(
+                `SELECT amount FROM custom_order WHERE item_id=?`, [item_id]);
+            
+            if (check[0].amount <= 1) {
+                return res.status(400).json({ error: 'The number of items in the cart cannot be 0' });
+            }
+            await queryDatabase(
+                `UPDATE custom_order SET amount=amount-1
+                 WHERE item_id=?`, [item_id]);
+        }
+        
+        return res.status(201).json({ message: 'Adjust cart successfully'});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to adjust cart',
+            details: error.message
+        });
+    }
+});
+
 //เหมือนกับของ publisher เเค่ไม่มี custom
 app.post('/shop/seller/cart/add' , async (req, res) => {
     try {
@@ -1522,6 +1564,47 @@ app.post('/shop/seller/cart/get' , async (req, res) => {
         console.error('ERROR', error);
         res.status(500).json({
             error: 'Fail to get product in cart',
+            details: error.message
+        });
+    }
+});
+
+// ตัวอย่างการfetch
+// http://localhost:3000/shop/seller/cart/adjust/105?reduce=true
+// http://localhost:3000/shop/seller/cart/adjust/105?increase=true
+
+app.get('/shop/seller/cart/adjust/:sellerItemId' , async (req, res) => {
+    try {
+        const seller_item_id = req.params.sellerItemId;
+        const increase = req.query.increase;
+        const reduce = req.query.reduce;
+
+        if ( !seller_item_id || (!increase && !reduce)) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        if (increase) {
+            await queryDatabase(
+                `UPDATE seller_order SET amount=amount+1
+                 WHERE seller_item_id=?`, [seller_item_id]);
+        }
+        else if (reduce) {
+            const check = await queryDatabase(
+                `SELECT amount FROM seller_order WHERE seller_item_id=?`, [seller_item_id]);
+            if (check[0].amount <= 1) {
+                return res.status(400).json({ error: 'The number of items in the cart cannot be 0' });
+            }
+            await queryDatabase(
+                `UPDATE seller_order SET amount=amount-1
+                 WHERE seller_item_id=?`, [seller_item_id]);
+        }
+        
+        return res.status(201).json({ message: 'Adjust cart successfully'});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to adjust cart',
             details: error.message
         });
     }
