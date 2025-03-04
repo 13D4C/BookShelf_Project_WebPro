@@ -79,8 +79,8 @@
       user_pass: formData.get("pass")?.toString().trim(),   // Get password (even if empty), and trim
     };
 
-    if (!updatedUserData.user_name || !updatedUserData.user_email) {
-      alert("กรุณากรอกข้อมูลให้ครบทุกช่อง");  // Don't check for password here
+    if (!updatedUserData.user_name || !updatedUserData.user_email || !updatedUserData.user_pass) {
+      alert("กรุณากรอกข้อมูลให้ครบทุกช่อง");
       return;
     }
 
@@ -103,6 +103,7 @@
       // Update user object with *only* the provided data
       user = { ...user, ...updatedUserData };
       alert("อัปเดตข้อมูลสำเร็จ!");
+      goto("/Profile");
     } catch (error) {
       console.error("Error updating user profile:", error);
       alert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล!");
@@ -350,7 +351,7 @@
                   <input
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500"
                     id="email"
-                    type="email"
+                    type="text"
                     name="email"
                     value={user?.user_email ?? ""}
                   />

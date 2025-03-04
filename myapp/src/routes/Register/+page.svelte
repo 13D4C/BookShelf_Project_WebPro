@@ -44,7 +44,7 @@
             const data = await response.json();
             if (response.ok) {
                 message = data.message;
-                goto("/main");
+                goto("/");
             } else {
                 error = data.error;
                 details = data.details || {};
