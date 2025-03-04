@@ -89,11 +89,11 @@
   }
 
   onMount(async () => {
-      userToken = localStorage.getItem("userToken");
-      await getUser(userToken).then((user) => {
-        userId = user.user_id;
-      });
-      isLoading.set(false);
+    userToken = localStorage.getItem("userToken");
+    await getUser(userToken).then((user) => {
+      userId = user.user_id;
+    });
+    isLoading.set(false);
     document.addEventListener("click", handleClickOutside);
     return () => {
       document.removeEventListener("click", handleClickOutside);
@@ -179,7 +179,7 @@
     if (book.serie_id) {
       try {
         const response = await fetch(
-          `http://localhost:3000/books/series/${book.serie_id}`
+          `http://localhost:3000/books/series/${book.serie_id}`,
         );
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -340,7 +340,7 @@
               "Content-Type": "application/json",
             },
             body: JSON.stringify({}),
-          }
+          },
         );
 
         if (!response.ok) {
@@ -367,7 +367,7 @@
             amount,
             custom,
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -377,7 +377,7 @@
         }
         const errorData = await response.json();
         throw new Error(
-          `Failed to add to cart: ${errorData.error} - ${errorData.details}`
+          `Failed to add to cart: ${errorData.error} - ${errorData.details}`,
         );
       }
       goto($page.url);
@@ -425,9 +425,9 @@
                       style="background-color: {colorHex};"
                     >
                       <h1
-    class="text-center text-xl font-bold text-white text-wrap whitespace-normal text-clip break-words w-full"
-    style="font-size: {textSize}px; color:{colorHexText};"
-  >
+                        class="text-center text-xl font-bold text-white text-wrap whitespace-normal text-clip break-words w-full"
+                        style="font-size: {textSize}px; color:{colorHexText};"
+                      >
                         {inputText}
                       </h1>
                     </div>
@@ -498,22 +498,23 @@
                   bind:value={inputText}
                   placeholder="ชื่อหนังสือ"
                   class="border p-2 w-full"
-                  id="title" maxlength="50"
+                  id="title"
+                  maxlength="50"
                 />
                 <label for="font" class="block">Font size (px):</label>
-<input
-  type="number"
-  bind:value={textSize}
-  min="1"
-  max="100"
-  class="border p-2 w-full"
-  id="font"
-  on:input={(e) => {
-    if (e.target.value > 100) e.target.value = 100;
-    if (e.target.value < 1) e.target.value = 1;
-    textSize = parseInt(e.target.value);
-  }}
-/>
+                <input
+                  type="number"
+                  bind:value={textSize}
+                  min="1"
+                  max="100"
+                  class="border p-2 w-full"
+                  id="font"
+                  on:input={(e) => {
+                    if (e.target.value > 100) e.target.value = 100;
+                    if (e.target.value < 1) e.target.value = 1;
+                    textSize = parseInt(e.target.value);
+                  }}
+                />
                 <!-- เมนูสำหรับเลือกสีข้อความ -->
                 <div class="relative" bind:this={menuElementText}>
                   <button
@@ -700,7 +701,7 @@
                     <div class="user-info">
                       <p class="user-name">
                         {comment.user_name} &ensp; {@html generateStars(
-                          comment.score
+                          comment.score,
                         )}
                       </p>
                       <p class="timestamp">

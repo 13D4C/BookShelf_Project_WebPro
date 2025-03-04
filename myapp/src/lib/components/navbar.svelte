@@ -221,7 +221,7 @@
 		<div
 		  class="flex items-center gap-4 bg-white-800 text-white p-3 rounded-md"
 		>
-		  <button class="text-xl">ตระกร้า🛒</button>
+		  <a href="/cart" class="text-xl">ตระกร้า🛒</a>
 		  <button on:click={ProfilePage} class="text-xl">โปรไฟล์👤</button
 		  >
 		  <button on:click={AdminPage} class="text-xl">⚙️</button>
