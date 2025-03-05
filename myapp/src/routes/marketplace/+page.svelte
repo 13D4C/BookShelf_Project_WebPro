@@ -115,7 +115,7 @@ transition:fade={{ duration: 300 }}
       >
         {#each sortedProducts as product (product.seller_book_id)}
           <div
-            class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition duration-200"
+            class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition duration-200 h-full flex flex-col"
           >
             <img
               src={product.book_image}
@@ -124,7 +124,9 @@ transition:fade={{ duration: 300 }}
             />
             <div class="p-4">
               <h2 class="text-xl font-semibold mb-2">{product.book_name}</h2>
-              <p class="text-gray-600 mb-2">{product.description}</p>
+              <p class="text-gray-600 mb-2 line-clamp-12">{product.description}</p>
+            </div>
+            <div class="mt-auto">
               <div class="flex items-center">
                 <img
                   src={product.user_image}
@@ -142,7 +144,7 @@ transition:fade={{ duration: 300 }}
                   >
                     ซื้อเลย
                   </button>
-            </div>
+                </div>
           </div>
         {/each}
       </div>

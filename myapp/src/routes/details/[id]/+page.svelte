@@ -65,13 +65,12 @@
     event.stopPropagation();
     isOpen = !isOpen;
     if (isOpen) {
-      isOpen1 = false; // ปิดเมนูอื่น
       // ใช้ timeout เล็กน้อยเพื่อให้ DOM อัปเดตแล้ว
       setTimeout(() => {
         if (document.getElementById("colorPickerText")) {
           // สร้างอินสแตนซ์ใหม่สำหรับ ColorPickerText
           const colorPickerText = new iro.ColorPicker("#colorPickerText", {
-            width: 280,
+            width: 180,
             color: colorHexText,
             borderWidth: 1,
             borderColor: "#fff",
@@ -89,11 +88,10 @@
     event.stopPropagation();
     isOpen1 = !isOpen1;
     if (isOpen1) {
-      isOpen = false; // ปิดเมนูอื่น
       setTimeout(() => {
         if (document.getElementById("colorPicker")) {
           const colorPicker = new iro.ColorPicker("#colorPicker", {
-            width: 280,
+            width: 180,
             color: colorHex,
             borderWidth: 1,
             borderColor: "#fff",
@@ -460,7 +458,7 @@ transition:fade={{ duration: 300 }}
 ></div>
 </div>{:else}
   <div class="min-h-screen bg-blue-50">
-    <div class="max-w-5xl mx-auto p-6">
+    <div class="max-w-7xl mx-auto p-6">
       {#if errorMessage}
         <p class="text-red-500">{errorMessage}</p>
       {/if}
@@ -530,11 +528,6 @@ transition:fade={{ duration: 300 }}
             <div class="flex items-center">
               <Rating id="example-3" total={5} rating={book.book_score}
               ></Rating>
-
-              <!-- {@html generateStars(book.book_score)}
-                            <span class="text-gray-800 ml-7 text-lg"
-                                >({(book.book_score).toFixed(2)})</span
-                            > -->
             </div>
             <p class="text-2xl text-red-600 font-semibold">
               {#if book.discount}
@@ -576,192 +569,217 @@ transition:fade={{ duration: 300 }}
             </div>
 
             {#if custom}
-              <div class="w-full md:w-1/2 space-y-4">
-                <label for="title" class="block">Title:</label>
-                <input
-                  type="text"
-                  bind:value={inputText}
-                  placeholder="ชื่อหนังสือ"
-                  class="border p-2 w-full"
-                  id="title"
-                  maxlength="50"
-                />
-                <Label for="fonts">เลือก Font Family</Label>
-                <Select
-                  id="fonts"
-                  class="mt-2 font-select"
-                  bind:value={selectedFont}
-                >
-                  {#each fonts as font}
-                    <option
-                      value={font.value}
-                      class="option-{font.value
-                        .replace(/\s+/g, '-')
-                        .toLowerCase()}"
-                    >
-                      {font.name}
-                    </option>
-                  {/each}
-                </Select>
-                <label for="font" class="block">Font size (px):</label>
-                <input
-                  type="number"
-                  bind:value={textSize}
-                  min="1"
-                  max="100"
-                  class="border p-2 w-full"
-                  id="font"
-                  on:input={(e) => {
-                    if (e.target.value > 100) e.target.value = 100;
-                    if (e.target.value < 1) e.target.value = 1;
-                    textSize = parseInt(e.target.value);
-                  }}
-                />
+  <div class="w-full p-4">
+    <!-- Grid container แบบ 2 คอลัมน์ -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- คอลัมน์ซ้าย -->
+      <div class="space-y-4">
+        <!-- Title -->
+        <div>
+          <label for="title" class="block font-medium text-sm mb-1">Title:</label>
+          <input
+            type="text"
+            bind:value={inputText}
+            placeholder="ชื่อหนังสือ"
+            class="border p-2 w-full rounded"
+            id="title"
+            maxlength="50"
+          />
+        </div>
+        
+        <!-- Font Family -->
+        <div>
+          <Label for="fonts" class="block font-medium text-sm mb-1">เลือก Font Family</Label>
+          <Select
+            id="fonts"
+            class="mt-1 font-select w-full"
+            bind:value={selectedFont}
+          >
+            {#each fonts as font}
+              <option
+                value={font.value}
+                class="option-{font.value.replace(/\s+/g, '-').toLowerCase()}"
+              >
+                {font.name}
+              </option>
+            {/each}
+          </Select>
+        </div>
+        
+        <!-- Font Size -->
+        <div>
+          <label for="font" class="block font-medium text-sm mb-1">Font size (px):</label>
+          <input
+            type="number"
+            bind:value={textSize}
+            min="1"
+            max="100"
+            class="border p-2 w-full rounded"
+            id="font"
+            on:input={(e) => {
+              if (e.target.value > 100) e.target.value = 100;
+              if (e.target.value < 1) e.target.value = 1;
+              textSize = parseInt(e.target.value);
+            }}
+          />
+        </div>
+        
+        <!-- Color Text -->
+        <div class="relative" bind:this={menuElementText}>
+          <button
+            type="button"
+            class="inline-flex items-center gap-x-1 text-sm font-semibold text-gray-900 border p-2 rounded w-full justify-between"
+            aria-expanded={isOpen}
+            on:click|stopPropagation={toggleMenu}
+          >
+            <span>Color Text</span>
+            <svg
+              class="w-5 h-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
 
-                <Label for="textarea-id" class="mb-2">ข้อความ</Label>
-                <Textarea
-                  id="textarea-id"
-                  placeholder="Your message"
-                  rows="4"
-                  name="message"
-                  maxlength="450"
-                  bind:value={textp}
-                />
-                <!-- เมนูสำหรับเลือกสีข้อความ -->
-                <div class="relative" bind:this={menuElementText}>
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-x-1 text-sm font-semibold text-gray-900"
-                    aria-expanded={isOpen}
-                    on:click|stopPropagation={toggleMenu}
-                  >
-                    <span>Color Text</span>
-                    <svg
-                      class="w-5 h-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z"
-                        clip-rule="evenodd"
-                      />
-                    </svg>
-                  </button>
-
-                  {#if isOpen}
-                    <div class="mt-5 px-4">
-                      <div
-                        class="w-80 max-w-md mx-auto overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-gray-900/5 p-4"
-                        transition:fly={{ y: 5, duration: 200 }}
-                      >
-                        <!-- เนื้อหาของ ColorPickerText -->
-                        <div id="colorPickerText"></div>
-                        <br />
-                        <input
-                          type="text"
-                          bind:value={colorHexText}
-                          placeholder="#000000"
-                          class="border p-2 w-full"
-                        />
-                      </div>
-                    </div>
-                  {/if}
+          {#if isOpen}
+            <div class="mt-2">
+              <div
+                class="w-full overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-gray-900/5 p-4"
+                transition:fly={{ y: 5, duration: 200 }}
+              >
+                <div id="colorPickerText" class="mx-auto"></div>
+                <div class="mt-3">
+                  <input
+                    type="text"
+                    bind:value={colorHexText}
+                    placeholder="#000000"
+                    class="border p-2 w-full rounded"
+                  />
                 </div>
-
-                <!-- เมนูสำหรับเลือกสี cover -->
-                <div class="relative" bind:this={menuElementCover}>
-                  <button
-                    type="button"
-                    class="inline-flex items-center gap-x-1 text-sm font-semibold text-gray-900"
-                    aria-expanded={isOpen1}
-                    on:click|stopPropagation={toggleMenu1}
-                  >
-                    <span>Color Cover</span>
-                    <svg
-                      class="w-5 h-5"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fill-rule="evenodd"
-                        d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z"
-                        clip-rule="evenodd"
-                      />
-                    </svg>
-                  </button>
-
-                  {#if isOpen1}
-                    <div class="mt-5 px-4">
-                      <div
-                        class="w-80 max-w-md mx-auto overflow-hidden rounded-3xl bg-white shadow-lg ring-1 ring-gray-900/5 p-4"
-                        transition:fly={{ y: 5, duration: 200 }}
-                      >
-                        <!-- เนื้อหาของ ColorCover -->
-                        <div id="colorPicker"></div>
-                        <br />
-                        <input
-                          type="text"
-                          bind:value={colorHex}
-                          placeholder="#ffffff"
-                          class="border p-2 w-full"
-                        />
-                      </div>
-                    </div>
-                  {/if}
-                </div>
-
-                <div class="w-80 grid grid-cols-2 gap-6">
-                  <div
-                    class="rounded-sm border border-gray-200 dark:border-gray-700 flex items-center justify-center"
-                  >
-                    <Radio
-                      name="bordered"
-                      value="1"
-                      bind:group={paperUse}
-                      class="w-full p-4 text-center"
-                    >
-                      กระดาษปกติ
-                    </Radio>
-                  </div>
-                  <div
-                    class="rounded-sm border border-gray-200 dark:border-gray-700 flex items-center justify-center"
-                  >
-                    <Radio
-                      name="bordered"
-                      value="2"
-                      bind:group={paperUse}
-                      class="w-full p-4 text-center"
-                    >
-                      กระดาษถนอมสายตา
-                    </Radio>
-                  </div>
-                </div>
-                <h5><b>ชนิดปกติ</b></h5>
-                <div class="flex flex-wrap items-center gap-6 w-auto">
-                  <Radio bind:group={paperCover} value="paperback"
-                    >ปกอ่อน (Paperback)</Radio
-                  >
-                  <Radio bind:group={paperCover} value="hardcover"
-                    >ปกแข็ง (Hardcover)</Radio
-                  >
-                  <Radio bind:group={paperCover} value="semi-hardcover"
-                    >ปกกึ่งอ่อนกึ่งแข็ง (Semi-Hardcover)</Radio
-                  >
-                </div>
-
-                <!-- ปุ่มตกลงส่งค่าสีเป็น JSON -->
-                <!-- <button
-                  on:click={submitColor}   REMOVED
-                  id="submitComplete"
-                  class="px-4 py-2 bg-blue-500 text-white rounded border border-slate-300 hover:border-slate-400 hover:bg-blue-400"
-                >
-                  ตกลง
-                </button> -->
               </div>
-            {/if}
+            </div>
+          {/if}
+        </div>
+        
+        <!-- Paper Type -->
+        <div>
+          <h5 class="font-medium text-sm mb-2">ประเภทกระดาษ</h5>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+              <Radio
+                name="bordered"
+                value="1"
+                bind:group={paperUse}
+                class="w-full p-3 text-center"
+              >
+                กระดาษปกติ
+              </Radio>
+            </div>
+            <div class="rounded border border-gray-200 dark:border-gray-700 flex items-center justify-center">
+              <Radio
+                name="bordered"
+                value="2"
+                bind:group={paperUse}
+                class="w-full p-3 text-center"
+              >
+                กระดาษถนอมสายตา
+              </Radio>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- คอลัมน์ขวา -->
+      <div class="space-y-4">
+        <!-- ข้อความ -->
+        <div>
+          <Label for="textarea-id" class="block font-medium text-sm mb-1">ข้อความ</Label>
+          <Textarea
+            id="textarea-id"
+            placeholder="Your message"
+            rows="4"
+            name="message"
+            maxlength="450"
+            bind:value={textp}
+            class="w-full rounded"
+          />
+        </div>
+        
+        <!-- Color Cover -->
+        <div class="relative" bind:this={menuElementCover}>
+          <button
+            type="button"
+            class="inline-flex items-center gap-x-1 text-sm font-semibold text-gray-900 border p-2 rounded w-full justify-between"
+            aria-expanded={isOpen1}
+            on:click|stopPropagation={toggleMenu1}
+          >
+            <span>Color Cover</span>
+            <svg
+              class="w-5 h-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M5.22 8.22a.75.75 0 011.06 0L10 11.94l3.72-3.72a.75.75 0 111.06 1.06l-4.25 4.25a.75.75 0 01-1.06 0L5.22 9.28a.75.75 0 010-1.06z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+
+          {#if isOpen1}
+            <div class="mt-2">
+              <div
+                class="w-full overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-gray-900/5 p-4"
+                transition:fly={{ y: 5, duration: 200 }}
+              >
+                <div id="colorPicker" class="mx-auto"></div>
+                <div class="mt-3">
+                  <input
+                    type="text"
+                    bind:value={colorHex}
+                    placeholder="#ffffff"
+                    class="border p-2 w-full rounded"
+                  />
+                </div>
+              </div>
+            </div>
+          {/if}
+        </div>
+        
+        <!-- Cover Type -->
+        <div>
+          <h5 class="font-medium text-sm mb-2"><b>ชนิดปก</b></h5>
+          <div class="space-y-2">
+            <div class="rounded border border-gray-200 p-2 hover:bg-gray-50">
+              <Radio bind:group={paperCover} value="paperback">
+                ปกอ่อน (Paperback)
+              </Radio>
+            </div>
+            <div class="rounded border border-gray-200 p-2 hover:bg-gray-50">
+              <Radio bind:group={paperCover} value="hardcover">
+                ปกแข็ง (Hardcover)
+              </Radio>
+            </div>
+            <div class="rounded border border-gray-200 p-2 hover:bg-gray-50">
+              <Radio bind:group={paperCover} value="semi-hardcover">
+                ปกกึ่งอ่อนกึ่งแข็ง (Semi-Hardcover)
+              </Radio>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{/if}
           </div>
         </div>
 
@@ -790,12 +808,6 @@ transition:fade={{ duration: 300 }}
                 {book.book_score.toFixed(2)} out of 5
               </p>
             </Rating>
-            <!-- <p class="text-3xl font-bold">
-                            {book.book_score.toFixed(2)}
-                        </p>
-                        <div class="mt-2">
-                            {@html generateStars(book.book_score)}
-                        </div> -->
           </div>
           <div class="bg-gray-100 p-4 rounded-lg">
             <h3 class="font-semibold">รีวิวจากลูกค้า</h3>
