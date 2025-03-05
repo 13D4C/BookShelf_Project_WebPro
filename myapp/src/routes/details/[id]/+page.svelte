@@ -58,6 +58,8 @@
   ];
   let paperCover = "paperback";
   let textp = "";
+  let showReportModal = false;
+  let reasonReport = '';
 
   function toggleMenu(event: MouseEvent) {
     event.stopPropagation();
@@ -128,6 +130,49 @@
     custom = !custom;
     console.log(custom);
   }
+
+   //report
+   function openReportModal() {
+    showReportModal = true;
+  }
+
+  function closeReportModal() {
+    showReportModal = false;
+  }
+
+  async function sentReport() {
+    try {
+      const response = await fetch("http://localhost:3000/report/book/publisher", {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+              },
+              body: JSON.stringify({book_id:book.book_id!, reporter_id:userId, report_reason:reasonReport}),
+      }) as any;
+      const data = await response.json();
+      if(!response.ok) {
+        if (data.error == 'Book is not found') {
+          alert("ไม่พบหนังสือ");
+        }
+        else if (data.error == 'User is not found') {
+          alert("ไม่พบบัญชีผู้ใช้");
+        }
+        else if (data.error == 'This user has already reported') {
+          alert("คุณเคยรายงานหนังสือเล่มนี้ไปเเล้ว");
+        }
+        return;
+      }
+      alert("การรายงานสำเร็จ")
+    }
+    catch(error) {
+      console.log(error)
+      alert("การรายงานไม่สำเร็จกรุณาลองใหม่ภายหลัง")
+    }
+    finally {
+      closeReportModal();
+      reasonReport = ''
+    }
+  };
 
 //   function updateColor(event) {
 //     let newColor = event.target.value;
@@ -725,6 +770,15 @@ transition:fade={{ duration: 300 }}
           <h2 class="text-xl font-semibold">รายละเอียด :</h2>
           <p class="text-gray-600 mt-2">{book.book_descriptions}</p>
         </div>
+
+          <!-- Report -->
+        <div class="mt-8">
+            <button
+            class="bg-blue-700 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            on:click={openReportModal}
+            >📢 รายงานหนังสือเล่มนี้</button>
+        </div>
+  
         <!-- Reviews -->
         <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="bg-gray-100 p-4 rounded-lg">
@@ -933,6 +987,40 @@ transition:fade={{ duration: 300 }}
         </div>
       {/if}
     </div>
+  </div>
+</div>
+{/if}
+
+<!-- ReportModal -->
+{#if showReportModal}
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-40 flex justify-center items-center z-50 transform">
+  <div 
+    class="bg-white p-10 rounded-lg shadow-xl w-[65vw] max-w-xl max-h-[50vh] space-y-6 border overflow-y-auto">
+      <h2 
+        class="text-2xl font-semibold text-gray-800">รายงานหนังสือ</h2>
+    <form>
+      <div class="space-y-4">
+        <div>
+            <label for="reason" class="block text-gray-600">เหตุผล</label>
+            <textarea
+              id="reason"
+              bind:value={reasonReport}
+              class="w-full px-4 py-2 border rounded-lg shadow-sm" required></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-4 mt-6">
+        <button
+        type="button"
+        on:click={closeReportModal}
+        class="bg-red-500 text-white p-2 pl-5 pr-5 rounded-lg hover:bg-red-600">ยกเลิก</button>
+
+        <button
+        type="button"
+        on:click={sentReport}
+        class="bg-green-500 text-white p-2 pl-5 pr-5 rounded-lg hover:bg-green-600">ยืนยัน</button>
+      </div>
+    </form>
   </div>
 </div>
 {/if}

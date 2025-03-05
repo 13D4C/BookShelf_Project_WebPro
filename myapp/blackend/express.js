@@ -2333,6 +2333,269 @@ app.get('/shop/information/get/:userId', async (req, res) => {
     }
 });
 
+
+
+//  <<----------------------------------------------------------------------------------->>
+//  <<----------------------------ระบบ Report-------------------------------------------->>
+//  <<----------------------------------------------------------------------------------->>
+
+app.post('/report/book/publisher' , async (req, res) => {
+    try {
+        const { book_id, reporter_id, report_reason }  = req.body;
+
+        if ( !book_id || !reporter_id || !report_reason ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        const check_book =  await queryDatabase(
+            `SELECT book_id FROM book_detail WHERE book_id=?`, [book_id]);
+        const check_user =  await queryDatabase(
+            `SELECT user_id FROM user WHERE user_id=?`, [reporter_id]);
+        const check_redundan =  await queryDatabase(
+            `SELECT book_id FROM report_book_detail
+              WHERE reporter_id=? 
+              AND book_id=?
+              AND report_status='รอการตรวจสอบ';`, [reporter_id, book_id]);
+
+        if(!check_book || check_book.length === 0) {
+            return res.status(400).json({ error: 'Book is not found' });
+        }
+        if(!check_user || check_user.length === 0) {
+            return res.status(400).json({ error: 'User is not found' });
+        }
+        if(!check_redundan || check_redundan.length > 0) {
+            return res.status(400).json({ error: 'This user has already reported'});
+        }
+
+        await queryDatabase(
+            `INSERT INTO report_book_detail(book_id, reporter_id, report_reason, report_status)
+             VALUES (?, ?, ?, 'รอการตรวจสอบ')`, [book_id, reporter_id, report_reason]);
+
+        return res.status(200).json({message:"Book report successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to repoer book',
+            details: error.message
+        });
+    }
+});
+
+app.get('/report/book/publisher/reject/:reportId' , async (req, res) => {
+    try {
+        const report_id = req.params.reportId;
+
+        if ( !report_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        const check = await queryDatabase(
+            `SELECT book_report_id FROM report_book_detail WHERE book_report_id=?`,[report_id]);
+
+        if (check.length == 0) {
+            return res.status(400).json({ error: 'Report is not found' });
+        }
+
+        await queryDatabase(
+            `UPDATE report_book_detail
+            SET report_status = 'เพิกเฉย', solved_time = current_timestamp()
+            WHERE book_report_id = ?`, [report_id]);
+
+        return res.status(200).json({message:"Reject report successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to reject report',
+            details: error.message
+        });
+    }
+});
+
+app.get('/report/book/publisher/approve/:reportId' , async (req, res) => {
+    try {
+        const report_id = req.params.reportId;
+
+        if ( !report_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        const check = await queryDatabase(
+            `SELECT book_report_id, book_id FROM report_book_detail WHERE book_report_id=?`,[report_id]);
+
+        if (check.length == 0) {
+            return res.status(400).json({ error: 'Report is not found' });
+        }
+
+        await queryDatabase(
+            `UPDATE report_book_detail
+            SET report_status = 'ยอมรับคำขอ', solved_time = current_timestamp()
+            WHERE book_report_id = ?`, [report_id]);
+        await queryDatabase(
+            `DELETE FROM book_detail
+             WHERE book_id=?`, [check[0].book_id],
+
+        )
+        return res.status(200).json({message:"Approve report successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to approve report',
+            details: error.message
+        });
+    }
+});
+
+app.post('/report/book/seller' , async (req, res) => {
+    try {
+        const { seller_book_id, reporter_id, report_reason }  = req.body;
+
+        if ( !seller_book_id || !reporter_id || !report_reason ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        const check_book =  await queryDatabase(
+            `SELECT seller_book_id FROM seller_book_detail WHERE seller_book_id=?`, [seller_book_id]);
+        const check_user =  await queryDatabase(
+            `SELECT user_id FROM user WHERE user_id=?`, [reporter_id]);
+        const check_redundan =  await queryDatabase(
+            `SELECT seller_book_id FROM report_seller_book
+              WHERE reporter_id=? 
+              AND seller_book_id=?
+              AND report_status='รอการตรวจสอบ';`, [reporter_id, seller_book_id]);
+
+        if(!check_book || check_book.length === 0) {
+            return res.status(400).json({ error: 'Book is not found' });
+        }
+        if(!check_user || check_user.length === 0) {
+            return res.status(400).json({ error: 'User is not found' });
+        }
+        if(!check_redundan || check_redundan.length > 0) {
+            return res.status(400).json({ error: 'This user has already reported'});
+        }
+
+        await queryDatabase(
+            `INSERT INTO report_seller_book(seller_book_id, reporter_id, report_reason, report_status)
+             VALUES (?, ?, ?, 'รอการตรวจสอบ')`, [seller_book_id, reporter_id, report_reason]);
+
+        return res.status(200).json({message:"Book report successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to repoer book',
+            details: error.message
+        });
+    }
+});
+
+app.get('/report/book/publisher/get', async(req, res) => {
+    try {
+        const qury_report = await queryDatabase(
+            `SELECT rd.*, u.user_name, bd.book_name_originl, ubd.user_id as owner_id
+             FROM report_book_detail rd
+             JOIN user u ON rd.reporter_id=u.user_id
+             JOIN book_detail bd ON rd.book_id=bd.book_id
+             JOIN user ubd ON ubd.publisher_id=bd.publisher_id
+             AND rd.report_status='รอการตรวจสอบ'`);
+        
+        return res.status(200).json({ report: qury_report});
+    }
+    catch(error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to get report',
+            details: error.message
+        });
+    }
+});
+
+app.get('/report/book/seller/get', async(req, res) => {
+    try {
+        const qury_report = await queryDatabase(
+            `SELECT rd.*, u.user_name, bd.book_name, bd.owner_id
+             FROM report_seller_book rd
+             JOIN user u ON rd.reporter_id=u.user_id
+             JOIN seller_book_detail bd ON rd.seller_book_id=bd.seller_book_id
+             AND rd.report_status='รอการตรวจสอบ'`);
+        return res.status(200).json({ report: qury_report});
+    }
+    catch(error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to get report',
+            details: error.message
+        });
+    }
+});
+
+app.get('/report/book/seller/reject/:reportId' , async (req, res) => {
+    try {
+        const report_id = req.params.reportId;
+
+        if ( !report_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        const check = await queryDatabase(
+            `SELECT report_id FROM report_seller_book WHERE report_id=?`,[report_id]);
+
+        if (check.length == 0) {
+            return res.status(400).json({ error: 'Report is not found' });
+        }
+
+        await queryDatabase(
+            `UPDATE report_seller_book
+            SET report_status = 'เพิกเฉย', resolved_time = current_timestamp()
+            WHERE report_id = ?`, [report_id]);
+
+        return res.status(200).json({message:"Reject report successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to reject report',
+            details: error.message
+        });
+    }
+});
+
+app.get('/report/book/seller/approve/:reportId' , async (req, res) => {
+    try {
+        const report_id = req.params.reportId;
+
+        if ( !report_id ) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        const check = await queryDatabase(
+            `SELECT report_id, seller_book_id FROM report_seller_book WHERE report_id=?`,[report_id]);
+
+        if (check.length == 0) {
+            return res.status(400).json({ error: 'Report is not found' });
+        }
+
+        await queryDatabase(
+            `UPDATE report_seller_book
+            SET report_status = 'ยอมรับคำขอ', resolved_time = current_timestamp()
+            WHERE report_id = ?`, [report_id]);
+        await queryDatabase(
+            `DELETE FROM seller_book_detail
+             WHERE seller_book_id=?`, [check[0].seller_book_id],
+        )
+        return res.status(200).json({message:"Approve report successfully"});
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to approve report',
+            details: error.message
+        });
+    }
+});
+
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });

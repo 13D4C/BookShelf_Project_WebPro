@@ -17,7 +17,7 @@
   let showModal = false;
   let currentRequest: SellerRequest | null = null;
   let showReportModal = false; // Modal for report details
-  let currentReport: Report | null = null; // Current report for the modal
+  let currentReport: Report | null | ReportSeller = null; // Current report for the modal
   let showOrderModal = false; // Modal for order details
   let currentOrder: Order | null = null; // Current order for modal
   let showBanModal = false;
@@ -25,32 +25,36 @@
 
   // --- Seller Requests Data (Mockup) ---
   interface SellerRequest {
-    id: number;
+    user_id: number;
     user_name: string;
-    name: string;
-    email: string;
-    phone: string;
-    age: number;
-    shopName: string;
-    shopDescription: string;
-    status: "pending" | "approved" | "rejected";
-    qrCode: string;
-    idCard: string;
-    token: string;
+    user_email: string;
+    user_phone: string;
+    status: string;
+    qr_code: string
+    proof_image: string;
   }
 
-  // --- Report Data (Mockup) ---
+  // --- Report Data ---
   interface Report {
-    id: number;
-    reporter_username: string; // Username of the person reporting
-    reporter_name: string;
-    reporter_email: string;
-    reported_item_id: number | null; // ID of the reported item (can be null)
-    reported_item_name: string | null; // Name of the reported product
-    reported_shop_id: number; // ID of the reported shop
-    reported_shop_name: string;
-    report_details: string; // Details of the report
-    status: "pending" | "reviewed"; // Add status to the report
+    book_report_id: number;
+    reporter_id: number;
+    report_reason: string;
+    book_id: number;
+    user_name: string;
+    book_name_originl: string
+    owner_id: number
+    report_status: string;
+  }
+
+  interface ReportSeller {
+    report_id: number;
+    reporter_id: number;
+    report_reason: string;
+    seller_book_id: number;
+    user_name: string;
+    book_name: string
+    owner_id: number
+    report_status: string;
   }
 
   // --- Order Data (Mockup) ---
@@ -148,78 +152,10 @@
     },
   ];
 
-  let reports: Report[] = [
-    // Mock Report data
-    {
-      id: 1,
-      reporter_username: "reporter1",
-      reporter_name: "Alice Johnson",
-      reporter_email: "alice@example.com",
-      reported_item_id: 101,
-      reported_item_name: "Broken Toy",
-      reported_shop_id: 1,
-      reported_shop_name: "John's Bookstore",
-      report_details: "The toy arrived broken and is not as described.",
-      status: "pending",
-    },
-    {
-      id: 2,
-      reporter_username: "reporter2",
-      reporter_name: "Bob Williams",
-      reporter_email: "bob@example.com",
-      reported_item_id: null,
-      reported_item_name: null,
-      reported_shop_id: 2,
-      reported_shop_name: "Jane's Crafts",
-      report_details: "The shop owner was rude and unresponsive.",
-      status: "pending",
-    },
-    {
-      id: 3,
-      reporter_username: "reporter3",
-      reporter_name: "Charlie Brown",
-      reporter_email: "charlie@test.com",
-      reported_item_id: 105,
-      reported_item_name: "Fake Product",
-      reported_shop_id: 3,
-      reported_shop_name: "Peter's Tech Shop",
-      report_details: "The product is counterfeit and not genuine.",
-      status: "reviewed",
-    },
-  ];
+  let reports: Report[] = [];
+  let reportsSeller: ReportSeller[] = [];
 
-  // Mock Order data
-  let orders: Order[] = [
-    {
-      id: 1,
-      buyer_username: "buyer1",
-      buyer_name: "Alice Smith",
-      shop_name: "John's Bookstore",
-      order_date: "2024-01-20",
-      total_amount: 500,
-      status: "pending",
-      items: [
-        { product_id: 1, product_name: "Book 1", quantity: 2, price: 200 },
-        { product_id: 2, product_name: "Book 2", quantity: 1, price: 100 },
-      ],
-      payment_slip: "https://example.com/slip1.jpg", // Example URL
-    },
-    {
-      id: 2,
-      buyer_username: "buyer2",
-      buyer_name: "Bob Johnson",
-      shop_name: "Jane's Crafts",
-      order_date: "2024-01-22",
-      total_amount: 750,
-      status: "confirmed",
-      items: [
-        { product_id: 3, product_name: "Craft A", quantity: 1, price: 500 },
-        { product_id: 4, product_name: "Craft B", quantity: 1, price: 250 },
-      ],
-      payment_slip: "https://example.com/slip2.jpg",
-    },
-  ];
-
+  
   // Temp Variables
   let manageUserId = null;
   let reason:any = null;
@@ -229,6 +165,15 @@
 
   // --- Helper Functions ---
   // Get all user (for ban management)
+
+  async function goDetail(book_id:any) {
+    window.open(`/details/${book_id}`, "_blank");
+  }
+
+  async function goSellerDetail(seller_book_id:any) {
+    window.open(`/marketdetails/${seller_book_id}`, "_blank");
+  }
+
   async function getAllUsers() {
     try {
       // Assuming you have an endpoint like /admin/users to fetch all users
@@ -244,6 +189,111 @@
       console.error("Error fetching users:", error);
     }
   }
+
+  // Get all report
+  async function getReport() {
+    try {
+      const response = await fetch("http://localhost:3000/report/book/publisher/get");
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      let reportInfo = data.report;
+      reports = reportInfo;
+    }
+    catch (error) {
+      console.log("Error fetching report:", error)
+    }
+  }
+
+  async function getSellerReport() {
+    try {
+      const response = await fetch("http://localhost:3000/report/book/seller/get");
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      let reportInfo = data.report;
+      reportsSeller = reportInfo;
+
+    }
+    catch (error) {
+      console.log("Error fetching report:", error)
+    }
+  }
+
+  async function approveReportBook(report_id:any) {
+    try {
+      console.log(report_id);
+      const response = await fetch(`http://localhost:3000/report/book/publisher/approve/${report_id}`);
+      if (!response.ok) {
+        alert("ไม่สามารถทำรายการได้ในขณะโปรดลองอีกครั้งภายหลัง");
+        return;
+      }
+      alert("จัดการรายงานเสร็จสิ้น");
+    }
+    catch {
+      alert("ไม่สามารถทำรายการได้ในขณะโปรดลองอีกครั้งภายหลัง");
+    }
+    finally{
+      await getReport();
+    }
+  }
+
+  async function rejectReportBook(report_id:any) {
+    try {
+      console.log(report_id);
+      const response = await fetch(`http://localhost:3000/report/book/publisher/reject/${report_id}`);
+      if (!response.ok) {
+        alert("ไม่สามารถทำรายการได้ในขณะโปรดลองอีกครั้งภายหลัง");
+        return;
+      }
+      alert("เพิกเฉยรายงานเสร็จสิ้น");
+    }
+    catch {
+      alert("ไม่สามารถทำรายการได้ในขณะโปรดลองอีกครั้งภายหลัง");
+    }
+    finally{
+      await getReport();
+    }
+  }
+
+  async function approveReportSeller(report_id:any) {
+    try {
+      console.log(report_id);
+      const response = await fetch(`http://localhost:3000/report/book/seller/approve/${report_id}`);
+      if (!response.ok) {
+        alert("ไม่สามารถทำรายการได้ในขณะโปรดลองอีกครั้งภายหลัง");
+        return;
+      }
+      alert("จัดการรายงานเสร็จสิ้น");
+    }
+    catch {
+      alert("ไม่สามารถทำรายการได้ในขณะโปรดลองอีกครั้งภายหลัง");
+    }
+    finally{
+      await getSellerReport();
+    }
+  }
+
+  async function rejectReportSeller(report_id:any) {
+    try {
+      console.log(report_id);
+      const response = await fetch(`http://localhost:3000/report/book/seller/reject/${report_id}`);
+      if (!response.ok) {
+        alert("ไม่สามารถทำรายการได้ในขณะโปรดลองอีกครั้งภายหลัง");
+        return;
+      }
+      alert("เพิกเฉยรายงานเสร็จสิ้น");
+    }
+    catch {
+      alert("ไม่สามารถทำรายการได้ในขณะโปรดลองอีกครั้งภายหลัง");
+    }
+    finally{
+      await getSellerReport();
+    }
+  }
+
 
   //Comment out during use mockup data.
   // async function getSellerRequests() {
@@ -489,8 +539,8 @@ async function deleteUser() {
         throw new Error("Simulated HTTP error");
       }
       reports = reports.map((report) => {
-        if (report.id === reportId) {
-          return { ...report, status: "reviewed" };
+        if (report.book_report_id === reportId) {
+          return { ...report, report_status: "reviewed" };
         }
         return report;
       });
@@ -568,6 +618,8 @@ async function deleteUser() {
     if (userToken) {
       // Only fetch if logged in as admin
       await getAllUsers();
+      await getReport();
+      await getSellerReport();
     }
   });
 </script>
@@ -812,8 +864,9 @@ async function deleteUser() {
         </div>
       {:else if activeMenu === "reportManagement"}
         <h1 class="text-2xl font-semibold mb-4">ตรวจสอบรายงาน</h1>
+        <h6 class="text-xl font-semibold mb-4 pt-5">เกี่ยวกับหนังสือของสำนักพิมพ์</h6>
         {#if reports.length === 0}
-          <p>ไม่มีรายงานในขณะนี้</p>
+          <p>ไม่มีรายงานของสำนักพิมพ์ในขณะนี้</p>
         {:else}
           <div class="bg-white rounded-lg shadow-md overflow-x-auto">
             <table class="min-w-full">
@@ -821,37 +874,93 @@ async function deleteUser() {
                 <tr class="bg-gray-100">
                   <th class="py-2 px-4 text-left">Report ID</th>
                   <th class="py-2 px-4 text-left">Reporter</th>
-                  <th class="py-2 px-4 text-left">Shop</th>
+                  <th class="py-2 px-4 text-left">Book</th>
                   <th class="py-2 px-4 text-left">Status</th>
                   <th class="py-2 px-4 text-left">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {#each reports as report (report.id)}
+                {#each reports as report (report.book_report_id)}
                   <tr class="border-b">
-                    <td class="py-2 px-4">{report.id}</td>
-                    <td class="py-2 px-4">{report.reporter_username}</td>
-                    <td class="py-2 px-4">{report.reported_shop_name}</td>
-                    <td class="py-2 px-4">
-                      {#if report.status === "pending"}
-                        <span class="text-yellow-500">Pending</span>
-                      {:else}
-                        <span class="text-green-500">Reviewed</span>
-                      {/if}
-                    </td>
+                    <td class="py-2 px-4">{report.book_report_id}</td>
+                    <td class="py-2 px-4">{report.user_name}</td>
+                    <td 
+                      class="py-2 px-4 cursor-pointer hover:bg-gray-200 hover:text-blue-600"
+                      on:click={() => goDetail(report.book_id)}
+                    >{report.book_name_originl}</td>
                     <td class="py-2 px-4">
                       <button
                         on:click={() => openReportModal(report)}
                         class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-2"
-                        >Detail</button
+                        >รายละเอียด</button
                       >
-                      {#if report.status === "pending"}
-                        <button
-                          on:click={() => handleReportReview(report.id)}
-                          class="bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded"
-                          >Mark as Reviewed</button
-                        >
-                      {/if}
+                      
+                    </td>
+                    <td class="py-2 px-4">
+                      <button
+                        on:click={() => approveReportBook(report.book_report_id)}
+                        class="bg-green-500 hover:bg-gren-700 text-white font-bold py-1 px-2 rounded mr-2"
+                        >ลบหนังสือ</button
+                      >
+                      <button
+                        on:click={() => rejectReportBook(report.book_report_id)}
+                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded mr-2"
+                        >เพิกเฉย</button
+                      >
+                      
+                    </td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+
+        
+        <h6 class="text-xl font-semibold mb-4 pt-5">เกี่ยวกับหนังสือของผู้ขาย</h6>
+        {#if reportsSeller.length === 0}
+          <p>ไม่มีรายงานของผู้ขายในขณะนี้</p>
+        {:else}
+          <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+            <table class="min-w-full">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="py-2 px-4 text-left">Report ID</th>
+                  <th class="py-2 px-4 text-left">Reporter</th>
+                  <th class="py-2 px-4 text-left">Book</th>
+                  <th class="py-2 px-4 text-left">Status</th>
+                  <th class="py-2 px-4 text-left">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each reportsSeller as report (report.report_id)}
+                  <tr class="border-b">
+                    <td class="py-2 px-4">{report.report_id}</td>
+                    <td class="py-2 px-4">{report.user_name}</td>
+                    <td 
+                      class="py-2 px-4 cursor-pointer hover:bg-gray-200 hover:text-blue-600"
+                      on:click={() => goSellerDetail(report.seller_book_id)}
+                    >{report.book_name}</td>
+                    <td class="py-2 px-4">
+                      <button
+                        on:click={() => openReportModal(report)}
+                        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mr-2"
+                        >รายละเอียด</button
+                      >
+                      
+                    </td>
+                    <td class="py-2 px-4">
+                      <button
+                        on:click={() => approveReportSeller(report.report_id)}
+                        class="bg-green-500 hover:bg-gren-700 text-white font-bold py-1 px-2 rounded mr-2"
+                        >ลบหนังสือ</button
+                      >
+                      <button
+                        on:click={() => rejectReportSeller(report.report_id)}
+                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-2 rounded mr-2"
+                        >เพิกเฉย</button
+                      >
+                      
                     </td>
                   </tr>
                 {/each}
@@ -1025,35 +1134,37 @@ async function deleteUser() {
             <div class="sm:flex sm:items-start">
               <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                 <h3 class="text-lg leading-6 font-medium text-gray-900" id="report-modal-title">
-                  Report Details
+                  รายระเอียดการรายงาน
                 </h3>
                 <div class="mt-2">
                   <p>
-                    <strong>Reporter Username:</strong> {currentReport.reporter_username}
+                    <strong>ไอดีของผู้รายงาน:</strong> {currentReport.reporter_id}
                   </p>
-                  <p><strong>Reporter Name:</strong> {currentReport.reporter_name}</p>
-                  <p>
-                    <strong>Reporter Email:</strong> {currentReport.reporter_email}
-                  </p>
-                  {#if currentReport.reported_item_id}
+                  {#if currentReport.book_report_id}
                     <p>
-                      <strong>Reported Item ID:</strong> {currentReport.reported_item_id}
+                      <strong>ไอดีของหนังสือที่รายงาน:</strong> {currentReport.book_id}
                     </p>
                     <p>
-                      <strong>Reported Item Name: </strong>{currentReport.reported_item_name}
+                      <strong >ชื่อหนังสือที่รายงาน:</strong>{currentReport.book_name_originl}
+                    </p>
+                  {/if}
+                  {#if currentReport.report_id}
+                    <p>
+                      <strong>ไอดีของหนังสือที่รายงาน:</strong> {currentReport.seller_book_id}
+                    </p>
+                    <p>
+                      <strong >ชื่อหนังสือที่รายงาน:</strong>{currentReport.book_name}
                     </p>
                   {/if}
 
                   <p>
-                    <strong>Reported Shop ID:</strong> {currentReport.reported_shop_id}
+                    <strong>ไอดีของผู้ขายหนังสือ:</strong> {currentReport.owner_id}
                   </p>
+
                   <p>
-                    <strong>Reported Shop Name:</strong> {currentReport.reported_shop_name}
+                    <strong>เหตุผลการรายงาน:</strong> {currentReport.report_reason}
                   </p>
-                  <p>
-                    <strong>Report Details:</strong> {currentReport.report_details}
-                  </p>
-                  <p><strong>Status:</strong> {currentReport.status}</p>
+                  <p><strong>สถานะ:</strong> {currentReport.report_status}</p>
                 </div>
               </div>
             </div>
