@@ -19,6 +19,7 @@ app.use(bodyParser.json());
 const pool = mysql.createPool({
 });
 
+
 async function queryDatabase(sql, params = []) {
     let connection;
     try {
@@ -1022,13 +1023,13 @@ app.post('/user/request-seller', async (req, res) => {
             `SELECT * FROM seller_register WHERE user_id = ?`, [user_id]
         )
 
-        if(check.length == 0) {
+        if(check.length > 0) {
             return res.status(400).json({message: "There is a request from this user already"});
         }
 
         const request = await queryDatabase(
             `INSERT INTO seller_register(user_id, status, proof_image, qr_code)
-            VALUES (?, 'Pending', ?, ?)`, [user_id, proof_image, qr_code]);
+            VALUES (?, 'รอการตรวจสอบ', ?, ?)`, [user_id, proof_image, qr_code]);
             return res.status(200).json({message: "Seller request successfuldly"});
     }
     catch {

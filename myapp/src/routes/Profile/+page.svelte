@@ -19,6 +19,11 @@
   let orders: any[] = []; //  Use any[] for more flexibility
   let seller_orders: any[] = []; // Use any[]
 
+  // --- Seller Request Data ---
+  let sellerRequest: any = null; // Store seller request data
+  let isSellerRequestLoading = writable(false);
+
+
   // --- Helper Functions ---
 
   function formatDate(dateString: string) {
@@ -27,13 +32,17 @@
   }
 
   function getStatusColor(status: string) {
-    switch (status) {
+     switch (status) {
       case "รอการชำระเงิน":
         return "text-yellow-500";
       case "กำลังดำเนินการ": // Added to handle new status
         return "text-blue-500";
+       case "อนุมัติ":
+        return "text-green-500";
       case "จัดส่งแล้ว":
         return "text-green-500";
+      case "ไม่อนุมัติ":
+         return "text-red-500"
       default:
         return "text-gray-500";
     }
@@ -119,15 +128,15 @@
     try {
       if (!userToken) return;
 
-      const response = await fetch("http://localhost:3000/user/shopRequest", {
+      const response = await fetch("http://localhost:3000/user/request-seller", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          token: userToken,
-          qrCode: qrCodeImage,
-          idCard: idCardImage,
+          user_id: user.user_id,
+          qr_code: qrCodeImage,
+          proof_image: idCardImage,
         }),
       });
 
@@ -139,6 +148,8 @@
         );
       }
       const result = await response.json();
+        // Refetch seller request status after successful submission
+        await fetchSellerRequestStatus();
 
       if (result.success) {
         alert(result.message || "คำขอเปิดร้านค้าถูกส่งแล้ว!");
@@ -408,6 +419,26 @@
     }
   }
 
+// --- Fetch Seller Request Status ---
+async function fetchSellerRequestStatus() {
+    isSellerRequestLoading.set(true);
+    try {
+        const response = await fetch(
+            `http://localhost:3000/user/request-seller/get/${user.user_id}`,
+        );
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status} - ${await response.text()}`);
+        }
+        const data = await response.json();
+        sellerRequest = data.seller_register; // Store the request data
+    } catch (error) {
+        console.error("Error fetching seller request status:", error);
+        sellerRequest = null; // Set to null on error
+    } finally {
+        isSellerRequestLoading.set(false);
+    }
+}
+
   // --- Lifecycle Hook ---
   onMount(async () => {
     userToken = localStorage.getItem("userToken");
@@ -438,6 +469,7 @@
     }
 
     await getOrder();
+    await fetchSellerRequestStatus(); // Fetch request status on mount
     isLoading.set(false);
   });
 </script>
@@ -719,6 +751,22 @@
                 {:else if activeMenu === "shopRequest"}
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h1 class="text-2xl font-semibold mb-4">การขอเปิดร้านค้า</h1>
+
+                    {#if $isSellerRequestLoading}
+                      <p>Loading...</p>
+                    {:else if sellerRequest}
+                      <!-- Display seller request details -->
+                      <div class="mb-4">
+                        <p class="text-lg font-medium">สถานะ: <span class="{getStatusColor(sellerRequest.status)}">{sellerRequest.status}</span></p>
+                        <p>วันที่ส่งคำขอ: {formatDate(sellerRequest.create_time)}</p>
+                        <p>QR Code: </p>
+                        <img src={sellerRequest.qr_code} alt="QR Code" class="mt-2 max-h-48" />
+                        <p>Proof Image: </p>
+                        <img src={sellerRequest.proof_image} alt="Proof of Identity" class="mt-2 max-h-48" />
+
+                      </div>
+                    {:else}
+                    <!-- Display the form for submitting a new request -->
                     <form on:submit={submitShopRequest} class="space-y-4">
                         <div>
                             <label for="qrCode" class="block text-sm font-medium text-gray-700">
@@ -742,12 +790,7 @@
                             ส่งคำขอ
                         </button>
                     </form>
-                </div>
-
-                {:else if activeMenu === "banManagement"}
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h1 class="text-2xl font-semibold mb-4">จัดการการแบน</h1>
-                    <p class="text-gray-600">(เนื้อหาส่วนนี้จะถูกพัฒนาในภายหลัง)</p>
+                     {/if}
                 </div>
                 {/if}
             </div>
