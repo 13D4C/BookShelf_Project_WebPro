@@ -15,11 +15,11 @@
           continue; 
         }
         let url;
-        if ($page.url.searchParams.get("type") === "official"){
-          url = 'http://localhost:3000/shop/publisher/payment/upload-proof';
+        if ($page.url.searchParams.get("type") === "seller"){
+          url = 'http://localhost:3000/shop/seller/payment/upload-proof';
         }
         else{
-          url = 'http://localhost:3000/shop/seller/payment/upload-proof';
+          url = 'http://localhost:3000/shop/publisher/payment/upload-proof';
         }
         const response = await fetch(url, {
           method: 'POST',
@@ -41,7 +41,6 @@
       goto("/thx");
 
     } catch (err) {
-      error = err.message;
       console.error(err);
       alert(err.message); 
     }
@@ -52,11 +51,11 @@
     try {
       const fetchedStores = [];
       for (const orderId of orderIds) {
-        if ($page.url.searchParams.get("type") === "official"){
-          url = `http://localhost:3000/shop/publisher/order/get/${orderId}`
+        if ($page.url.searchParams.get("type") === "seller"){
+          url = `http://localhost:3000/shop/seller/order/get/${orderId}`
         }
         else{
-          url = `http://localhost:3000/shop/seller/order/get/${orderId}`
+          url = `http://localhost:3000/shop/publisher/order/get/${orderId}`
         }
           const response = await fetch(url);
 
@@ -139,10 +138,6 @@
     return stores.every(store => store.slip !== null);
   }
 
-
-  function goToNextPage() {
-    goto('/next-page'); // Replace with your actual next page
-  }
 </script>
 
 <style>

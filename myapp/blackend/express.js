@@ -14,7 +14,8 @@ app.use(cors({
 }));
 const port = process.env.PORT || 3000;
 
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb', extended: true}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 const pool = mysql.createPool({
 });
@@ -2138,7 +2139,7 @@ app.get('/shop/seller/order/get/:seller_order_id', async (req, res) => {
         const seller_order_id = req.params.seller_order_id;
 
         const querry_order = await queryDatabase("SELECT * FROM seller_order_list WHERE seller_order_id=?", [seller_order_id]);
-        if (querry_order[0].length == 0) {
+        if (querry_order.length == 0) {
             return res.status(204).json({ message: "No order found in the seller_order_list" });
         }
         const querry_item = await queryDatabase(
