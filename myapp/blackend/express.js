@@ -1040,9 +1040,9 @@ app.post('/user/request-seller', async (req, res) => {
 });
 
 //เเอดมินยอมรับคำขอ
-app.post('/user/request-seller/approve', async (req, res) => {
+app.get('/user/request-seller/approve/:userId', async (req, res) => {
     try {
-        const { user_id } = req.body;
+        const user_id = req.params.userId;
         if (!user_id) {
             return res.status(400).json({ error: 'Information all is required' });
         }
@@ -1051,7 +1051,7 @@ app.post('/user/request-seller/approve', async (req, res) => {
         );
 
         const approve = await queryDatabase(
-            `UPDATE seller_register SET status = ? WHERE user_id = ?`, ['Permitted', user_id]);
+            `UPDATE seller_register SET status = ? WHERE user_id = ?`, ['อนุมัติ', user_id]);
         const updateStatus = await queryDatabase(
             `UPDATE user SET user_permission = 'Seller' WHERE user_id = ?`, [user_id]
         );
@@ -1070,14 +1070,14 @@ app.post('/user/request-seller/approve', async (req, res) => {
 });
 
 //เเอดมินปฏิเสธคำขอ
-app.post('/user/request-seller/reject', async (req, res) => {
+app.get('/user/request-seller/reject/:userId', async (req, res) => {
     try {
-        const { user_id } = req.body;
+        const user_id = req.params.userId;
         if (!user_id) {
             return res.status(400).json({ error: 'Information all is required' });
         }
         const reject = await queryDatabase(
-            `DELETE FROM seller_register WHERE user_id = ?`, [user_id]);
+            `UPDATE seller_register SET status = ? WHERE user_id = ?`, ['ไม่อนุมัติ', user_id]);
         return res.status(200).json({ message: "Reject seller request successfuldly" });
     }
     catch {
@@ -1090,8 +1090,10 @@ app.post('/user/request-seller/reject', async (req, res) => {
 app.get('/user/request-seller/get', async (req, res) => {
     try {
         const get = await queryDatabase(
-            `SELECT * FROM seller_register WHERE  status != 'Permitted';`);
-        return res.status(200).json({ seller_register: get[0] });
+            `SELECT sr.*, u.user_name, u.user_email, u.user_phone FROM seller_register sr
+             JOIN user u ON sr.user_id=u.user_id
+             WHERE  sr.status='รอการตรวจสอบ';`);
+        return res.status(200).json({ seller_register: get });
     }
     catch {
         console.log(error);
