@@ -4,6 +4,7 @@
   import { page } from "$app/stores";
   import { getUser } from "$lib/utils"; // Make sure this path is correct
   import { writable } from "svelte/store";
+  import { fade, slide } from "svelte/transition"; // Import transitions
 
   // --- State & Variables ---
   const isLoading = writable(true);
@@ -23,7 +24,6 @@
   let sellerRequest: any = null; // Store seller request data
   let isSellerRequestLoading = writable(false);
 
-
   // --- Helper Functions ---
 
   function formatDate(dateString: string) {
@@ -32,17 +32,17 @@
   }
 
   function getStatusColor(status: string) {
-     switch (status) {
+    switch (status) {
       case "รอการชำระเงิน":
         return "text-yellow-500";
       case "กำลังดำเนินการ": // Added to handle new status
         return "text-blue-500";
-       case "อนุมัติ":
+      case "อนุมัติ":
         return "text-green-500";
       case "จัดส่งแล้ว":
         return "text-green-500";
       case "ไม่อนุมัติ":
-         return "text-red-500"
+        return "text-red-500";
       default:
         return "text-gray-500";
     }
@@ -117,6 +117,7 @@
       alert("เกิดข้อผิดพลาดในการอัปเดตข้อมูล!");
     }
   }
+
   async function submitShopRequest(event: Event) {
     event.preventDefault();
 
@@ -128,28 +129,32 @@
     try {
       if (!userToken) return;
 
-      const response = await fetch("http://localhost:3000/user/request-seller", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "http://localhost:3000/user/request-seller",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_id: user.user_id,
+            qr_code: qrCodeImage,
+            proof_image: idCardImage,
+          }),
         },
-        body: JSON.stringify({
-          user_id: user.user_id,
-          qr_code: qrCodeImage,
-          proof_image: idCardImage,
-        }),
-      });
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
-          `HTTP error! Status: ${response.status}, Message: ${errorData.message || "Unknown error"
+          `HTTP error! Status: ${response.status}, Message: ${
+            errorData.message || "Unknown error"
           }`,
         );
       }
       const result = await response.json();
-        // Refetch seller request status after successful submission
-        await fetchSellerRequestStatus();
+      // Refetch seller request status after successful submission
+      await fetchSellerRequestStatus();
 
       if (result.success) {
         alert(result.message || "คำขอเปิดร้านค้าถูกส่งแล้ว!");
@@ -186,13 +191,12 @@
   }
 
   // --- Image Upload for Orders (Publisher) ---
-  let fileInputs = {};  // Store file input refs per orderId
+  let fileInputs = {}; // Store file input refs per orderId
   let base64Images = {}; // Store Base64 strings per orderId
 
   // --- Image Upload for Orders (Seller) ---
   let fileInputsSeller = {};
   let base64ImagesSeller = {};
-
 
   function handleFileChangeOrder(orderId: string | number, event: Event) {
     const target = event.target as HTMLInputElement;
@@ -236,7 +240,6 @@
     reader.readAsDataURL(file);
   }
 
-
   async function uploadSlip(orderId: string | number) {
     if (!base64Images[orderId]) {
       alert("Please select a payment slip image.");
@@ -271,24 +274,25 @@
       alert("Payment proof submitted successfully!");
 
       // Find the order in the 'orders' array and update its status *and* payment_slip
-      orders = orders.map(order => {
+      orders = orders.map((order) => {
         if (order.order_id === orderId) {
-          return { ...order, payment_slip: base64Images[orderId], order_status: "กำลังดำเนินการ" }; //Update status
+          return {
+            ...order,
+            payment_slip: base64Images[orderId],
+            order_status: "กำลังดำเนินการ",
+          }; //Update status
         }
         return order;
       });
       base64Images = { ...base64Images, [orderId]: "" }; //clear image
       if (fileInputs[orderId]) {
-        fileInputs[orderId].value = "";  //clear input
+        fileInputs[orderId].value = ""; //clear input
       }
-
     } catch (error) {
       console.error("Error uploading slip:", error);
       alert(`Error: ${error.message}`); // Display error to user
     }
   }
-
-
 
   function handleFileChangeOrderSeller(orderId: string | number, event: Event) {
     const target = event.target as HTMLInputElement;
@@ -331,7 +335,7 @@
       if (fileInputsSeller[orderId]) {
         fileInputsSeller[orderId].value = "";
       }
-    }
+    };
     reader.readAsDataURL(file);
   }
 
@@ -343,7 +347,7 @@
 
     try {
       const response = await fetch(
-        "http://localhost:3000/shop/seller/payment/upload-proof",  // Correct endpoint
+        "http://localhost:3000/shop/seller/payment/upload-proof", // Correct endpoint
         {
           method: "POST",
           headers: {
@@ -359,7 +363,8 @@
 
       if (!response.ok) {
         const errorData = await response.json();
-        const errorMessage = errorData.message || "Failed to upload payment proof.";
+        const errorMessage =
+          errorData.message || "Failed to upload payment proof.";
         alert(errorMessage);
         return;
       }
@@ -372,22 +377,20 @@
           return {
             ...order,
             payment_slip: base64ImagesSeller[orderId],
-            order_status: "กำลังดำเนินการ" // Or whatever status you want
+            order_status: "กำลังดำเนินการ", // Or whatever status you want
           };
         }
         return order;
       });
       base64ImagesSeller = { ...base64ImagesSeller, [orderId]: "" }; //clear image
       if (fileInputsSeller[orderId]) {
-        fileInputsSeller[orderId].value = "";  //clear input
+        fileInputsSeller[orderId].value = ""; //clear input
       }
-
     } catch (error) {
       console.error("Error uploading slip (seller):", error);
       alert(`Error: ${error.message}`);
     }
   }
-
 
   // --- Fetch Orders ---
   async function getOrder() {
@@ -396,11 +399,12 @@
         `http://localhost:3000/shop/publisher/order?token=${userToken}`,
       );
       if (!response.ok) {
-        throw new Error(`Publisher API Error: ${response.status} - ${await response.text()}`);
+        throw new Error(
+          `Publisher API Error: ${response.status} - ${await response.text()}`,
+        );
       }
       const publisherData = await response.json();
       orders = publisherData;
-
     } catch (err) {
       orders = [];
     }
@@ -409,35 +413,38 @@
         `http://localhost:3000/shop/seller/order?token=${userToken}`,
       );
       if (!response2.ok) {
-        throw new Error(`Seller API Error: ${response2.status} - ${await response2.text()}`);
+        throw new Error(
+          `Seller API Error: ${response2.status} - ${await response2.text()}`,
+        );
       }
       const sellerData = await response2.json();
       seller_orders = sellerData;
-
     } catch (err) {
       seller_orders = [];
     }
   }
 
-// --- Fetch Seller Request Status ---
-async function fetchSellerRequestStatus() {
+  // --- Fetch Seller Request Status ---
+  async function fetchSellerRequestStatus() {
     isSellerRequestLoading.set(true);
     try {
-        const response = await fetch(
-            `http://localhost:3000/user/request-seller/get/${user.user_id}`,
+      const response = await fetch(
+        `http://localhost:3000/user/request-seller/get/${user.user_id}`,
+      );
+      if (!response.ok) {
+        throw new Error(
+          `API Error: ${response.status} - ${await response.text()}`,
         );
-        if (!response.ok) {
-            throw new Error(`API Error: ${response.status} - ${await response.text()}`);
-        }
-        const data = await response.json();
-        sellerRequest = data.seller_register; // Store the request data
+      }
+      const data = await response.json();
+      sellerRequest = data.seller_register; // Store the request data
     } catch (error) {
-        console.error("Error fetching seller request status:", error);
-        sellerRequest = null; // Set to null on error
+      console.error("Error fetching seller request status:", error);
+      sellerRequest = null; // Set to null on error
     } finally {
-        isSellerRequestLoading.set(false);
+      isSellerRequestLoading.set(false);
     }
-}
+  }
 
   // --- Lifecycle Hook ---
   onMount(async () => {
@@ -461,8 +468,7 @@ async function fetchSellerRequestStatus() {
         goto("/login"); // Redirect to login
         return;
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.error("On mount error", error);
       goto("/login");
       return;
@@ -474,329 +480,531 @@ async function fetchSellerRequestStatus() {
   });
 </script>
 
-{#if !$isLoading}
-<div class="min-h-screen bg-gray-100">
+{#if $isLoading}
+  <div class="flex justify-center items-center h-screen">
+    <p class="text-2xl text-gray-600 animate-pulse">Loading...</p>
+  </div>
+{:else}
+  <div class="min-h-screen bg-gray-100" in:fade>
     <div class="container mx-auto px-4 py-8">
-        <div class="flex flex-col md:flex-row">
-            <!-- Sidebar (Mobile) -->
-            <div class="md:hidden">
-                <button on:click={toggleMenu} class="text-blue-600 hover:text-blue-800 focus:outline-none">
-                    <i class="fa-solid fa-bars text-xl"></i>
+      <div class="flex flex-col md:flex-row gap-8">
+        <!-- Sidebar (Desktop & Mobile) -->
+        <aside
+          class="w-full md:w-64 bg-blue-600 rounded-lg shadow-lg p-4 text-white transition-all duration-300"
+          in:slide
+        >
+          <div class="md:hidden flex justify-between items-center mb-4">
+            <button
+              on:click={toggleMenu}
+              class="text-white hover:text-gray-200 focus:outline-none"
+            >
+              <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+            {#if isOpen}
+              <div
+                class="absolute bg-blue-600 w-64 rounded-lg shadow-lg p-4 z-10 top-16 left-4"
+                in:slide
+              >
+                <button
+                  on:click={closeMenu}
+                  class="text-white text-right block w-full"
+                >
+                  <i class="fa-solid fa-times"></i>
                 </button>
-                {#if isOpen}
-                <div class="absolute bg-blue-600 w-64 rounded-lg shadow-lg p-4 z-10">
-                    <button on:click={closeMenu} class="text-white text-right block w-full">
-                        <i class="fa-solid fa-times"></i>
-                    </button>
-                    <ul class="mt-4 space-y-2">
-                        <li class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
-                  'account'
-                    ? 'bg-blue-800 text-white'
-                    : 'text-white'}" on:click={() => {
-                    activeMenu = "account";
-                    closeMenu();
-                  }}>
-                            <i class="fa-solid fa-user mr-2"></i>บัญชีผู้ใช้
-                        </li>
-                        <li class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
-                  'orders'
-                    ? 'bg-blue-800 text-white'
-                    : 'text-white'}" on:click={() => {
-                    activeMenu = "orders";
-                    closeMenu();
-                  }}>
-                            <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของฉัน
-                        </li>
-                        <li class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
-                  'shopRequest'
-                    ? 'bg-blue-800 text-white'
-                    : 'text-white'}" on:click={() => {
-                    activeMenu = "shopRequest";
-                    closeMenu();
-                  }}>
-                            <i class="fa-solid fa-store mr-2"></i>การขอเปิดร้านค้า
-                        </li>
-                    </ul>
-                </div>
-                {/if}
-            </div>
-
-            <!-- Sidebar (Desktop) -->
-            <div class="hidden md:block w-64 bg-blue-600 rounded-lg shadow-lg p-4 mr-4">
-                <h2 class="text-lg font-semibold text-white mb-4">บัญชีของฉัน</h2>
-                <ul class="space-y-2">
-                    <li class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
-              'account'
-                ? 'bg-blue-800 text-white'
-                : 'text-white'}" on:click={() => (activeMenu = "account")}>
-                        <i class="fa-solid fa-user mr-2"></i>บัญชีผู้ใช้
-                    </li>
-                    <li class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
-              'orders'
-                ? 'bg-blue-800 text-white'
-                : 'text-white'}" on:click={() => (activeMenu = "orders")}>
-                        <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของฉัน
-                    </li>
-                    <li class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
-              'shopRequest'
-                ? 'bg-blue-800 text-white'
-                : 'text-white'}" on:click={() => (activeMenu = "shopRequest")}>
-                        <i class="fa-solid fa-store mr-2"></i>การขอเปิดร้านค้า
-                    </li>
+                <ul class="mt-4 space-y-2">
+                  <li
+                    class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
+                    'account'
+                      ? 'bg-blue-800 text-white'
+                      : 'text-white'}"
+                    on:click={() => {
+                      activeMenu = "account";
+                      closeMenu();
+                    }}
+                  >
+                    <i class="fa-solid fa-user mr-2"></i>บัญชีผู้ใช้
+                  </li>
+                  <li
+                    class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
+                    'orders'
+                      ? 'bg-blue-800 text-white'
+                      : 'text-white'}"
+                    on:click={() => {
+                      activeMenu = "orders";
+                      closeMenu();
+                    }}
+                  >
+                    <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของฉัน
+                  </li>
+                  <li
+                    class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
+                    'shopRequest'
+                      ? 'bg-blue-800 text-white'
+                      : 'text-white'}"
+                    on:click={() => {
+                      activeMenu = "shopRequest";
+                      closeMenu();
+                    }}
+                  >
+                    <i class="fa-solid fa-store mr-2"></i>การขอเปิดร้านค้า
+                  </li>
                 </ul>
-            </div>
+              </div>
+            {/if}
+          </div>
+          <h2 class="text-lg font-semibold mb-4 hidden md:block">
+            บัญชีของฉัน
+          </h2>
+          <ul class="space-y-2 hidden md:block">
+            <li
+              class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
+              'account'
+                ? 'bg-blue-800'
+                : ''}"
+              on:click={() => (activeMenu = "account")}
+            >
+              <i class="fa-solid fa-user mr-2"></i>บัญชีผู้ใช้
+            </li>
+            <li
+              class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
+              'orders'
+                ? 'bg-blue-800'
+                : ''}"
+              on:click={() => (activeMenu = "orders")}
+            >
+              <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของฉัน
+            </li>
+            <li
+              class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
+              'shopRequest'
+                ? 'bg-blue-800'
+                : ''}"
+              on:click={() => (activeMenu = "shopRequest")}
+            >
+              <i class="fa-solid fa-store mr-2"></i>การขอเปิดร้านค้า
+            </li>
+          </ul>
+        </aside>
 
-            <!-- Main Content -->
-            <div class="flex-1 mt-4 md:mt-0">
-                {#if activeMenu === "account"}
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h1 class="text-2xl font-semibold mb-4">บัญชีผู้ใช้</h1>
-                    <div class="flex items-center mb-4">
-                        <img src={user.user_image} alt="Profile" class="w-20 h-20 rounded-full mr-4" />
-                        <div>
-                            <p class="text-lg font-medium">
-                                ชื่อบัญชี: <span class="font-normal">{user.user_name}</span>
-                            </p>
-                            <p class="text-gray-600">
-                                ชื่อจริง: {user.user_firstname} {user.user_lastname}
-                            </p>
-                            <p class="text-gray-600">อีเมล: {user.user_email}</p>
-                        </div>
-                    </div>
-
-                    <form on:submit={updateUser} class="mt-6">
-                        <div class="mb-4">
-                            <label class="block text-gray-700 text-sm font-bold mb-2" for="name">
-                                ชื่อบัญชี:
-                            </label>
-                            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" id="name" type="text" name="name" value={user?.user_name ?? ""} />
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-gray-700 text-sm font-bold mb-2" for="email">
-                                อีเมล:
-                            </label>
-                            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" id="email" type="text" name="email" value={user?.user_email ?? ""} />
-                        </div>
-                        <div class="mb-6">
-                            <label class="block text-gray-700 text-sm font-bold mb-2" for="pass">
-                                รหัสผ่าน:
-                            </label>
-                            <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500" id="pass" type="password" name="pass" placeholder="********" />
-                            <p class="text-xs text-gray-500 mt-1">
-                                ปล่อยว่างไว้ หากไม่ต้องการเปลี่ยนรหัสผ่าน
-                            </p>
-                        </div>
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                            บันทึก
-                        </button>
-                    </form>
+        <!-- Main Content -->
+        <main class="flex-1 mt-4 md:mt-0">
+          {#if activeMenu === "account"}
+            <div
+              class="bg-white rounded-lg shadow-md p-6"
+              in:fade={{ delay: 200 }}
+            >
+              <h1 class="text-2xl font-semibold mb-4">บัญชีผู้ใช้</h1>
+              <div class="flex items-center mb-4">
+                <img
+                  src={user.user_image}
+                  alt="Profile"
+                  class="w-20 h-20 rounded-full mr-4 ring-2 ring-blue-500"
+                />
+                <div>
+                  <p class="text-lg font-medium">
+                    ชื่อบัญชี: <span class="font-normal">{user.user_name}</span>
+                  </p>
+                  <p class="text-gray-600">
+                    ชื่อจริง: {user.user_firstname}
+                    {user.user_lastname}
+                  </p>
+                  <p class="text-gray-600">อีเมล: {user.user_email}</p>
                 </div>
-                {:else if activeMenu === "orders"}
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h1 class="text-2xl font-semibold mb-4">คำสั่งซื้อของฉัน</h1>
+              </div>
 
-                    {#if orders.length === 0 && seller_orders.length === 0}
-                    <p class="text-gray-600">ไม่มีคำสั่งซื้อในขณะนี้</p>
-                    {:else}
-                    {#if orders.length > 0}
-                    <h2 class="text-lg font-semibold mb-2">Publisher Orders</h2>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">Order ID</th>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">วันที่</th>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">สถานะ</th>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">ยอดรวม</th>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">การจ่ายเงิน</th>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">รายละเอียด</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {#each orders as order (order.order_id)}
-                                <tr class="border-b">
-                                    <td class="py-2 px-4 text-sm">{order.order_id}</td>
-                                    <td class="py-2 px-4 text-sm">{formatDate(order.order_time)}</td>
-                                    <td class="py-2 px-4 text-sm {getStatusColor(order.order_status)}">{order.order_status}</td>
-                                    <td class="py-2 px-4 text-sm">{formatCurrency(order.total_price)}</td>
-                                    <td class="py-2 px-4 text-sm">
-                                        {#if order.payment_slip}
-                                        <span class="text-green-500">ส่งสลิปแล้ว</span>
-                                        {:else}
-                                        <input type="file" accept="image/*" bind:this={fileInputs[order.order_id]} on:change={(event) => handleFileChangeOrder(order.order_id, event)} />
-                                        <button on:click|stopPropagation={() => uploadSlip(order.order_id)} class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mt-1">Upload</button>
-                                        {/if}
-                                    </td>
-                                    <td class="py-2 px-4"><button on:click={() => toggleOrderDetails(order.order_id)} class="text-blue-500 hover:underline">
-                                            {expandedOrderId === order.order_id ? 'Hide Details' : 'Show Details'}
-                                        </button></td>
-                                </tr>
-                                {#if expandedOrderId === order.order_id}
-                                <tr>
-                                    <td colspan="6" class="p-4 bg-gray-50">
-                                        {#if base64Images[order.order_id]}
-                                        <img src={base64Images[order.order_id]} alt="Uploaded Slip" style="max-width: 200px;" />
+              <form on:submit={updateUser} class="mt-6 space-y-4">
+                <div>
+                  <label
+                    class="block text-gray-700 text-sm font-bold mb-2"
+                    for="name"
+                  >
+                    ชื่อบัญชี:
+                  </label>
+                  <input
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500"
+                    id="name"
+                    type="text"
+                    name="name"
+                    value={user?.user_name ?? ""}
+                  />
+                </div>
+                <div>
+                  <label
+                    class="block text-gray-700 text-sm font-bold mb-2"
+                    for="email"
+                  >
+                    อีเมล:
+                  </label>
+                  <input
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500"
+                    id="email"
+                    type="text"
+                    name="email"
+                    value={user?.user_email ?? ""}
+                  />
+                </div>
+                <div>
+                  <label
+                    class="block text-gray-700 text-sm font-bold mb-2"
+                    for="pass"
+                  >
+                    รหัสผ่าน:
+                  </label>
+                  <input
+                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline focus:border-blue-500"
+                    id="pass"
+                    type="password"
+                    name="pass"
+                    placeholder="********"
+                  />
+                  <p class="text-xs text-gray-500 mt-1">
+                    ปล่อยว่างไว้ หากไม่ต้องการเปลี่ยนรหัสผ่าน
+                  </p>
+                </div>
+                <button
+                  type="submit"
+                  class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                  บันทึก
+                </button>
+              </form>
+            </div>
+          {:else if activeMenu === "orders"}
+    <div
+        class="bg-white rounded-lg shadow-md p-6"
+        in:fade={{ delay: 200 }}
+    >
+        <h1 class="text-2xl font-semibold mb-6">คำสั่งซื้อของฉัน</h1>
+
+        {#if orders.length === 0 && seller_orders.length === 0}
+            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                <p class="font-bold text-yellow-700">ยังไม่มีคำสั่งซื้อ</p>
+                <p class="text-sm text-yellow-600">
+                    คุณยังไม่มีรายการสั่งซื้อใด ๆ ในขณะนี้.
+                </p>
+            </div>
+        {:else}
+          {#if orders.length > 0}
+            <h2 class="text-xl font-semibold mb-4 text-blue-600">
+                Publisher Orders
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Order ID
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                วันที่
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                สถานะ
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                ยอดรวม
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                การจ่ายเงิน
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                รายละเอียด
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {#each orders as order (order.order_id)}
+                            <tr
+                                class="transition-colors duration-200 hover:bg-gray-50"
+                                in:slide
+                            >
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {order.order_id}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {formatDate(order.order_time)}
+                                </td>
+                                <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm {getStatusColor(
+                                        order.order_status,
+                                    )}"
+                                >
+                                    {order.order_status}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {formatCurrency(order.total_price)}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                     {#if order.payment_slip}
+                                        <span class="text-sm text-green-600">
+                                            <i class="fas fa-check-circle mr-1"></i> ส่งสลิปแล้ว
+                                        </span>
+                                    {:else}
+                                        <div class="flex flex-col items-start space-y-2">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                bind:this={fileInputs[order.order_id]}
+                                                on:change={(event) =>
+                                                handleFileChangeOrder(order.order_id, event)}
+                                                class="text-sm"
+                                            />
+                                            <button
+                                                on:click|stopPropagation={() =>
+                                                uploadSlip(order.order_id)}
+                                                class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+                                            >
+                                                Upload Slip
+                                            </button>
+                                        </div>
+                                    {/if}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button
+                                        on:click={() =>
+                                        toggleOrderDetails(order.order_id)}
+                                        class="text-blue-600 hover:text-blue-800 transition-colors"
+                                    >
+                                        {expandedOrderId === order.order_id
+                                        ? "Hide Details"
+                                        : "Show Details"}
+                                    </button>
+                                </td>
+                            </tr>
+                            {#if expandedOrderId === order.order_id}
+                                <tr in:slide>
+                                    <td colspan="6" class="bg-gray-50 p-4">
+                                         {#if base64Images[order.order_id]}
+                                            <img src={base64Images[order.order_id]} alt="Uploaded Slip" style="max-width: 200px;" class="mb-4 rounded-lg shadow-sm" />
                                         {/if}
                                         <!-- Display other order details here -->
-                                        <p>Fullname: {order.fullname}</p>
-                                        <p>Email: {order.email}</p>
-                                        <p>Phone: {order.phone}</p>
-                                        <p>Address: {order.address}</p>
-                                        {#each order.items as item}
-                                        <div class="mb-2 border-b pb-2 flex items-start">
-                                            <div>
-                                                <p class="font-semibold">
-                                                    {item.book_name_th}
-                                                </p>
-                                                <p>
-                                                    <span class="font-semibold">Price:</span>
-                                                    {formatCurrency(item.book_price)} x {item.amount}
-                                                </p>
-                                                <p>
-                                                    <span class="font-semibold">Total:</span>
-                                                    {formatCurrency(
-                                          item.book_price * item.amount,
-                                        )}
-                                                </p>
+                                        <p class="mb-1 text-sm font-semibold">Fullname: <span class="text-gray-700">{order.fullname}</span></p>
+                                        <p class="mb-1 text-sm font-semibold">Email: <span class="text-gray-700">{order.email}</span></p>
+                                        <p class="mb-1 text-sm font-semibold">Phone: <span class="text-gray-700">{order.phone}</span></p>
+                                        <p class="mb-3 text-sm font-semibold">Address: <span class="text-gray-700">{order.address}</span></p>
+
+                                        <h4 class="text-lg font-semibold mb-2">Items:</h4>
+                                         {#each order.items as item}
+                                            <div
+                                                class="mb-4 p-4 border rounded-lg shadow-sm flex items-start bg-white"
+                                            >
+                                                <div>
+                                                    <p class="font-semibold text-blue-600">
+                                                        {item.book_name_th}
+                                                    </p>
+                                                    <p class="text-sm">
+                                                        <span class="font-semibold"
+                                                            >Price:</span
+                                                        >
+                                                        {formatCurrency(item.book_price)} x {item.amount}
+                                                    </p>
+                                                    <p class="text-sm">
+                                                        <span class="font-semibold"
+                                                            >Total:</span
+                                                        >
+                                                        {formatCurrency(
+                                                            item.book_price * item.amount,
+                                                        )}
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
                                         {/each}
                                     </td>
                                 </tr>
-                                {/if}
-                                {/each}
-                            </tbody>
-                        </table>
-                    </div>
-                    {/if}
-
-                    {#if seller_orders.length > 0}
-                    <h2 class="text-lg font-semibold mb-2 mt-6">Seller Orders</h2>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">Order ID</th>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">วันที่</th>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">สถานะ</th>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">ยอดรวม</th>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">การจ่ายเงิน</th>
-                                    <th class="py-2 px-4 text-left text-sm font-medium text-gray-600">รายละเอียด</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {#each seller_orders as order (order.order_id)}
-                                <tr class="border-b">
-                                    <td class="py-2 px-4 text-sm">{order.order_id}</td>
-                                    <td class="py-2 px-4 text-sm">{formatDate(order.order_time)}</td>
-                                    <td class="py-2 px-4 text-sm {getStatusColor(order.order_status)}">{order.order_status}</td>
-                                    <td class="py-2 px-4 text-sm">{formatCurrency(order.total_price)}</td>
-                                    <td class="py-2 px-4 text-sm">
-                                        {#if order.payment_slip}
-                                        <span class="text-green-500">ส่งสลิปแล้ว</span>
-                                        {:else}
-                                        <input type="file" accept="image/*" bind:this={fileInputsSeller[order.order_id]} on:change={(event) => handleFileChangeOrderSeller(order.order_id, event)} />
-                                        <button on:click|stopPropagation={() => uploadSlipSeller(order.order_id)} class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded mt-1">
-                                            Upload
-                                        </button>
-                                        {/if}
-                                    </td>
-                                    <td class="py-2 px-4"><button on:click={() => toggleOrderDetails(order.order_id)} class="text-blue-500 hover:underline">
-                                            {expandedOrderId === order.order_id ? 'Hide Details' : 'Show Details'}
-                                        </button></td>
-                                </tr>
-
-                                {#if expandedOrderId === order.order_id}
-                                <tr>
-                                    <td colspan="6">
-                                         <div class="p-4 bg-gray-50">
-                                        {#if base64ImagesSeller[order.order_id]}
-                                        <img src={base64ImagesSeller[order.order_id]} alt="Uploaded Slip Seller" style="max-width: 200px;" />
-                                       {/if}
-                                       <!-- Display other order details here -->
-                                        <p>Fullname: {order.fullname}</p>
-                                        <p>Email: {order.email}</p>
-                                        <p>Phone: {order.phone}</p>
-                                        <p>Address: {order.address}</p>
-                                        {#each order.items as item}
-                                        <div class="mb-2 border-b pb-2 flex items-start">
-                                            <div>
-                                                <p class="font-semibold">
-                                                    {item.book_name}
-                                                </p>
-                                                <p>
-                                                    <span class="font-semibold">Price:</span>
-                                                    {formatCurrency(item.book_price)} x {item.amount}
-                                                </p>
-                                                <p>
-                                                    <span class="font-semibold">Total:</span>
-                                                    {formatCurrency(
-                                          item.book_price * item.amount,
-                                        )}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        {/each}
-                                    </div>
-                                    </td>
-                                </tr>
-                                {/if}
-                                {/each}
-                            </tbody>
-                        </table>
-                    </div>
-                    {/if}
-                    {/if}
-                </div>
-                {:else if activeMenu === "shopRequest"}
-                <div class="bg-white rounded-lg shadow-md p-6">
-                    <h1 class="text-2xl font-semibold mb-4">การขอเปิดร้านค้า</h1>
-
-                    {#if $isSellerRequestLoading}
-                      <p>Loading...</p>
-                    {:else if sellerRequest}
-                      <!-- Display seller request details -->
-                      <div class="mb-4">
-                        <p class="text-lg font-medium">สถานะ: <span class="{getStatusColor(sellerRequest.status)}">{sellerRequest.status}</span></p>
-                        <p>วันที่ส่งคำขอ: {formatDate(sellerRequest.create_time)}</p>
-                        <p>QR Code: </p>
-                        <img src={sellerRequest.qr_code} alt="QR Code" class="mt-2 max-h-48" />
-                        <p>Proof Image: </p>
-                        <img src={sellerRequest.proof_image} alt="Proof of Identity" class="mt-2 max-h-48" />
-
-                      </div>
-                    {:else}
-                    <!-- Display the form for submitting a new request -->
-                    <form on:submit={submitShopRequest} class="space-y-4">
-                        <div>
-                            <label for="qrCode" class="block text-sm font-medium text-gray-700">
-                                รูป QR Code:
-                            </label>
-                            <input type="file" id="qrCode" accept="image/*" on:change={(e) => handleFileUpload(e, "qr")} class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-                            {#if qrCodeImage}
-                            <img src={qrCodeImage} alt="QR Code Preview" class="mt-2 max-h-48" />
                             {/if}
-                        </div>
-                        <div>
-                            <label for="idCard" class="block text-sm font-medium text-gray-700">
-                                รูปบัตรประชาชน:
-                            </label>
-                            <input type="file" id="idCard" accept="image/*" on:change={(e) => handleFileUpload(e, "id")} class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
-                            {#if idCardImage}
-                            <img src={idCardImage} alt="ID Card Preview" class="mt-2 max-h-48" />
-                            {/if}
-                        </div>
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
-                            ส่งคำขอ
-                        </button>
-                    </form>
-                     {/if}
-                </div>
-                {/if}
+                        {/each}
+                    </tbody>
+                </table>
             </div>
-        </div>
-    </div>
+        {/if}
+
+        {#if seller_orders.length > 0}
+            <h2 class="text-xl font-semibold mb-4 text-blue-600 mt-8">
+                Seller Orders
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Order ID
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                วันที่
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                สถานะ
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                ยอดรวม
+                            </th>
+                            <th
+                                scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                การจ่ายเงิน
+                            </th>
+                            <th
+                                 scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                รายละเอียด
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {#each seller_orders as order (order.order_id)}
+                            <tr
+                                class="transition-colors duration-200 hover:bg-gray-50"
+                                in:slide
+                            >
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {order.order_id}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {formatDate(order.order_time)}
+                                </td>
+                                <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm {getStatusColor(
+                                        order.order_status,
+                                    )}"
+                                >
+                                    {order.order_status}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {formatCurrency(order.total_price)}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    {#if order.payment_slip}
+                                        <span class="text-sm text-green-600">
+                                            <i class="fas fa-check-circle mr-1"></i> ส่งสลิปแล้ว
+                                        </span>
+                                    {:else}
+                                         <div class="flex flex-col items-start space-y-2">
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                bind:this={fileInputsSeller[order.order_id]}
+                                                on:change={(event) =>
+                                                handleFileChangeOrderSeller(order.order_id, event)}
+                                                class="text-sm"
+                                            />
+                                            <button
+                                                on:click|stopPropagation={() =>
+                                                uploadSlipSeller(order.order_id)}
+                                                class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
+                                            >
+                                                Upload Slip
+                                            </button>
+                                        </div>
+                                    {/if}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                     <button
+                                        on:click={() =>
+                                        toggleOrderDetails(order.order_id)}
+                                        class="text-blue-600 hover:text-blue-800 transition-colors"
+                                    >
+                                        {expandedOrderId === order.order_id
+                                        ? "Hide Details"
+                                        : "Show Details"}
+                                    </button>
+                                </td>
+                            </tr>
+
+                            {#if expandedOrderId === order.order_id}
+                                <tr in:slide>
+                                     <td colspan="6" class="bg-gray-50 p-4">
+                                        {#if base64ImagesSeller[order.order_id]}
+                                            <img src={base64ImagesSeller[order.order_id]} alt="Uploaded Slip Seller" style="max-width: 200px;"  class="mb-4 rounded-lg shadow-sm" />
+                                        {/if}
+                                        <!-- Display other order details here -->
+                                        <p class="mb-1 text-sm font-semibold">Fullname: <span class="text-gray-700">{order.fullname}</span></p>
+                                        <p class="mb-1 text-sm font-semibold">Email: <span class="text-gray-700">{order.email}</span></p>
+                                        <p class="mb-1 text-sm font-semibold">Phone: <span class="text-gray-700">{order.phone}</span></p>
+                                        <p class="mb-3 text-sm font-semibold">Address: <span class="text-gray-700">{order.address}</span></p>
+                                        <h4 class="text-lg font-semibold mb-2">Items:</h4>
+
+                                        {#each order.items as item}
+                                            <div
+                                                class="mb-4 p-4 border rounded-lg shadow-sm flex items-start bg-white"
+                                            >
+                                                <div>
+                                                    <p class="font-semibold text-blue-600">
+                                                        {item.book_name}
+                                                    </p>
+                                                    <p class="text-sm">
+                                                        <span class="font-semibold"
+                                                            >Price:</span
+                                                        >
+                                                        {formatCurrency(item.book_price)} x {item.amount}
+                                                    </p>
+                                                    <p class="text-sm">
+                                                        <span class="font-semibold"
+                                                            >Total:</span
+                                                        >
+                                                        {formatCurrency(
+                                                            item.book_price * item.amount,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        {/each}
+                                    </td>
+                                </tr>
+                            {/if}
+                        {/each}
+                    </tbody>
+                </table>
+            </div>
+        {/if}
+    {/if}
 </div>
 {/if}
+        </main>
+      </div>
+    </div>
+  </div>
+{/if}
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+  integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+/>
+
+<style>
+  /* Add any custom styles here, if needed, to further refine the appearance */
+</style>
