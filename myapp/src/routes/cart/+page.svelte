@@ -212,6 +212,7 @@
     userToken = localStorage.getItem("userToken");
     checkAndRedirect(userToken, $page.route.id);
     await fetchCart();
+    console.log(cart);
     });
 </script>
 
@@ -279,7 +280,10 @@
           >
             🗑️
           </button>
+          
         </div>
+        {#if item.marker}
+          <p>{item.marker} {JSON.stringify(item)}</p>{/if}
       {:else}
         <p>ไม่มีสินค้าในตะกร้า</p>
       {/each}

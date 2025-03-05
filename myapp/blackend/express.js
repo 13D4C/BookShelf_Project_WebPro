@@ -1270,6 +1270,7 @@ app.post('/shop/publisher/cart/add' , async (req, res) => {
         }
 
         let book_querry = await queryDatabase("SELECT book_price FROM book_detail WHERE book_id = ?", [book_id]);
+        console.log("IM here");
         if(book_querry.length === 0){
             return res.status(404).json({ error: 'Book not found' });
         }
@@ -1302,10 +1303,12 @@ app.post('/shop/publisher/cart/add' , async (req, res) => {
             }
 
             if (find_same.length > 0) {
-                if (find_same[0].cover_color == custom.cover_color && find_same[0].cover_type == custom.cover_type &&
-                    find_same[0].font_family == custom.font_family && find_same[0].font_size == custom.font_size &&
-                    find_same[0].paper_type == custom.paper_type &&  find_same[0].marker == custom.marker
-                ){
+                if (find_same[0].cover_color == custom.color && find_same[0].cover_type == custom.paperCover &&
+                    find_same[0].font_family == custom.fontType && find_same[0].font_size == custom.font &&
+                    find_same[0].paper_type == custom.paperType &&  find_same[0].marker == custom.Name && 
+                    find_same[0].text == custom.text && find_same[0].color_text == custom.color_text){
+                    console.log(find_same[0]);
+                    console.log(custom);
                     update = await queryDatabase(
                         `UPDATE custom_order
                          SET amount = amount + ?
@@ -1315,8 +1318,8 @@ app.post('/shop/publisher/cart/add' , async (req, res) => {
             }
 
             create_custom = await queryDatabase(
-                "INSERT INTO custom_order(book_id, cover_color, cover_type, font_family, font_size, paper_type, marker, amount, item_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                [book_id, custom.cover_color, custom.cover_type , custom.font_family, custom.font_size, custom.paper_type, custom.marker ,amount, book_querry[0].book_price]);
+                "INSERT INTO custom_order(book_id, cover_color, cover_type, font_family, font_size, paper_type, marker, amount, color_text, text, item_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                [book_id, custom.color, custom.paperCover , custom.fontType, custom.font, custom.paperType, custom.Name ,amount, custom.colorText, custom.text, book_querry[0].book_price]);
         }
 
         await queryDatabase("INSERT INTO cart(user_id, item_id) VALUES (?, ?)", [decodedToken.user_id, create_custom.insertId]);
@@ -1385,6 +1388,8 @@ app.post('/shop/publisher/cart/get' , async (req, res) => {
                 co.paper_type,
                 co.marker,
                 co.amount,
+                co.color_text,
+                co.text,
                 b.book_name_th,
                 b.book_name_en,
                 b.book_price,
