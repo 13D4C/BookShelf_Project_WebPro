@@ -135,7 +135,7 @@
 
 	afterNavigate(async (navigation) => {
         console.log("afterNavigate triggered", navigation);
-        if (navigation.from.route.id !== "/" && navigation.from.route.id !== "/Register") {
+        if (navigation && navigation.from?.route && navigation.from.route.id !== "/" && navigation.from.route.id !== "/Register") {
             await fetchCartCount();
         }
     });

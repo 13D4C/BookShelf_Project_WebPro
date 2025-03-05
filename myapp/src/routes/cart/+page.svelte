@@ -1,34 +1,50 @@
 <script>
 
   import { goto } from "$app/navigation";
-  import { page } from "$app/stores";
   import { onMount } from "svelte";
     import { quintOut } from "svelte/easing";
   import { writable } from "svelte/store";
     import { fade, scale } from "svelte/transition";
 
-  let selectAll = false;
   let userToken = null;
   const isLoading = writable(true);
 
   let cart = [];
   let filterType = "official";
 
-  function updateQuantity(index, amount) {
-    // Use filteredCart for index calculation, but update the main cart
+  async function updateQuantity(index, amount) {
+    let url;
     const originalIndex = cart.findIndex(
-      (item) => item.item_id === filteredCart[index].item_id,
+      (item) => (item.item_id && item.item_id === filteredCart[index].item_id) || (item.seller_item_id && item.seller_item_id === filteredCart[index].seller_item_id),
     );
-
-    if (cart[originalIndex].amount + amount > 0) {
-      cart[originalIndex].amount += amount;
-      // Send update to server
-      updateCartItem(cart[originalIndex].item_id, cart[originalIndex].amount);
+    console.log(amount);
+    if (amount == -1){
+      if (cart[originalIndex].type === "official"){
+        url = `http://localhost:3000/shop/publisher/cart/adjust/${cart[originalIndex].item_id}?reduce=true`;
+      }
+      else {
+        url = `http://localhost:3000/shop/seller/cart/adjust/${cart[originalIndex].seller_item_id}?reduce=true`;
+      }
+      cart[originalIndex].amount -= 1;
     }
-  }
+    else {
+      if (cart[originalIndex].type === "official"){
+        url = `http://localhost:3000/shop/publisher/cart/adjust/${cart[originalIndex].item_id}?increase=true`;
+      }
+      else {
+        url = `http://localhost:3000/shop/seller/cart/adjust/${cart[originalIndex].seller_item_id}?increase=true`;
+      }
+      cart[originalIndex].amount += 1;
+    }
+    const response = await fetch(url, {
+        method: "get", 
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+    }
 
 
-  //  Modify getTotalPrice to use filteredCart
   function getTotalPrice() {
     let total = filteredCart.reduce((sum, item) => {
       return sum + item.book_price * item.amount;
@@ -37,9 +53,8 @@
   }
 
   async function removeItem(index) {
-    // Find the correct index in the original cart array
     const originalIndex = cart.findIndex(
-      (item) => item.item_id === filteredCart[index].item_id,
+      (item) => (item.item_id && item.item_id === filteredCart[index].item_id) || (item.seller_item_id && item.seller_item_id === filteredCart[index].seller_item_id),
     );
     const itemToRemove = cart[originalIndex];
     if (itemToRemove.type === "official"){
@@ -160,43 +175,6 @@
     }
   });
 
-  async function updateCartItem(itemId, newAmount) {
-    try {
-      // Determine which API endpoint to use based on item type.
-      const itemToUpdate = cart.find((item) => item.item_id === itemId);
-      let url = "http://localhost:3000/shop/publisher/cart/update"; // Default to official cart
-
-      if (itemToUpdate && itemToUpdate.type === "seller") {
-        url = "http://localhost:3000/shop/seller/cart/update"; // URL for seller cart updates
-      }
-
-      const response = await fetch(url, {
-        method: "PUT", // Use PUT for updating
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ item_id: itemId, amount: newAmount }),
-      });
-
-      if (!response.ok) {
-        if (response.status === 400) {
-          const errorData = await response.json();
-          alert(errorData.error);
-        } else {
-          const errorData = await response.json(); //get error from body
-          throw new Error(
-            `Network response was not ok: ${response.status}, ${errorData.error}`,
-          ); //show error
-        }
-      }
-    } catch (error) {
-      console.error("Error updating cart item:", error);
-      alert("Failed to update cart. Please try again.");
-      // Re-fetch the cart to get the correct state from the server
-      await fetchCart();
-    }
-  }
-
   onMount(async () => {
     userToken = localStorage.getItem("userToken");
     await fetchCart();
@@ -204,15 +182,15 @@
 </script>
 
 {#if $isLoading}
-<div 
-class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
-transition:fade={{ duration: 300 }}
->
-<div 
-  class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
-  transition:scale={{ duration: 300, easing: quintOut }}
-></div>
-</div>
+  <div
+    class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
+    transition:fade={{ duration: 300 }}
+  >
+    <div
+      class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+      transition:scale={{ duration: 300, easing: quintOut }}
+    ></div>
+  </div>
 {:else}
   <div class="flex flex-col md:flex-row gap-6 p-6">
     <!-- Cart Section -->
@@ -239,90 +217,87 @@ transition:fade={{ duration: 300 }}
         </button>
       </div>
       {#if filterType === "official"}
-      {#each filteredCart as item, index (item.item_id)}
-        <div class="flex items-center gap-4 border-b pb-4 mb-4">
-          <img
-            src={item.book_image}
-            alt="Product"
-            class="w-20 h-20 object-cover rounded-lg"
-          />
-          <div class="flex-1">
-            <h3 class="text-sm font-medium">{item.book_name_th}</h3>
-            <p class="text-lg font-semibold text-blue-600">
-              {item.book_price} บาท
-            </p>
-            <!-- Display item type (optional, for debugging) -->
-            <!-- <p class="text-xs text-gray-500">Type: {item.type}</p>  -->
-          </div>
-          <div class="flex items-center">
+        {#each filteredCart as item, index (item.item_id)}
+          <div class="flex items-center gap-4 border-b pb-4 mb-4">
+            <img
+              src={item.book_image}
+              alt="Product"
+              class="w-20 h-20 object-cover rounded-lg"
+            />
+            <div class="flex-1">
+              <h3 class="text-sm font-medium">{item.book_name_th}</h3>
+              <p class="text-lg font-semibold text-blue-600">
+                {item.book_price} บาท
+              </p>
+            </div>
+            <div class="flex items-center">
+              <button
+                class="px-2 py-1 border rounded"
+                on:click={() => updateQuantity(index, -1)}
+              >
+                -
+              </button>
+              <span class="px-4">{item.amount}</span>
+              <button
+                class="px-2 py-1 border rounded"
+                on:click={() => updateQuantity(index, 1)}
+              >
+                +
+              </button>
+            </div>
             <button
-              class="px-2 py-1 border rounded"
-              on:click={() => updateQuantity(index, -1)}
+              class="text-gray-500 hover:text-red-500"
+              on:click={() => removeItem(index)}
             >
-              -
-            </button>
-            <span class="px-4">{item.amount}</span>
-            <button
-              class="px-2 py-1 border rounded"
-              on:click={() => updateQuantity(index, 1)}
-            >
-              +
+              🗑️
             </button>
           </div>
-          <button
-            class="text-gray-500 hover:text-red-500"
-            on:click={() => removeItem(index)}
-          >
-            🗑️
-          </button>
-          
-        </div>
-        {#if item.marker}
-          <p>{item.marker} {item.cover_color}</p>{/if}
+          {#if item.marker}
+            <p>{item.marker} {item.cover_color}</p>{/if}
+        {:else}
+          <p>ไม่มีสินค้าในตะกร้า</p>
+        {/each}
       {:else}
-        <p>ไม่มีสินค้าในตะกร้า</p>
-      {/each}
-      {:else}
-      {#each filteredCart as item, index (item.seller_item_id)}
-        <div class="flex items-center gap-4 border-b pb-4 mb-4">
-          <img
-            src={item.book_image}
-            alt="Product"
-            class="w-20 h-20 object-cover rounded-lg"
-          />
-          <div class="flex-1">
-            <h3 class="text-sm font-medium">{item.book_name_th}</h3>
-            <p class="text-lg font-semibold text-blue-600">
-              {item.book_price} บาท
-            </p>
-            <!-- Display item type (optional, for debugging) -->
-            <!-- <p class="text-xs text-gray-500">Type: {item.type}</p>  -->
-          </div>
-          <div class="flex items-center">
+        {#each filteredCart as item, index (item.seller_item_id)}
+          <div class="flex items-center gap-4 border-b pb-4 mb-4">
+            <img
+              src={item.book_image}
+              alt="Product"
+              class="w-20 h-20 object-cover rounded-lg"
+            />
+            <div class="flex-1">
+              <h3 class="text-sm font-medium">{item.book_name_th}</h3>
+              <p class="text-lg font-semibold text-blue-600">
+                {item.book_price} บาท
+              </p>
+              <!-- Display item type (optional, for debugging) -->
+              <!-- <p class="text-xs text-gray-500">Type: {item.type}</p>  -->
+            </div>
+            <div class="flex items-center">
+              <button
+                class="px-2 py-1 border rounded"
+                on:click={() => updateQuantity(index, -1)}
+              >
+                -
+              </button>
+              <span class="px-4">{item.amount}</span>
+              <button
+                class="px-2 py-1 border rounded"
+                on:click={() => updateQuantity(index, 1)}
+              >
+                +
+              </button>
+            </div>
             <button
-              class="px-2 py-1 border rounded"
-              on:click={() => updateQuantity(index, -1)}
+              class="text-gray-500 hover:text-red-500"
+              on:click={() => removeItem(index)}
             >
-              -
-            </button>
-            <span class="px-4">{item.amount}</span>
-            <button
-              class="px-2 py-1 border rounded"
-              on:click={() => updateQuantity(index, 1)}
-            >
-              +
+              🗑️
             </button>
           </div>
-          <button
-            class="text-gray-500 hover:text-red-500"
-            on:click={() => removeItem(index)}
-          >
-            🗑️
-          </button>
-        </div>
-      {:else}
-        <p>ไม่มีสินค้าในตะกร้า</p>
-      {/each}
+        {:else}
+          <p>ไม่มีสินค้าในตะกร้า</p>
+        {/each}
       {/if}
     </div>
 

@@ -9,23 +9,26 @@
 
   async function thxPage() {
     try {
-      // Upload slips for each store
       for (const store of stores) {
         if (!store.slip) {
-          // Handle cases where a slip hasn't been uploaded for a store
-          // (This should ideally be prevented by the UI, but it's good to have a check)
           console.warn(`No slip uploaded for store ID ${store.id}`);
-          continue; // Skip this store
+          continue; 
         }
-
-        const response = await fetch('http://localhost:3000/shop/publisher/payment/upload-proof', {
+        let url;
+        if ($page.url.searchParams.get("type") === "official"){
+          url = 'http://localhost:3000/shop/publisher/payment/upload-proof';
+        }
+        else{
+          url = 'http://localhost:3000/shop/seller/payment/upload-proof';
+        }
+        const response = await fetch(url, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             order_id: store.id,
-            payment_slip: store.slip, // Send the base64 encoded image data
+            payment_slip: store.slip, 
           }),
         });
 
@@ -35,28 +38,32 @@
         }
       }
 
-      // If all uploads are successful, navigate to the thank you page
       goto("/thx");
 
     } catch (err) {
-      // Display error to the user
       error = err.message;
       console.error(err);
-      alert(err.message); // Or use a more sophisticated error display
+      alert(err.message); 
     }
   }
 
     async function fetchOrderDetails(orderIds) {
+      let url;
     try {
       const fetchedStores = [];
       for (const orderId of orderIds) {
-          const response = await fetch(`http://localhost:3000/shop/publisher/order/get/${orderId}`);
+        if ($page.url.searchParams.get("type") === "official"){
+          url = `http://localhost:3000/shop/publisher/order/get/${orderId}`
+        }
+        else{
+          url = `http://localhost:3000/shop/seller/order/get/${orderId}`
+        }
+          const response = await fetch(url);
 
           if (!response.ok) {
-              if (response.status === 204) { // No content
+              if (response.status === 204) {
                   console.warn(`No order found for ID ${orderId}`);
-                  //You could add a placeholder or skip adding anything to fetchedStores.
-                  continue; // Skip to the next ID.
+                  continue;
               } else {
                   throw new Error(`Failed to fetch order ${orderId}: ${response.status}`);
               }

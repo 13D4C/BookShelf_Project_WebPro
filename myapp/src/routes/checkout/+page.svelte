@@ -132,57 +132,63 @@
     const shippingData =
       address + " " + city + " " + province + " " + postalCode;
     try {
-        let url;
-        if ($page.url.searchParams.get("type") === "official") {
-            url = "http://localhost:3000/shop/publisher/order/create";
-        } else {
-            url = "http://localhost:3000/shop/seller/order/create";
-        }
+      let url;
+      if ($page.url.searchParams.get("type") === "official") {
+        url = "http://localhost:3000/shop/publisher/order/create";
+      } else {
+        url = "http://localhost:3000/shop/seller/order/create";
+      }
 
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                token: userToken,
-                fullname: Name,
-                email,
-                phone,
-                address: shippingData,
-            }),
-        });
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: userToken,
+          fullname: Name,
+          email,
+          phone,
+          address: shippingData,
+        }),
+      });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ");
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || "เกิดข้อผิดพลาดในการสร้างคำสั่งซื้อ",
+        );
+      }
 
-        const data = await response.json();
-        let orderIdParam = "";
+      const data = await response.json();
+      let orderIdParam = "";
 
-        if (data.order_ids && Array.isArray(data.order_ids)) {
-            orderIdParam = `order_ids=${data.order_ids.join(",")}`;
-        } else {
-            // Handle unexpected response (should not happen with the corrected backend)
-            console.error("Invalid order ID response:", data);
-            alert("Failed to create order.  Invalid response from server.");
-            return;
-        }
-        console.log(orderIdParam);
-        const paymentUrl = `/payment?${orderIdParam}`;
-        // Clear form fields
-        Name = "";
-        email = "";
-        phone = "";
-        address = "";
-        city = "";
-        province = "";
-        postalCode = "";
-		goto(paymentUrl);
+      if (data.order_ids && Array.isArray(data.order_ids)) {
+        orderIdParam = `order_ids=${data.order_ids.join(",")}`;
+      } else {
+        // Handle unexpected response (should not happen with the corrected backend)
+        console.error("Invalid order ID response:", data);
+        alert("Failed to create order.  Invalid response from server.");
+        return;
+      }
+      console.log(orderIdParam);
+      const paymentUrl = `/payment?${orderIdParam}`;
+      // Clear form fields
+      Name = "";
+      email = "";
+      phone = "";
+      address = "";
+      city = "";
+      province = "";
+      postalCode = "";
+      if ($page.url.searchParams.get("type") === "official") {
+        goto(paymentUrl);
+      } else {
+        goto(paymentUrl+"&?type=seller");
+      }
     } catch (error) {
-        console.error("Error creating order:", error);
-        alert(error.message); // Show the error message
+      console.error("Error creating order:", error);
+      alert(error.message); // Show the error message
     }
-}
+  }
   function getTotalPrice() {
     let total = cart.reduce((sum, item) => {
       return sum + item.book_price * item.amount;
@@ -264,7 +270,7 @@
         </div>
       </div>
       {#if item.marker}
-          <p>Name:{item.marker} Cover Color:{item.cover_color}</p>{/if}
+        <p>Name:{item.marker} Cover Color:{item.cover_color}</p>{/if}
     {/each}
   </div>
 
