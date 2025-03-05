@@ -3,7 +3,6 @@
   import { goto } from "$app/navigation";
   import { writable } from "svelte/store";
   import { page } from "$app/stores";
-    import { load } from "../+layout";
 
   let products: any[] = [];
   const isLoading = writable(true);

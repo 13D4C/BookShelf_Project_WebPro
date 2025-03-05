@@ -1980,7 +1980,7 @@ app.post('/shop/publisher/payment/upload-proof' , async (req, res) => {
         }
 
         const querry_status = await queryDatabase("SELECT order_status FROM order_list WHERE order_id=?", [order_id]);
-        if (querry_status[0].order_status != "กำลังดำเนินการ") {
+        if (querry_status[0].order_status != "รอการชำระเงิน") {
             return res.status(400).json({message: "Please wait for review"})
         }
 
@@ -1998,18 +1998,18 @@ app.post('/shop/publisher/payment/upload-proof' , async (req, res) => {
 
 app.post('/shop/seller/payment/upload-proof' , async (req, res) => {
     try {
-        const { seller_order_id, payment_slip, payment_time}  = req.body;
+        const { seller_order_id, payment_slip}  = req.body;
 
-        if ( !seller_order_id || !payment_slip || !payment_time) {
+        if ( !seller_order_id || !payment_slip) {
             return res.status(400).json({ error: 'Information all is required' });
         }
 
         const querry_status = await queryDatabase("SELECT order_status FROM seller_order_list WHERE seller_order_id=?", [seller_order_id]);
-        if (querry_status[0].order_status != "กำลังดำเนินการ") {
+        if (querry_status[0].order_status != "รอการชำระเงิน") {
             return res.status(400).json({message: "Please wait for review"})
         }
 
-        await queryDatabase("UPDATE seller_order_list SET payment_slip=?, payment_time=?, order_status=?, status_time=current_timestamp() WHERE seller_order_id=?", [payment_slip, payment_time, "Waiting for review", seller_order_id]);
+        await queryDatabase("UPDATE seller_order_list SET payment_slip=?, payment_time=current_timestamp(), order_status=?, status_time=current_timestamp() WHERE seller_order_id=?", [payment_slip, "กำลังดำเนินการ", seller_order_id]);
         return res.status(200).json({message: "Payment proof submitted successfully"});
     }
     catch (error) {
@@ -2029,7 +2029,7 @@ app.patch('/shop/seller/payment/approve' , async (req, res) => {
             return res.status(400).json({ error: 'Information all is required' });
         }
 
-        await queryDatabase("UPDATE seller_order_list SET order_status='Checked', status_time=current_timestamp() WHERE seller_order_id=?", [seller_order_id]);
+        await queryDatabase("UPDATE seller_order_list SET order_status='ระหว่างการจัดส่ง', status_time=current_timestamp() WHERE seller_order_id=?", [seller_order_id]);
         return res.status(200).json({message: "Payment approve successfully"});
     }
     catch (error) {
@@ -2049,7 +2049,7 @@ app.patch('/shop/publisher/payment/approve' , async (req, res) => {
             return res.status(400).json({ error: 'Information all is required' });
         }
 
-        await queryDatabase("UPDATE order_list SET order_status='Checked', status_time=current_timestamp() WHERE order_id=?", [order_id]);
+        await queryDatabase("UPDATE order_list SET order_status='อยู่ระหว่างการจัดส่ง', status_time=current_timestamp() WHERE order_id=?", [order_id]);
         return res.status(200).json({message: "Payment approve successfully"});
     }
     catch (error) {
