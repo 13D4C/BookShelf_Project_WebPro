@@ -143,6 +143,7 @@
         : [];
 
       cart = [...officialCart, ...sellerCart];
+      isLoading.set(false);
     } catch (error) {
       console.error("Skibidi Error", error);
     }
@@ -188,9 +189,6 @@
           ); //show error
         }
       }
-      //optional show success message
-      //const data = await response.json(); //if return message
-      //alert(data.message);
     } catch (error) {
       console.error("Error updating cart item:", error);
       alert("Failed to update cart. Please try again.");
@@ -202,7 +200,6 @@
   onMount(async () => {
     userToken = localStorage.getItem("userToken");
     await fetchCart();
-    isLoading.set(false);
     });
 </script>
 
@@ -281,7 +278,7 @@ transition:fade={{ duration: 300 }}
           
         </div>
         {#if item.marker}
-          <p>{item.marker} {JSON.stringify(item)}</p>{/if}
+          <p>{item.marker} {item.cover_color}</p>{/if}
       {:else}
         <p>ไม่มีสินค้าในตะกร้า</p>
       {/each}

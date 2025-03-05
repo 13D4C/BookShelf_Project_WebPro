@@ -1620,71 +1620,86 @@ app.get('/shop/seller/cart/adjust/:sellerItemId' , async (req, res) => {
 
 
 //body คือ tokenคนสั่ง เบอร์ เมล์ ที่อยู่ ชื่อเต็ม 
-app.post('/shop/publisher/order/create' , async (req, res) => {
+app.post('/shop/publisher/order/create', async (req, res) => {
     try {
-        const { token , phone, email, address, fullname }  = req.body;
+        const { token, phone, email, address, fullname } = req.body;
 
-        if ( !token || !phone || !email || !address || !fullname ) {
+        if (!token || !phone || !email || !address || !fullname) {
             return res.status(400).json({ error: 'Information all is required' });
         }
+
         const decodedToken = await jwt.verify(token, 'itkmitl');
-        let cart_publisher_querry = await queryDatabase("SELECT * FROM cart WHERE user_id = ?", [decodedToken.user_id]);
-        if(cart_publisher_querry.length != 0){
-            let querry_custom = await queryDatabase(
+        const user_id = decodedToken.user_id; //  use consistent naming
+
+        let cart_publisher_query = await queryDatabase("SELECT * FROM cart WHERE user_id = ?", [user_id]);
+
+        if (cart_publisher_query.length === 0) {
+            return res.status(204).json({ message: "No products found in the cart" }); //  204 is good here
+        }
+
+        const createdOrderIds = []; // Array to store created order IDs
+        let query_custom = await queryDatabase(
                 `SELECT bd.publisher_id, SUM(co.amount * bd.book_price) AS total_price
                 FROM cart c
                 JOIN custom_order co ON c.item_id = co.item_id
                 JOIN book_detail bd ON co.book_id = bd.book_id
                 WHERE c.user_id = ?
                 GROUP BY bd.publisher_id
-                ORDER BY bd.publisher_id;`, 
-                [decodedToken.user_id]);
+                ORDER BY bd.publisher_id;`,
+                [user_id]);
 
-                for (const item of querry_custom) {
-                    let owner = await queryDatabase(
-                        `SELECT * FROM user WHERE publisher_id = ?`,
-                        [item.publisher_id]
-                    )
-                    owner = owner[0]
-                    console.log(owner);
-                    let insert_order = await queryDatabase(
-                        `INSERT INTO order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname, status_time, order_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp());`, 
-                        [decodedToken.user_id, owner.user_id, item.total_price, "รอการชำระเงิน", phone, email, address, fullname]
+        for (const item of query_custom) {
+            let owner = await queryDatabase(
+                `SELECT * FROM user WHERE publisher_id = ?`,
+                [item.publisher_id]
+            );
+            owner = owner[0]; //  safely get the first element
+
+            if(!owner) {
+               //  Handle the case where the owner is not found.  This is IMPORTANT.
+                console.error(`Owner not found for publisher ID: ${item.publisher_id}`);
+                continue; //  Skip to the next item, or throw an error, depending on your needs.  Don't create a broken order!
+            }
+
+            const insert_order_result = await queryDatabase(
+                `INSERT INTO order_list (user_id, owner_id, total_price, order_status, phone, email, address, fullname, status_time, order_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, current_timestamp(), current_timestamp());`,
+                [user_id, owner.user_id, item.total_price, "รอการชำระเงิน", phone, email, address, fullname]
+            );
+
+            const newOrderId = insert_order_result.insertId; // Get the newly inserted order ID
+            createdOrderIds.push(newOrderId);  //  Add to the array
+
+            let traverse_cart = await queryDatabase( // Consistent naming!
+                `SELECT c.item_id , bd.publisher_id FROM cart c
+                JOIN custom_order co ON c.item_id = co.item_id
+                JOIN book_detail bd ON co.book_id = bd.book_id
+                WHERE c.user_id = ?;`,
+                [user_id]
+            );
+
+            for (const item_cart of traverse_cart) {
+                if (item_cart.publisher_id == item.publisher_id) {
+                    await queryDatabase(
+                        `INSERT INTO order_bridge (item_id, order_id) VALUES (?, ?);`,
+                        [item_cart.item_id, newOrderId] // Use the correct newOrderId
                     );
-                    let traverst_cart = await queryDatabase(
-                        `SELECT c.item_id , bd.publisher_id FROM cart c
-                        JOIN custom_order co ON c.item_id = co.item_id
-                        JOIN book_detail bd ON co.book_id = bd.book_id
-                        WHERE c.user_id = ?;`, 
-                        [decodedToken.user_id]
+
+                    await queryDatabase(
+                        `DELETE FROM cart WHERE item_id = ?;`,
+                        [item_cart.item_id]
                     );
-                
-                    for (const item_cart of traverst_cart) {
-                        if (item_cart.publisher_id == item.publisher_id) {
-                            await queryDatabase(
-                                `INSERT INTO order_bridge (item_id, order_id) VALUES (?, ?);`, 
-                                [item_cart.item_id, insert_order.insertId]
-                            );
-                
-                            await queryDatabase(
-                                `DELETE FROM cart WHERE item_id = ?;`, 
-                                [item_cart.item_id]
-                            );
-                        }
-                    }
                 }
+            }
         }
-        if (cart_publisher_querry.length == 0) {
-            return res.status(204).json({ message: "No products found in the cart"});
-        }
+        // Return the array of created order IDs
+        return res.status(201).json({ success: true, order_ids: createdOrderIds }); //  201 Created is better than 200 OK for creation
 
-        return res.status(200).json({ message: "Order created successfully"});
-    }
-    catch (error) {
+
+    } catch (error) {
         console.error('ERROR', error);
         res.status(500).json({
             error: 'Fail to create order',
-            details: error.message
+            details: error.message,
         });
     }
 });
