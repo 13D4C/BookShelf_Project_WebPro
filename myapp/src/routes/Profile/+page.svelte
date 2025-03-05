@@ -807,6 +807,9 @@ transition:fade={{ duration: 300 }}
                                         <p class="mb-1 text-sm font-semibold">Email: <span class="text-gray-700">{order.email}</span></p>
                                         <p class="mb-1 text-sm font-semibold">Phone: <span class="text-gray-700">{order.phone}</span></p>
                                         <p class="mb-3 text-sm font-semibold">Address: <span class="text-gray-700">{order.address}</span></p>
+                                        {#if order.payment_slip}
+                                            <img src={order.payment_slip} alt="Uploaded Slip" style="max-width: 200px;" class="mb-4 rounded-lg shadow-sm" />
+                                        {/if} 
 
                                         <h4 class="text-lg font-semibold mb-2">Items:</h4>
                                          {#each order.items as item}
@@ -960,6 +963,9 @@ transition:fade={{ duration: 300 }}
                                         <p class="mb-1 text-sm font-semibold">Email: <span class="text-gray-700">{order.email}</span></p>
                                         <p class="mb-1 text-sm font-semibold">Phone: <span class="text-gray-700">{order.phone}</span></p>
                                         <p class="mb-3 text-sm font-semibold">Address: <span class="text-gray-700">{order.address}</span></p>
+                                        {#if order.payment_slip}
+                                            <img src={order.payment_slip} alt="Payment Slip" class="mb-4 rounded-lg shadow-sm" />
+                                        {/if}
                                         <h4 class="text-lg font-semibold mb-2">Items:</h4>
 
                                         {#each order.items as item}

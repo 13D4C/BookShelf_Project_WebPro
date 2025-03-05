@@ -19,7 +19,6 @@ app.use(bodyParser.json());
 const pool = mysql.createPool({
 });
 
-
 async function queryDatabase(sql, params = []) {
     let connection;
     try {
