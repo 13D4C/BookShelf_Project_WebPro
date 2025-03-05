@@ -4,6 +4,8 @@
 	import Navbar from "$lib/components/navbar.svelte";
 	import { onMount, onDestroy } from "svelte";
 	import { writable } from "svelte/store";
+    import { quintOut } from "svelte/easing";
+    import { fade, scale } from "svelte/transition";
 
 	const isLoading = writable(true);
 	const shouldRenderContent = writable(false); // New store: controls child rendering
@@ -47,9 +49,15 @@
 </script>
 
 {#if $isLoading}
-	<div class="flex items-center justify-center h-screen">
-		<div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-32 w-32"></div>
-	</div>
+<div 
+class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
+transition:fade={{ duration: 300 }}
+>
+<div 
+  class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+  transition:scale={{ duration: 300, easing: quintOut }}
+></div>
+</div>
 {:else}
 	<Navbar />
 	{#if $shouldRenderContent}

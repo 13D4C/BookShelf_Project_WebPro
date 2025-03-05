@@ -4,7 +4,8 @@
   import { page } from "$app/stores";
   import { getUser } from "$lib/utils"; // Make sure this path is correct
   import { writable } from "svelte/store";
-  import { fade, slide } from "svelte/transition"; // Import transitions
+  import { fade, scale, slide } from "svelte/transition"; // Import transitions
+    import { quintOut } from "svelte/easing";
 
   // --- State & Variables ---
   const isLoading = writable(true);
@@ -481,9 +482,15 @@
 </script>
 
 {#if $isLoading}
-  <div class="flex justify-center items-center h-screen">
-    <p class="text-2xl text-gray-600 animate-pulse">Loading...</p>
-  </div>
+<div 
+class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
+transition:fade={{ duration: 300 }}
+>
+<div 
+  class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+  transition:scale={{ duration: 300, easing: quintOut }}
+></div>
+</div>
 {:else}
   <div class="min-h-screen bg-gray-100" in:fade>
     <div class="container mx-auto px-4 py-8">

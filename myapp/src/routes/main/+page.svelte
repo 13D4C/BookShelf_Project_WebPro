@@ -7,6 +7,8 @@
   import "swiper/css/bundle";
   import { generateStars } from "$lib/utils";
   import { Rating, AdvancedRating, ScoreRating } from "flowbite-svelte";
+    import { fade, scale } from "svelte/transition";
+    import { quintOut } from "svelte/easing";
 
   let products: any[] = [];
   let eachbook: any[] = [];
@@ -243,7 +245,17 @@
   ];
 </script>
 
-{#if $isLoading}{:else}
+{#if $isLoading}
+<div 
+class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
+transition:fade={{ duration: 300 }}
+>
+<div 
+  class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+  transition:scale={{ duration: 300, easing: quintOut }}
+></div>
+</div>
+{:else}
   <div class="h-full bg-blue-50">
     <!-- Main Content -->
     <main class="container mx-auto py-8">
@@ -508,6 +520,15 @@
     .swiper-button-prev {
       display: none !important;
     }
+  }
+  .spinner {
+    border-top-color: transparent !important;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 
   /*  Font Awesome  */

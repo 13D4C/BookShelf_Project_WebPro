@@ -1,10 +1,11 @@
 <script>
-  // @ts-nocheck
 
   import { goto } from "$app/navigation";
   import { page } from "$app/stores";
   import { onMount } from "svelte";
+    import { quintOut } from "svelte/easing";
   import { writable } from "svelte/store";
+    import { fade, scale } from "svelte/transition";
 
   let selectAll = false;
   let userToken = null;
@@ -33,16 +34,6 @@
       return sum + item.book_price * item.amount;
     }, 0);
     return total.toFixed(2);
-  }
-
-  function checkAndRedirect(token, routeId) {
-    const isAuthRoute = routeId === "/" || routeId === "/Register";
-
-    if (!token && !isAuthRoute) {
-      goto("/");
-    } else {
-      isLoading.set(false);
-    }
   }
 
   async function removeItem(index) {
@@ -210,14 +201,21 @@
 
   onMount(async () => {
     userToken = localStorage.getItem("userToken");
-    checkAndRedirect(userToken, $page.route.id);
     await fetchCart();
-    console.log(cart);
+    isLoading.set(false);
     });
 </script>
 
 {#if $isLoading}
-  <div>Loading...</div>
+<div 
+class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
+transition:fade={{ duration: 300 }}
+>
+<div 
+  class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+  transition:scale={{ duration: 300, easing: quintOut }}
+></div>
+</div>
 {:else}
   <div class="flex flex-col md:flex-row gap-6 p-6">
     <!-- Cart Section -->

@@ -3,6 +3,8 @@
   import { goto } from "$app/navigation";
   import { writable } from "svelte/store";
   import { page } from "$app/stores";
+    import { quintOut } from "svelte/easing";
+    import { fade, scale } from "svelte/transition";
 
   let products: any[] = [];
   const isLoading = writable(true);
@@ -67,7 +69,15 @@
   }
 </script>
 
-{#if !$isLoading}
+{#if $isLoading}<div 
+class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
+transition:fade={{ duration: 300 }}
+>
+<div 
+  class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+  transition:scale={{ duration: 300, easing: quintOut }}
+></div>
+</div>{:else}
   <div class="container mx-auto p-4">
     <h1 class="text-3xl font-bold mb-4">Marketplace</h1>
 

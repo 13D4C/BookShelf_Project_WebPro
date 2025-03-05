@@ -7,7 +7,8 @@
     import { Sidebar, SidebarBrand, SidebarCta, SidebarDropdownItem, SidebarDropdownWrapper, SidebarGroup, SidebarItem, SidebarWrapper } from 'flowbite-svelte';
     import { Drawer, Button, CloseButton } from 'flowbite-svelte';
     import {FilterSolid } from 'flowbite-svelte-icons';
-  import { sineIn } from 'svelte/easing';
+  import { quintOut, sineIn } from 'svelte/easing';
+    import { fade, scale } from "svelte/transition";
   let hidden1 = true;
   let transitionParams = {
     x: -320,
@@ -360,7 +361,17 @@
     
 </script>
 
-{#if !$isLoading}
+{#if $isLoading}
+<div 
+class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
+transition:fade={{ duration: 300 }}
+>
+<div 
+  class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+  transition:scale={{ duration: 300, easing: quintOut }}
+></div>
+</div>
+{:else}
     <div class="min-h-screen bg-white">
         <div class="max-w-6xl mx-auto p-4">
             <div class="flex items-center justify-between mb-4">

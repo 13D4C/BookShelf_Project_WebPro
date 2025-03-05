@@ -15,6 +15,8 @@
     Label,
     Textarea,
   } from "flowbite-svelte";
+  import { quintOut, sineIn } from "svelte/easing";
+  import { fade, scale } from "svelte/transition";
 
   let book = {}; // Initialize as an empty object
   let quantity = 1;
@@ -402,7 +404,16 @@
 }
 </script>
 
-{#if $isLoading}{:else}
+{#if $isLoading}
+<div 
+class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
+transition:fade={{ duration: 300 }}
+>
+<div 
+  class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+  transition:scale={{ duration: 300, easing: quintOut }}
+></div>
+</div>{:else}
   <div class="min-h-screen bg-blue-50">
     <div class="max-w-5xl mx-auto p-6">
       {#if errorMessage}
