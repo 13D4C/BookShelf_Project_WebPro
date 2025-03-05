@@ -2103,7 +2103,11 @@ app.get('/shop/publisher/order/get/:order_id' , async (req, res) => {
             WHERE order_id = ?;`, [order_id]
         );
 
-        return res.status(200).json({order_info: querry_order, item: querry_item, buyer:querry_buyer});
+        const querry_shop = await queryDatabase (
+            `SELECT * FROM shop_list WHERE owner_id=?`, [querry_order[0].owner_id]
+        );
+
+        return res.status(200).json({order_info: querry_order, item: querry_item, buyer:querry_buyer, shop:querry_shop});
     }
     catch (error) {
         console.error('ERROR', error);
@@ -2136,7 +2140,11 @@ app.get('/shop/seller/order/get/:seller_order_id' , async (req, res) => {
             WHERE seller_order_id = ?;`, [seller_order_id]
         );
 
-        return res.status(200).json({order_info: querry_order, item: querry_item, buyer:querry_buyer});
+        const querry_shop = await queryDatabase (
+            `SELECT * FROM shop_list WHERE owner_id=?`, [querry_order[0].owner_id]
+        );
+
+        return res.status(200).json({order_info: querry_order, item: querry_item, buyer:querry_buyer, shop:querry_shop});
     }
     catch (error) {
         console.error('ERROR', error);
