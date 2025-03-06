@@ -20,10 +20,18 @@
   // --- Orders Data ---
   let orders: any[] = []; //  Use any[] for more flexibility
   let seller_orders: any[] = []; // Use any[]
+  let shop_orders: any[] = [];
+  let shop_seller: any[] = [];
 
   // --- Seller Request Data ---
   let sellerRequest: any = null; // Store seller request data
   let isSellerRequestLoading = writable(false);
+
+  // --- Temp Data ----
+  let tracking_number = '';
+  let showTrackingModal = false;
+  let showTrackingModalSeller = false;
+  let order_id = 0;
 
   // --- Helper Functions ---
 
@@ -185,6 +193,29 @@
     isOpen = false;
   }
 
+
+  // -- Modal --
+  function closeTrackingModal() {
+    showTrackingModal = false;
+    tracking_number = '';
+    order_id = 0;
+  }
+
+  function openTrackingModal(order_id_in:any) {
+    order_id = order_id_in
+    showTrackingModal = true;
+  }
+  
+  function openTrackingModalSeller(order_id_in:any) {
+    order_id = order_id_in
+    showTrackingModalSeller = true;
+  }
+
+  function closeTrackingModalSeller() {
+    showTrackingModalSeller = false;
+    tracking_number = '';
+    order_id = 0;
+  }
   // --- Order Details Toggle ---
   function toggleOrderDetails(orderId: string | number) {
     // Use type assertion since expandedOrder can be string | number | null
@@ -425,6 +456,215 @@
     }
   }
 
+  async function getShopOrder() {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/shop/publisher/order/getall/${user.user_id}`,
+      );
+      if (!response.ok) {
+        throw new Error(
+          `Publisher API Error: ${response.status} - ${await response.text()}`,
+        );
+      }
+      const publisherData = await response.json();
+      shop_orders = publisherData;
+    } catch (err) {
+      shop_orders = [];
+    }
+  }
+
+  async function getShopOrderSeller() {
+    try {
+      const response = await fetch(
+        `http://localhost:3000/shop/seller/order/getall/${user.user_id}`,
+      );
+      if (!response.ok) {
+        throw new Error(
+          `Seller API Error: ${response.status} - ${await response.text()}`,
+        );
+      }
+      const sellerData = await response.json();
+      shop_seller = sellerData;
+    } catch (err) {
+      shop_seller = [];
+    }
+  }
+
+  async function approvePaySeller(seller_order_id:any) {
+    try {
+      const response = await fetch(`http://localhost:3000/shop/seller/payment/approve/${seller_order_id}`);
+      if(!response.ok) {
+        alert("การอนุมัติไม่สำเร็จ")
+        return;
+      }
+      alert("การอนุมัติสำเร็จ")
+    }
+    catch {
+      alert("การอนุมัติไม่สำเร็จ")
+    }
+    finally {
+      await getShopOrderSeller();
+    }
+  }
+
+  async function approvePayPublisher(order_id:any) {
+    try {
+      const response = await fetch(`http://localhost:3000/shop/publisher/payment/approve/${order_id}`);
+      if(!response.ok) {
+        alert("การอนุมัติไม่สำเร็จ")
+        return;
+      }
+      alert("การอนุมัติสำเร็จ")
+    }
+    catch {
+      alert("การอนุมัติไม่สำเร็จ")
+    }
+    finally {
+      await getShopOrder();
+    }
+  }
+
+  async function rejectPayPublisher(order_id:any) {
+    try {
+      const response = await fetch(`http://localhost:3000/shop/publisher/payment/reject/${order_id}`);
+      if(!response.ok) {
+        alert("ไม่อนุมัติไม่สำเร็จ")
+      }
+      alert("ไม่อนุมัติสำเร็จ")
+    }
+    catch {
+      alert("การอนุมัติไม่สำเร็จ")
+    }
+    finally {
+      await getShopOrder();
+    }
+  }
+
+  async function rejectPaySeller(seller_order_id:any) {
+    try {
+      const response = await fetch(`http://localhost:3000/shop/seller/payment/reject/${seller_order_id}`);
+      if(!response.ok) {
+        alert("ไม่อนุมัติไม่สำเร็จ")
+      }
+      alert("ไม่อนุมัติสำเร็จ")
+    }
+    catch {
+      alert("การอนุมัติไม่สำเร็จ")
+    }
+    finally {
+      await getShopOrderSeller();
+    }
+  }
+
+  async function shippingPublisher() {
+    try {
+      const response = await fetch("http://localhost:3000/shop/publisher/order/shipping", {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                order_id: order_id,
+                tracking_number: tracking_number
+            })
+      });
+      if(!response.ok) {
+        alert("การจัดส่งไม่สำเร็จ");
+        return;
+      }
+      alert("การจัดส่งสำเร็จ");
+    }
+    catch {
+      alert("การจัดสังไม่สำเร็จ");
+    }
+    finally {
+      order_id = 0;
+      tracking_number = '';
+      await getShopOrder();
+      closeTrackingModal();
+    }
+  }
+  
+
+  async function shippingSeller() {
+    try {
+      const response = await fetch("http://localhost:3000/shop/seller/order/shipping", {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                seller_order_id: order_id,
+                tracking_number: tracking_number
+            })
+      });
+      if(!response.ok) {
+        alert("การจัดส่งไม่สำเร็จ");
+        return;
+      }
+      alert("การจัดส่งสำเร็จ");
+    }
+    catch {
+      alert("การจัดสังไม่สำเร็จ");
+    }
+    finally {
+      order_id = 0;
+      tracking_number = '';
+      await getShopOrderSeller();
+      closeTrackingModalSeller();
+    }
+  }
+
+  async function orderPublisherReceive(order_id:any) {
+    try {
+      const response = await fetch(`http://localhost:3000/shop/buyer/publisher/order/received`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              order_id: order_id,
+            })
+      });
+      if(!response.ok) {
+        alert("เกิดข้อผิดพลาดขึ้นกรุณาลองใหม่ภายหลัง");
+        return;
+      }
+      alert("ยืนยันการได้รับของเเล้ว");
+    }
+    catch {
+      alert("เกิดข้อผิดพลาดขึ้นกรุณาลองใหม่ภายหลัง");
+    }
+    finally {
+      await getOrder();
+    }
+  }
+
+  async function orderSellerReceive(seller_order_id:any) {
+    try {
+      const response = await fetch(`http://localhost:3000/shop/buyer/seller/order/received`, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              seller_order_id: seller_order_id,
+            })
+      });
+      if(!response.ok) {
+        alert("เกิดข้อผิดพลาดขึ้นกรุณาลองใหม่ภายหลัง");
+        return;
+      }
+      alert("ยืนยันการได้รับของเเล้ว");
+    }
+    catch {
+      alert("เกิดข้อผิดพลาดขึ้นกรุณาลองใหม่ภายหลัง");
+    }
+    finally {
+      await getOrder();
+    }
+  }
+
   // --- Fetch Seller Request Status ---
   async function fetchSellerRequestStatus() {
     isSellerRequestLoading.set(true);
@@ -476,6 +716,8 @@
     }
 
     await getOrder();
+    await getShopOrder();
+    await getShopOrderSeller();
     await fetchSellerRequestStatus(); // Fetch request status on mount
     isLoading.set(false);
   });
@@ -543,6 +785,17 @@
                   >
                     <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของฉัน
                   </li>
+                  {#if user.user_permission == "Publisher" || user.user_permission == "Seller"}
+                  <li
+                      class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
+                      'shoporders'
+                        ? 'bg-blue-800'
+                        : ''}"
+                      on:click={() => (activeMenu = "shopOrder")}
+                    >
+                      <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของร้าน
+                    </li>
+                  {/if}
                   <li
                     class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
                     'shopRequest'
@@ -581,6 +834,17 @@
             >
               <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของฉัน
             </li>
+            {#if user.user_permission == "Publisher" || user.user_permission == "Seller"}
+            <li
+              class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
+              'shoporders'
+                ? 'bg-blue-800'
+                : ''}"
+              on:click={() => (activeMenu = "shopOrder")}
+            >
+              <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของร้าน
+            </li>
+            {/if}
             <li
               class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
               'shopRequest'
@@ -733,6 +997,12 @@
                             scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
+                            ดำเนินการ
+                          </th>
+                          <th
+                            scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
                             รายละเอียด
                           </th>
                         </tr>
@@ -796,6 +1066,16 @@
                               {/if}
                             </td>
                             <td
+                              class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                            >
+                            {#if order.order_status == "จัดส่งเเล้ว"}
+                              <button
+                              on:click={() => orderPublisherReceive(order.order_id)}
+                              class="text-white bg-blue-600 hover:text-blue-800 p-2 transition-colors"
+                              >ได้รับสินค้าเเล้ว</button>
+                              {/if}  
+                            </td>
+                            <td
                               class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
                             >
                               <button
@@ -841,6 +1121,12 @@
                                     >{order.address}</span
                                   >
                                 </p>
+
+                                {#if order.tracking_number}
+                                    รหัสติดตามของ: <span class="text-gray-700"
+                                    >{order.tracking_number}</span>
+                                {/if}
+
                                 {#if order.payment_slip}
                                   <img
                                     src={order.payment_slip}
@@ -927,6 +1213,12 @@
                             scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
+                            ดำเนินการ
+                          </th>
+                          <th
+                            scope="col"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
                             รายละเอียด
                           </th>
                         </tr>
@@ -989,6 +1281,18 @@
                                 </div>
                               {/if}
                             </td>
+
+                            <td
+                              class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                            >
+                            {#if order.order_status == "จัดส่งเเล้ว"}
+                              <button
+                              on:click={() => orderSellerReceive(order.order_id)}
+                              class="text-white bg-blue-600 hover:text-blue-800 p-2 transition-colors"
+                              >ได้รับสินค้าเเล้ว</button>
+                            {/if}  
+                            </td>
+
                             <td
                               class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
                             >
@@ -1036,6 +1340,12 @@
                                     >{order.address}</span
                                   >
                                 </p>
+
+                                {#if order.tracking_number}
+                                    รหัสติดตามของ: <span class="text-gray-700"
+                                    >{order.tracking_number}</span>
+                                {/if}
+
                                 {#if order.payment_slip}
                                   <img
                                     src={order.payment_slip}
@@ -1166,11 +1476,500 @@
                 </form>
               {/if}
             </div>
-          {/if}
-        </main>
+            {:else if activeMenu === "shopOrder"}
+              <div
+                  class="bg-white rounded-lg shadow-md p-6"
+                  in:fade={{ delay: 200 }}
+              >
+              <h1 class="text-2xl font-semibold mb-6">คำสั่งซื้อของร้าน</h1>
+          {#if user.user_permission == "Publisher"}
+
+                        {#if shop_orders.length === 0}
+                          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <p class="font-bold text-yellow-700">ยังไม่มีคำสั่งซื้อ</p>
+                            <p class="text-sm text-yellow-600">
+                              คุณยังไม่มีรายการขอสั่งซื้อใด ๆ ในขณะนี้.
+                            </p>
+                          </div>
+                        {:else}
+
+                          {#if shop_orders.length > 0}
+                            <h2 class="text-xl font-semibold mb-4 text-blue-600">
+                              Orders All
+                            </h2>
+                            <div class="overflow-x-auto">
+                              <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                  <tr>
+                                    <th
+                                      scope="col"
+                                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    >
+                                      Order ID
+                                    </th>
+                                    <th
+                                      scope="col"
+                                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    >
+                                      วันที่
+                                    </th>
+                                    <th
+                                      scope="col"
+                                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    >
+                                      สถานะ
+                                    </th>
+                                    <th
+                                      scope="col"
+                                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    >
+                                      ยอดรวม
+                                    </th>
+                                    <th
+                                      scope="col"
+                                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    >
+                                      การดำเนินการ
+                                    </th>
+                                    <th
+                                      scope="col"
+                                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                    >
+                                      รายละเอียด
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                  {#each shop_orders as order (order.order_id)}
+                                    <tr
+                                      class="transition-colors duration-200 hover:bg-gray-50"
+                                      in:slide
+                                    >
+                                      <td
+                                        class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                                      >
+                                        {order.order_id}
+                                      </td>
+                                      <td
+                                        class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        {formatDate(order.order_time)}
+                                      </td>
+                                      <td
+                                        class="px-6 py-4 whitespace-nowrap text-sm {getStatusColor(
+                                          order.order_status,
+                                        )}"
+                                      >
+                                        {order.order_status}
+                                      </td>
+                                      <td
+                                        class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                                      >
+                                        {formatCurrency(order.total_price)}
+                                      </td>
+                                      <td class="px-6 py-4 whitespace-nowrap">
+                                        <!-- <button
+                                        class="bg-blue-500 text-white rounded p-1">
+                                        ตรวจสอบเสร็จสิ้น</button> -->
+                                        {#if order.order_status == "อยู่ระหว่างการจัดส่ง"}
+                                          <button
+                                          class="bg-blue-500 text-white rounded p-1"
+                                          on:click={openTrackingModal(order.order_id)}>
+                                          จัดส่งเเล้ว</button>
+                                        {/if}
+                                        {#if order.order_status == "กำลังดำเนินการ"}
+                                          <button
+                                          on:click={() => approvePayPublisher(order.order_id)}
+                                          class="bg-green-500 text-white rounded p-1">
+                                          อนุมัติ</button>
+                                          <button
+                                          on:click={() => rejectPayPublisher(order.order_id)}
+                                          class="bg-red-500 text-white rounded p-1">
+                                          ไม่อนุมัติ</button>
+                                        {/if}
+
+                                      </td>
+                                      <td
+                                        class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
+                                      >
+                                        <button
+                                          on:click={() =>
+                                            toggleOrderDetails(order.order_id)}
+                                          class="text-blue-600 hover:text-blue-800 transition-colors"
+                                        >
+                                          {expandedOrderId === order.order_id
+                                            ? "Hide Details"
+                                            : "Show Details"}
+                                        </button>
+                                      </td>
+                                    </tr>
+                                    {#if expandedOrderId === order.order_id}
+                                      <tr in:slide>
+                                        <td colspan="6" class="bg-gray-50 p-4">
+                                          {#if base64Images[order.order_id]}
+                                            <img
+                                              src={base64Images[order.order_id]}
+                                              alt="Uploaded Slip"
+                                              style="max-width: 200px;"
+                                              class="mb-4 rounded-lg shadow-sm"
+                                            />
+                                          {/if}
+                                          <!-- Display other order details here -->
+                                          <p class="mb-1 text-sm font-semibold">
+                                            Fullname: <span class="text-gray-700"
+                                              >{order.fullname}</span
+                                            >
+                                          </p>
+                                          <p class="mb-1 text-sm font-semibold">
+                                            Email: <span class="text-gray-700"
+                                              >{order.email}</span
+                                            >
+                                          </p>
+                                          <p class="mb-1 text-sm font-semibold">
+                                            Phone: <span class="text-gray-700"
+                                              >{order.phone}</span
+                                            >
+                                          </p>
+                                          <p class="mb-3 text-sm font-semibold">
+                                            Address: <span class="text-gray-700"
+                                              >{order.address}</span
+                                            >
+                                          </p>
+                                          {#if order.tracking_number}
+                                          รหัสติดตามของ: <span class="text-gray-700"
+                                          >{order.tracking_number}</span
+                                          >
+                                          {/if}
+                                          {#if order.payment_slip}
+                                            <img
+                                              src={order.payment_slip}
+                                              alt="Uploaded Slip"
+                                              style="max-width: 200px;"
+                                              class="mb-4 rounded-lg shadow-sm"
+                                            />
+                                          {/if}
+                                        
+
+                                          <h4 class="text-lg font-semibold mb-2">
+                                            Items:
+                                          </h4>
+                                          {#each order.items as item}
+                                            <div
+                                              class="mb-4 p-4 border rounded-lg shadow-sm flex items-start bg-white"
+                                            >
+                                              <div>
+                                                <p class="font-semibold text-blue-600">
+                                                  {item.book_name_th}
+                                                </p>
+                                                <p class="text-sm">
+                                                  <span class="font-semibold">Price:</span
+                                                  >
+                                                  {formatCurrency(item.book_price)} x {item.amount}
+                                                </p>
+                                                <p class="text-sm">
+                                                  <span class="font-semibold">Total:</span
+                                                  >
+                                                  {formatCurrency(
+                                                    item.book_price * item.amount,
+                                                  )}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          {/each}
+                                        </td>
+                                      </tr>
+                                    {/if}
+                                  {/each}
+                                </tbody>
+                              </table>
+                            </div>
+                          {/if}
+                        {/if}
+                    {/if}
+                    <!-- --------->
+                    <!-- SELLER -->
+                     <!-- --------->
+                    {#if user.user_permission == "Seller"}
+                    {#if shop_seller.length === 0}
+                          <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                            <p class="font-bold text-yellow-700">ยังไม่มีคำสั่งซื้อ</p>
+                            <p class="text-sm text-yellow-600">
+                              คุณยังไม่มีรายการขอสั่งซื้อใด ๆ ในขณะนี้.
+                            </p>
+                          </div>
+                    {/if}
+                    {#if shop_seller.length > 0}
+                        <h2 class="text-xl font-semibold mb-4 text-blue-600 mt-8">
+                          Orders All
+                        </h2>
+                        <div class="overflow-x-auto">
+                          <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                              <tr>
+                                <th
+                                  scope="col"
+                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                  Order ID
+                                </th>
+                                <th
+                                  scope="col"
+                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                  วันที่
+                                </th>
+                                <th
+                                  scope="col"
+                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                  สถานะ
+                                </th>
+                                <th
+                                  scope="col"
+                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                  ยอดรวม
+                                </th>
+                                <th
+                                  scope="col"
+                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                  การดำเนินการ
+                                </th>
+                                <th
+                                  scope="col"
+                                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                >
+                                  รายละเอียด
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                              {#each shop_seller as order (order.order_id)}
+                                <tr
+                                  class="transition-colors duration-200 hover:bg-gray-50"
+                                  in:slide
+                                >
+                                  <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                                  >
+                                    {order.order_id}
+                                  </td>
+                                  <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                                  >
+                                    {formatDate(order.order_time)}
+                                  </td>
+                                  <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm {getStatusColor(
+                                      order.order_status,
+                                    )}"
+                                  >
+                                    {order.order_status}
+                                  </td>
+                                  <td
+                                    class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                                  >
+                                    {formatCurrency(order.total_price)}
+                                  </td>
+                                  <td class="px-6 py-4 whitespace-nowrap">
+                                    <!-- <button
+                                    class="bg-blue-500 text-white rounded p-1">
+                                    ตรวจสอบเสร็จสิ้น</button> -->
+                                    {#if order.order_status == "อยู่ระหว่างการจัดส่ง"}
+                                      <button
+                                      class="bg-blue-500 text-white rounded p-1"
+                                      on:click={() => openTrackingModalSeller(order.order_id)}>
+                                      จัดส่งเเล้ว</button>
+                                    {/if}
+                                    {#if order.order_status == "กำลังดำเนินการ"}
+                                      <button
+                                      on:click={() => approvePaySeller(order.order_id)}
+                                      class="bg-green-500 text-white rounded p-1">
+                                      อนุมัติ</button>
+                                      <button
+                                      on:click={() => rejectPaySeller(order.order_id)}
+                                      class="bg-red-500 text-white rounded p-1">
+                                      ไม่อนุมัติ</button>
+                                    {/if}
+
+                                  </td>
+                                  <td
+                                    class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
+                                  >
+                                    <button
+                                      on:click={() =>
+                                        toggleOrderDetails(order.order_id)}
+                                      class="text-blue-600 hover:text-blue-800 transition-colors"
+                                    >
+                                      {expandedOrderId === order.order_id
+                                        ? "Hide Details"
+                                        : "Show Details"}
+                                    </button>
+                                  </td>
+                                </tr>
+      
+                                {#if expandedOrderId === order.order_id}
+                                  <tr in:slide>
+                                    <td colspan="6" class="bg-gray-50 p-4">
+                                      {#if base64ImagesSeller[order.order_id]}
+                                        <img
+                                          src={base64ImagesSeller[order.order_id]}
+                                          alt="Uploaded Slip Seller"
+                                          style="max-width: 200px;"
+                                          class="mb-4 rounded-lg shadow-sm"
+                                        />
+                                      {/if}
+                                      <!-- Display other order details here -->
+                                      <p class="mb-1 text-sm font-semibold">
+                                        Fullname: <span class="text-gray-700"
+                                          >{order.fullname}</span
+                                        >
+                                      </p>
+                                      <p class="mb-1 text-sm font-semibold">
+                                        Email: <span class="text-gray-700"
+                                          >{order.email}</span
+                                        >
+                                      </p>
+                                      <p class="mb-1 text-sm font-semibold">
+                                        Phone: <span class="text-gray-700"
+                                          >{order.phone}</span
+                                        >
+                                      </p>
+                                      <p class="mb-3 text-sm font-semibold">
+                                        Address: <span class="text-gray-700"
+                                          >{order.address}</span
+                                        >
+                                      </p>                 
+                                      
+                                      {#if order.tracking_number}
+                                          รหัสติดตามของ: <span class="text-gray-700"
+                                          >{order.tracking_number}</span
+                                          >
+                                      {/if}
+                                      
+                                      {#if order.payment_slip}
+                                      <img
+                                        src={order.payment_slip}
+                                        alt="Uploaded Slip"
+                                        style="max-width: 200px;"
+                                        class="mb-4 rounded-lg shadow-sm"
+                                      />
+                                      {/if}
+
+                                                           
+                                    
+                                      <h4 class="text-lg font-semibold mb-2">
+                                        Items:
+                                      </h4>
+      
+                                      {#each order.items as item}
+                                        <div
+                                          class="mb-4 p-4 border rounded-lg shadow-sm flex items-start bg-white"
+                                        >
+                                          <div>
+                                            <p class="font-semibold text-blue-600">
+                                              {item.book_name}
+                                            </p>
+                                            <p class="text-sm">
+                                              <span class="font-semibold">Price:</span
+                                              >
+                                              {formatCurrency(item.book_price)} x {item.amount}
+                                            </p>
+                                            <p class="text-sm">
+                                              <span class="font-semibold">Total:</span
+                                              >
+                                              {formatCurrency(
+                                                item.book_price * item.amount,
+                                              )}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      {/each}
+                                    </td>
+                                  </tr>
+                                {/if}
+                              {/each}
+                            </tbody>
+                          </table>
+                        </div>
+                      {/if}
+                    {/if}
+                  </div>  
+                  {/if}
+            </main>
+          </div>
+        </div>
       </div>
-    </div>
+    {/if}
+
+<!-- sent modal -->
+{#if showTrackingModal}
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-40 flex justify-center items-center z-50 transform">
+  <div 
+    class="bg-white p-10 rounded-lg shadow-xl w-[65vw] max-w-xl max-h-[50vh] space-y-6 border overflow-y-auto">
+      <h2 
+        class="text-2xl font-semibold text-gray-800">ส่งเลขพัสดุ</h2>
+    <form>
+      <div class="space-y-4">
+        <div>
+            <label for="reason" class="block text-gray-600">เลขพัสดุ</label>
+            <input
+              id="reason"
+              type="text"
+              bind:value={tracking_number}
+              class="w-full px-4 py-2 border rounded-lg shadow-sm" required>
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-4 mt-6">
+        <button
+        type="button"
+        on:click={closeTrackingModal}
+        class="bg-red-500 text-white p-2 pl-5 pr-5 rounded-lg hover:bg-red-600">ยกเลิก</button>
+
+        <button
+        type="button"
+        on:click={shippingPublisher}
+        class="bg-green-500 text-white p-2 pl-5 pr-5 rounded-lg hover:bg-green-600">ยืนยัน</button>
+      </div>
+    </form>
   </div>
+</div>
+{/if}
+
+{#if showTrackingModalSeller}
+  <div class="fixed inset-0 bg-gray-500 bg-opacity-40 flex justify-center items-center z-50 transform">
+  <div 
+    class="bg-white p-10 rounded-lg shadow-xl w-[65vw] max-w-xl max-h-[50vh] space-y-6 border overflow-y-auto">
+      <h2 
+        class="text-2xl font-semibold text-gray-800">ส่งเลขพัสดุ</h2>
+    <form>
+      <div class="space-y-4">
+        <div>
+            <label for="reason" class="block text-gray-600">เลขพัสดุ</label>
+            <input
+              id="reason"
+              type="text"
+              bind:value={tracking_number}
+              class="w-full px-4 py-2 border rounded-lg shadow-sm" required>
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-4 mt-6">
+        <button
+        type="button"
+        on:click={closeTrackingModalSeller}
+        class="bg-red-500 text-white p-2 pl-5 pr-5 rounded-lg hover:bg-red-600">ยกเลิก</button>
+
+        <button
+        type="button"
+        on:click={shippingSeller}
+        class="bg-green-500 text-white p-2 pl-5 pr-5 rounded-lg hover:bg-green-600">ยืนยัน</button>
+      </div>
+    </form>
+  </div>
+</div>
 {/if}
 
 <link

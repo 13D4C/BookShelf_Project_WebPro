@@ -1768,6 +1768,7 @@ app.get('/shop/publisher/order', async (req, res) => {
                 fullname: order.fullname,
                 status_time: order.status_time,
                 order_time: order.order_time,
+                tracking_number: order.tracking_number,
                 payment_slip: order.payment_slip,
                 items: itemDetails,
             });
@@ -1846,6 +1847,7 @@ app.get('/shop/seller/order', async (req, res) => {
                 fullname: order.fullname,
                 status_time: order.status_time,
                 order_time: order.order_time,
+                tracking_number: order.tracking_number,
                 payment_slip: order.payment_slip,
                 items: itemDetails,
             });
@@ -2059,15 +2061,15 @@ app.post('/shop/seller/payment/upload-proof', async (req, res) => {
     }
 });
 
-app.patch('/shop/seller/payment/approve', async (req, res) => {
+app.get('/shop/seller/payment/approve/:sOrderId', async (req, res) => {
     try {
-        const { seller_order_id } = req.body;
+        const seller_order_id = req.params.sOrderId;
 
         if (!seller_order_id) {
             return res.status(400).json({ error: 'Information all is required' });
         }
 
-        await queryDatabase("UPDATE seller_order_list SET order_status='ระหว่างการจัดส่ง', status_time=current_timestamp() WHERE seller_order_id=?", [seller_order_id]);
+        await queryDatabase("UPDATE seller_order_list SET order_status='อยู่ระหว่างการจัดส่ง', status_time=current_timestamp() WHERE seller_order_id=?", [seller_order_id]);
         return res.status(200).json({ message: "Payment approve successfully" });
     }
     catch (error) {
@@ -2079,9 +2081,29 @@ app.patch('/shop/seller/payment/approve', async (req, res) => {
     }
 });
 
-app.patch('/shop/publisher/payment/approve', async (req, res) => {
+app.get('/shop/seller/payment/reject/:sOrderId', async (req, res) => {
     try {
-        const { order_id } = req.body;
+        const seller_order_id = req.params.sOrderId;
+
+        if (!seller_order_id) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        await queryDatabase("UPDATE seller_order_list SET order_status='ไม่อนุมัติ', status_time=current_timestamp() WHERE seller_order_id=?", [seller_order_id]);
+        return res.status(200).json({ message: "Payment reject successfully" });
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to payment reject',
+            details: error.message
+        });
+    }
+});
+
+app.get('/shop/publisher/payment/approve/:orderId', async (req, res) => {
+    try {
+        const order_id = req.params.orderId;
 
         if (!order_id) {
             return res.status(400).json({ error: 'Information all is required' });
@@ -2094,6 +2116,26 @@ app.patch('/shop/publisher/payment/approve', async (req, res) => {
         console.error('ERROR', error);
         res.status(500).json({
             error: 'Fail to payment approve',
+            details: error.message
+        });
+    }
+});
+
+app.get('/shop/publisher/payment/reject/:orderId', async (req, res) => {
+    try {
+        const order_id = req.params.orderId;
+
+        if (!order_id) {
+            return res.status(400).json({ error: 'Information all is required' });
+        }
+
+        await queryDatabase("UPDATE order_list SET order_status='ไม่อนุมัติ', status_time=current_timestamp() WHERE order_id=?", [order_id]);
+        return res.status(200).json({ message: "Payment reject successfully" });
+    }
+    catch (error) {
+        console.error('ERROR', error);
+        res.status(500).json({
+            error: 'Fail to payment reject',
             details: error.message
         });
     }
@@ -2173,15 +2215,76 @@ app.get('/shop/seller/order/get/:seller_order_id', async (req, res) => {
 });
 
 // user_id ของ publisher
-app.post('/shop/publisher/order/getall', async (req, res) => {
+app.get('/shop/publisher/order/getall/:ownerId', async (req, res) => {
     try {
-        const { user_id } = req.body;
+        const owner_id = req.params.ownerId;
 
-        if (!user_id) {
-            return res.status(400).json({ error: 'Information all is required' });
+        if (!owner_id) {
+            return res.status(400).json({ error: 'Owner is required' });
         }
-        const querry_order = await queryDatabase("SELECT * FROM order_list WHERE owner_id=?", [user_id]);
-        return res.status(200).json({ order_all: querry_order });
+
+
+        const orders = await queryDatabase(
+            `SELECT * FROM order_list WHERE owner_id = ? ORDER BY order_time DESC`,
+            [owner_id]
+        );
+
+        if (orders.length === 0) {
+            return res.status(204).json({ message: "No orders found for this user" });
+        }
+        const ordersWithDetails = [];
+
+        for (const order of orders) {
+            // Get item_ids associated with the order
+            const orderItems = await queryDatabase(
+                `SELECT item_id FROM order_bridge WHERE order_id = ?`,
+                [order.order_id]
+            );
+            const itemDetails = [];
+
+            // Get details for each item in the order
+            for (const orderItem of orderItems) {
+                const itemDetail = await queryDatabase(
+                    `SELECT 
+                        co.item_id,
+                        co.book_id,
+                        co.amount,
+                        bd.book_name_th,
+                        bd.book_price,
+                        bd.publisher_id,
+                        u.user_name AS publisher_name,
+                        bd.book_image
+                     FROM custom_order co
+                     JOIN book_detail bd ON co.book_id = bd.book_id
+                     JOIN user u ON bd.publisher_id = u.publisher_id
+                     WHERE co.item_id = ?`,
+                    [orderItem.item_id]
+                );
+                if (itemDetail.length > 0) {
+                    itemDetails.push(itemDetail[0]); // Add the item detail (there should only be one)
+                }
+            }
+
+
+            //combine order information.
+            ordersWithDetails.push({
+                order_id: order.order_id,
+                owner_id: order.owner_id,
+                total_price: order.total_price,
+                order_status: order.order_status,
+                phone: order.phone,
+                email: order.email,
+                address: order.address,
+                fullname: order.fullname,
+                status_time: order.status_time,
+                order_time: order.order_time,
+                payment_slip: order.payment_slip,
+                tracking_number: order.tracking_number,
+                items: itemDetails,
+            });
+        }
+
+        res.status(200).json(ordersWithDetails);
     }
     catch (error) {
         console.error('ERROR', error);
@@ -2193,23 +2296,71 @@ app.post('/shop/publisher/order/getall', async (req, res) => {
 });
 
 // seller_id คือ user_id ของ seller
-app.post('/shop/seller/order/getall', async (req, res) => {
-    try {
-        const { seller_id } = req.body;
+app.get('/shop/seller/order/getall/:userId', async (req, res) => {
+    const user_id = req.params.userId;
 
-        if (!seller_id) {
-            return res.status(400).json({ error: 'Information all is required' });
-        }
-        const querry_order = await queryDatabase("SELECT * FROM seller_order_list WHERE owner_id=?", [seller_id]);
-        return res.status(200).json({ order_all: querry_order });
+    if (!user_id) {
+        return res.status(400).json({ error: 'User_id is required' });
     }
-    catch (error) {
-        console.error('ERROR', error);
-        res.status(500).json({
-            error: 'Fail to get order',
-            details: error.message
+
+    const orders = await queryDatabase(
+        `SELECT * FROM seller_order_list WHERE owner_id = ? ORDER BY order_time DESC`,
+        [user_id]
+    );
+
+    if (orders.length === 0) {
+        return res.status(204).json({ message: "No orders found for this user" });
+    }
+
+    const ordersWithDetails = [];
+
+    for (const order of orders) {
+        const orderItems = await queryDatabase(
+            `SELECT seller_item_id FROM seller_order_bridge WHERE seller_order_id = ?`,
+            [order.seller_order_id]
+        );
+
+        const itemDetails = [];
+
+        for (const orderItem of orderItems) {
+            const itemDetail = await queryDatabase(
+                `SELECT 
+                    co.seller_item_id,
+                    co.seller_book_id,
+                    co.amount,
+                    bd.book_name,
+                    bd.book_price,
+                    bd.owner_id,
+                    u.user_name,
+                    bd.book_image
+                 FROM seller_order co
+                 JOIN seller_book_detail bd ON co.seller_book_id = bd.seller_book_id
+                 JOIN user u ON bd.owner_id = u.user_id
+                 WHERE co.seller_item_id = ?`,
+                [orderItem.seller_item_id]
+            );
+
+            if (itemDetail.length > 0) {
+                itemDetails.push(itemDetail[0]);
+            }
+        }
+        ordersWithDetails.push({
+            order_id: order.seller_order_id,
+            owner_id: order.owner_id,
+            total_price: order.total_price,
+            order_status: order.order_status,
+            phone: order.phone,
+            email: order.email,
+            address: order.address,
+            fullname: order.fullname,
+            status_time: order.status_time,
+            order_time: order.order_time,
+            tracking_number: order.tracking_number,
+            payment_slip: order.payment_slip,
+            items: itemDetails,
         });
     }
+    res.status(200).json(ordersWithDetails);
 });
 
 app.patch('/shop/publisher/order/shipping', async (req, res) => {
@@ -2218,7 +2369,7 @@ app.patch('/shop/publisher/order/shipping', async (req, res) => {
         if (!order_id || !tracking_number) {
             return res.status(400).json({ error: 'Information all is required' });
         }
-        await queryDatabase(`UPDATE order_list SET order_status='Shipped', status_time=current_timestamp(), tracking_number=?  WHERE order_id=?`, [tracking_number, order_id]);
+        await queryDatabase(`UPDATE order_list SET order_status='จัดส่งเเล้ว', status_time=current_timestamp(), tracking_number=?  WHERE order_id=?`, [tracking_number, order_id]);
         return res.status(200).json({ message: "Status updated successfully" });
     }
     catch (error) {
@@ -2236,7 +2387,7 @@ app.patch('/shop/seller/order/shipping', async (req, res) => {
         if (!seller_order_id || !tracking_number) {
             return res.status(400).json({ error: 'Information all is required' });
         }
-        await queryDatabase(`UPDATE seller_order_list SET order_status='Shipped', status_time=current_timestamp(), tracking_number=?  WHERE seller_order_id=?`, [tracking_number, seller_order_id]);
+        await queryDatabase(`UPDATE seller_order_list SET order_status='จัดส่งเเล้ว', status_time=current_timestamp(), tracking_number=?  WHERE seller_order_id=?`, [tracking_number, seller_order_id]);
         return res.status(200).json({ message: "Status updated successfully" });
     }
     catch (error) {
@@ -2277,7 +2428,7 @@ app.patch('/shop/buyer/publisher/order/received', async (req, res) => {
             return res.status(400).json({ error: 'Information all is required' });
         }
         const update = await queryDatabase(
-            `UPDATE order_list SET order_status='Received', status_time=current_timestamp()
+            `UPDATE order_list SET order_status='ได้รับสินค้าเเล้ว', status_time=current_timestamp()
              WHERE order_id = ?`, [order_id]);
         return res.status(200).json({ message: "Status updated successfully" });
     }
@@ -2299,7 +2450,7 @@ app.patch('/shop/buyer/seller/order/received', async (req, res) => {
             return res.status(400).json({ error: 'Information all is required' });
         }
         const update = await queryDatabase(
-            `UPDATE seller_order_list SET order_status='Received', status_time=current_timestamp()
+            `UPDATE seller_order_list SET order_status='ได้รับสินค้าเเล้ว', status_time=current_timestamp()
              WHERE seller_order_id = ?`, [seller_order_id]);
         return res.status(200).json({ message: "Status updated successfully" });
     }
