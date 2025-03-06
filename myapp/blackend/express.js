@@ -1049,16 +1049,15 @@ app.get('/user/request-seller/approve/:userId', async (req, res) => {
         const request_info = await queryDatabase(
             `SELECT * FROM seller_register WHERE user_id = ?`, [user_id]
         );
-
         const approve = await queryDatabase(
             `UPDATE seller_register SET status = ? WHERE user_id = ?`, ['อนุมัติ', user_id]);
         const updateStatus = await queryDatabase(
             `UPDATE user SET user_permission = 'Seller' WHERE user_id = ?`, [user_id]
         );
-
+        let name = await queryDatabase("SELECT user_name from user WHERE user_id = ?", [user_id]);
         const addShop = await queryDatabase(
-            `INSERT INTO shop_list(owner_id, qr_code)
-             VALUES (?, ?)`, [user_id, request_info[0].qr_code]
+            `INSERT INTO shop_list(shop_name, owner_id, qr_code)
+             VALUES (?, ?, ?)`, [name[0].user_name, user_id, request_info[0].qr_code]
         );
 
         return res.status(200).json({ message: "Seller request successfuldly" });
@@ -2105,7 +2104,7 @@ app.get('/shop/publisher/order/get/:order_id', async (req, res) => {
         const order_id = req.params.order_id;
 
         const querry_order = await queryDatabase("SELECT * FROM order_list WHERE order_id=?", [order_id]);
-        if (querry_order[0].length == 0) {
+        if (querry_order.length == 0) {
             return res.status(204).json({ message: "No order found in the order_list" });
         }
         const querry_item = await queryDatabase(

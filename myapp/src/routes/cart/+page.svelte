@@ -158,6 +158,11 @@
         : [];
 
       cart = [...officialCart, ...sellerCart];
+      if (officialCart.length < sellerCart.length) {
+          filterType = "seller";
+        } else {
+          filterType = "official";
+        }
       isLoading.set(false);
     } catch (error) {
       console.error("Skibidi Error", error);
@@ -205,7 +210,7 @@
             : 'bg-gray-200'}"
           on:click={() => (filterType = "official")}
         >
-          Official
+        Official : {cart.filter(item => item.type === "official").length}
         </button>
         <button
           class="px-4 py-2 rounded {filterType === 'seller'
@@ -213,7 +218,7 @@
             : 'bg-gray-200'}"
           on:click={() => (filterType = "seller")}
         >
-          Seller
+        Official : {cart.filter(item => item.type === "seller").length}
         </button>
       </div>
       {#if filterType === "official"}
@@ -314,15 +319,16 @@
         <span>ยอดสุทธิ</span>
         <span>{getTotalPrice()} บาท</span>
       </div>
-
+      {#if filteredCart.length != 0}
       <button
         class="w-full bg-green-500 text-white py-2 rounded mt-4"
         on:click={() => goto(`/checkout?type=${filterType}`)}
       >
         ดำเนินการต่อ
       </button>
+      {/if}
       <button
-        class="w-full border mt-2 py-2 rounded"
+        class="w-full border mt-2 py-2 rounded text-white  bg-blue-500"
         on:click={() => goto("/all")}
       >
         เลือกสินค้าต่อ

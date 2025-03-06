@@ -462,7 +462,7 @@
         user.user_firstname = user.user_firstname || "N/A";
         user.user_lastname = user.user_lastname || "N/A";
         user.user_email = user.user_email || "N/A";
-        user.user_image = user.user_image || "/placeholder-profile.png"; // Default image
+        user.user_image = user.user_image; // Default image
       } else {
         // Handle case where getUser returns null (e.g., invalid token)
         console.error("Failed to fetch user data");

@@ -15,6 +15,7 @@
           continue; 
         }
         let url;
+        let id;
         if ($page.url.searchParams.get("type") === "seller"){
           url = 'http://localhost:3000/shop/seller/payment/upload-proof';
         }
@@ -28,6 +29,7 @@
           },
           body: JSON.stringify({
             order_id: store.id,
+            seller_order_id: store.id,
             payment_slip: store.slip, 
           }),
         });
@@ -57,6 +59,9 @@
         else{
           url = `http://localhost:3000/shop/publisher/order/get/${orderId}`
         }
+          console.log($page.url.searchParams.get("type"));
+          console.log($page.url.searchParams.get("order_ids"));
+          console.log(url);
           const response = await fetch(url);
 
           if (!response.ok) {
@@ -74,7 +79,7 @@
           if (data && data.order_info && data.order_info[0] && data.shop && data.shop[0]) {
             // Check if required data exists.  Crucial for robust error handling
             const storeData = {
-              id: data.order_info[0].order_id,  //Use the actual order ID
+              id: data.order_info[0].order_id ?? data.order_info[0].seller_order_id,  //Use the actual order ID
               name: data.shop[0].shop_name,
               qrCode: data.shop[0].qr_code,
               amount: parseFloat(data.order_info[0].total_price), // Ensure amount is a number

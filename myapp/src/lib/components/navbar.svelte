@@ -54,12 +54,12 @@ let showSearch = false;
 
   async function Logout() {
     isLoading.set(true);
+    await goto("/");
     localStorage.removeItem("userToken");
     sessionStorage.clear();
     isAuthenticated.set(false); // Update store
     user.set(null);
     cartCount.set(0);
-    await goto("/");
     isLoading.set(false);
   }
 
@@ -215,10 +215,10 @@ let showSearch = false;
       <span class="block text-sm">{$user?.user_name || "Username"}</span>
 	  <span class="block truncate text-sm font-medium">{$user?.user_email}</span>
     </DropdownHeader>
-    <DropdownItem on:click={ProfilePage}>Profile</DropdownItem>
-    <DropdownItem on:click={AdminPage}>Settings</DropdownItem>
+    <DropdownItem on:click={ProfilePage}>โปรไฟล์</DropdownItem>
+    {#if $user.user_permission === "Manager"}<DropdownItem on:click={AdminPage}>จัดการ</DropdownItem>{/if}
     <DropdownDivider />
-    <DropdownItem on:click={Logout}>Sign out</DropdownItem>
+    <DropdownItem on:click={Logout}>ออกจากระบบ</DropdownItem>
   </Dropdown>
     <NavUl class="order-1">
 		<NavLi href="/main" class="hover:underline md:text-white">หน้าหลัก</NavLi>

@@ -4,6 +4,8 @@
   import { onMount } from "svelte";
   import { writable } from "svelte/store";
   import { getUser } from "$lib/utils";
+    import { quintOut } from "svelte/easing";
+    import { fade, scale } from "svelte/transition";
   // State variables for form inputs
   let userToken = "";
   let cart = [];
@@ -14,6 +16,7 @@
   let city = "";
   let province = "";
   let postalCode = "";
+  let isLoading = writable(true);
 
   // Example data for provinces (replace with your actual data source)
   const provinces = [
@@ -182,7 +185,7 @@
       if ($page.url.searchParams.get("type") === "official") {
         goto(paymentUrl);
       } else {
-        goto(paymentUrl+"&?type=seller");
+        goto(paymentUrl+"&type=seller");
       }
     } catch (error) {
       console.error("Error creating order:", error);
@@ -241,14 +244,28 @@
         console.error("Error fetching cart count:", error);
       }
     }
+    if (cart.length == 0){
+      goto('/cart')
+    }
   }
 
   onMount(async () => {
     userToken = localStorage.getItem("userToken");
     await fetchCart();
+    isLoading.set(false);
   });
 </script>
-
+{#if $isLoading}
+  <div
+    class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
+    transition:fade={{ duration: 300 }}
+  >
+    <div
+      class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+      transition:scale={{ duration: 300, easing: quintOut }}
+    ></div>
+  </div>
+{:else}
 <div class="flex flex-col md:flex-row gap-6 p-6">
   <div class="flex-1 bg-white p-6 rounded-lg shadow">
     <h2 class="text-lg font-semibold mb-4">ตะกร้าสินค้า</h2>
@@ -397,3 +414,4 @@
     </div>
   </form>
 </div>
+{/if}
