@@ -1,36 +1,96 @@
+// const express = require('express');
+// const cors = require('cors');
+// const bodyParser = require('body-parser');
+// const mysql = require('mysql2/promise');
+// const bcrypt = require('bcryptjs');
+// const jwt = require('jsonwebtoken');
+
+// const app = express();
+// app.use(cors({
+//     origin: ['http://localhost:5173'],
+//     credentials: true,
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+//     allowedHeaders: ['Content-Type', 'Authorization']
+// }));
+// const port = process.env.PORT || 3000;
+
+// app.use(bodyParser.json({limit: '50mb', extended: true}));
+// app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+
+// const pool = mysql.createPool({
+// });
+
+// async function queryDatabase(sql, params = []) {
+//     let connection;
+//     try {
+//         connection = await pool.getConnection();
+//         const [rows] = await connection.execute(sql, params);
+//         return rows;
+//     } catch (error) {
+//         console.error('Database error:', error);
+//         throw new Error('Internal Server Error');
+//     } finally {
+//         if (connection) connection.release();
+//     }
+// }
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const mysql = require('mysql2/promise');
+const sqlite3 = require('sqlite3').verbose();
+const { open } = require('sqlite');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 
 const app = express();
 app.use(cors({
-    origin: ['http://localhost:5173'],
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
-const port = process.env.PORT || 3000;
+const port = 3000;
 
-app.use(bodyParser.json({limit: '50mb', extended: true}));
-app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+app.use(bodyParser.json({ limit: '50mb', extended: true }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
-const pool = mysql.createPool({
-});
+// --- SQLite Database Setup ---
+const dbPath = path.join(__dirname, 'book_v2.db'); // Database file in the same directory
+let db;
+
+async function initializeDatabase() {
+    try {
+        db = await open({
+            filename: dbPath,
+            driver: sqlite3.Database
+        });
+        console.log('Connected to the SQLite database.');
+    } catch (error) {
+        console.error('Database initialization error:', error);
+        throw new Error('Database Initialization Failed');
+    }
+}
+
+// Initialize the database before handling requests
+initializeDatabase();
+
 
 async function queryDatabase(sql, params = []) {
-    let connection;
     try {
-        connection = await pool.getConnection();
-        const [rows] = await connection.execute(sql, params);
-        return rows;
+        //Use db.all or db.get
+        if (sql.trim().toUpperCase().startsWith('SELECT')) {
+            //for select statements
+            const rows = await db.all(sql, params);
+             return rows;
+        }else{
+            //for INSERT, UPDATE, DELETE
+            const result = await db.run(sql, params);
+            return result;
+        }
     } catch (error) {
         console.error('Database error:', error);
-        throw new Error('Internal Server Error');
-    } finally {
-        if (connection) connection.release();
+         throw new Error('Internal Server Error', { cause: error });
     }
 }
 
