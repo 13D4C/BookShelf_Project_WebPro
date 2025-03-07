@@ -1147,7 +1147,31 @@
                                       <p class="font-semibold text-blue-600">
                                         {item.book_name_th}
                                       </p>
-                                      <p class="text-sm">
+                                      {#if item.cover_color}
+                                        <span class="font-semibold">สีปก:</span>
+                                        {item.cover_color}
+                                      {/if}
+                                      {#if item.cover_type}
+                                        <span class="font-semibold">ชนิดปก:</span>
+                                        {item.cover_type}
+                                      {/if}
+                                      {#if item.font_family}
+                                        <span class="font-semibold">ฟอนต์:</span>
+                                        {item.font_family}
+                                      {/if}
+                                      {#if item.font_size}
+                                        <span class="font-semibold">ฟอนต์:</span>
+                                        {item.font_size}
+                                      {/if}
+                                      {#if item.paper_type}
+                                        <span class="font-semibold">ชนิดกระดาษ:</span>
+                                        {item.paper_type}
+                                      {/if}
+                                      {#if item.marker}
+                                        <span class="font-semibold">ข้อความ:</span>
+                                        {item.marker}
+                                      {/if}
+                                        <p class="text-sm">
                                         <span class="font-semibold">Price:</span
                                         >
                                         {formatCurrency(item.book_price)} x {item.amount}
@@ -1666,6 +1690,30 @@
                                                   >
                                                   {formatCurrency(item.book_price)} x {item.amount}
                                                 </p>
+                                                {#if item.cover_color}
+                                                  <span class="font-semibold">สีปก:</span>
+                                                  {item.cover_color}
+                                                {/if}
+                                                {#if item.cover_type}
+                                                  <span class="font-semibold">ชนิดปก:</span>
+                                                  {item.cover_type}
+                                                {/if}
+                                                {#if item.font_family}
+                                                  <span class="font-semibold">ฟอนต์:</span>
+                                                  {item.font_family}
+                                                {/if}
+                                                {#if item.font_size}
+                                                  <span class="font-semibold">ฟอนต์:</span>
+                                                  {item.font_size}
+                                                {/if}
+                                                {#if item.paper_type}
+                                                  <span class="font-semibold">ชนิดกระดาษ:</span>
+                                                  {item.paper_type}
+                                                {/if}
+                                                {#if item.marker}
+                                                  <span class="font-semibold">ข้อความ:</span>
+                                                  {item.marker}
+                                                {/if}
                                                 <p class="text-sm">
                                                   <span class="font-semibold">Total:</span
                                                   >
