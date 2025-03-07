@@ -1156,7 +1156,6 @@ app.get('/user/request-seller/get', async (req, res) => {
         return res.status(200).json({ seller_register: get });
     }
     catch {
-        console.log(error);
         res.status(500).json({ error: 'Failed to get information' });
     }
 });

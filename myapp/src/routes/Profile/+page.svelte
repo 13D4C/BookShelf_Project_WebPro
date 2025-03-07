@@ -796,6 +796,7 @@
                       <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของร้าน
                     </li>
                   {/if}
+                  {#if user.user_permission == "User" || user.user_permission == "Seller"}
                   <li
                     class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
                     'shopRequest'
@@ -808,6 +809,7 @@
                   >
                     <i class="fa-solid fa-store mr-2"></i>การขอเปิดร้านค้า
                   </li>
+                  {/if}
                 </ul>
               </div>
             {/if}
@@ -1071,7 +1073,7 @@
                             {#if order.order_status == "จัดส่งเเล้ว"}
                               <button
                               on:click={() => orderPublisherReceive(order.order_id)}
-                              class="text-white bg-blue-600 hover:text-blue-800 p-2 transition-colors"
+                              class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                               >ได้รับสินค้าเเล้ว</button>
                               {/if}  
                             </td>
@@ -1288,7 +1290,7 @@
                             {#if order.order_status == "จัดส่งเเล้ว"}
                               <button
                               on:click={() => orderSellerReceive(order.order_id)}
-                              class="text-white bg-blue-600 hover:text-blue-800 p-2 transition-colors"
+                              class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
                               >ได้รับสินค้าเเล้ว</button>
                             {/if}  
                             </td>
@@ -1785,11 +1787,11 @@
                                     {#if order.order_status == "กำลังดำเนินการ"}
                                       <button
                                       on:click={() => approvePaySeller(order.order_id)}
-                                      class="bg-green-500 text-white rounded p-1">
+                                      class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                                       อนุมัติ</button>
                                       <button
                                       on:click={() => rejectPaySeller(order.order_id)}
-                                      class="bg-red-500 text-white rounded p-1">
+                                      class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                                       ไม่อนุมัติ</button>
                                     {/if}
 

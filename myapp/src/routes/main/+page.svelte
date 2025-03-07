@@ -7,8 +7,8 @@
   import "swiper/css/bundle";
   import { generateStars } from "$lib/utils";
   import { Rating, AdvancedRating, ScoreRating } from "flowbite-svelte";
-    import { fade, scale } from "svelte/transition";
-    import { quintOut } from "svelte/easing";
+  import { fade, scale } from "svelte/transition";
+  import { quintOut } from "svelte/easing";
 
   let products: any[] = [];
   let eachbook: any[] = [];
@@ -38,7 +38,7 @@
     return books.filter(
       (book) =>
         Array.isArray(book.book_category) &&
-        book.book_category.includes(category)
+        book.book_category.includes(category),
     );
   }
 
@@ -145,7 +145,7 @@
     visibleProducts = products.slice(currentIndex, currentIndex + itemsPerPage);
     if (visibleProducts.length < itemsPerPage) {
       visibleProducts = visibleProducts.concat(
-        products.slice(0, itemsPerPage - visibleProducts.length)
+        products.slice(0, itemsPerPage - visibleProducts.length),
       );
     }
   }
@@ -246,15 +246,15 @@
 </script>
 
 {#if $isLoading}
-<div 
-class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
-transition:fade={{ duration: 300 }}
->
-<div 
-  class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
-  transition:scale={{ duration: 300, easing: quintOut }}
-></div>
-</div>
+  <div
+    class="fixed inset-0 flex items-center justify-center bg-blue-50 z-50"
+    transition:fade={{ duration: 300 }}
+  >
+    <div
+      class="spinner animate-spin w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full"
+      transition:scale={{ duration: 300, easing: quintOut }}
+    ></div>
+  </div>
 {:else}
   <div class="h-full bg-blue-50">
     <!-- Main Content -->
@@ -410,50 +410,7 @@ transition:fade={{ duration: 300 }}
 
     <footer class="bg-blue-800 text-white py-8">
       <div class="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="md:col-span-1">
-          <h4 class="text-lg font-semibold mb-3">Links</h4>
-          <ul>
-            {#each footerLinks as link}
-              <li>
-                <a
-                  href={link.url}
-                  class="hover:text-blue-300 transition-colors duration-300"
-                  >{link.title}</a
-                >
-              </li>
-            {/each}
-          </ul>
-        </div>
-        <div class="md:col-span-1">
-          <h4 class="text-lg font-semibold mb-3">ติดต่อเรา</h4>
-          <p>{contactInfo.address}</p>
-          <p>โทร: {contactInfo.phone}</p>
-          <p>
-            อีเมล:
-            <a
-              href={"mailto:" + contactInfo.email}
-              class="hover:text-blue-300 transition-colors duration-300"
-              >{contactInfo.email}</a
-            >
-          </p>
-        </div>
-        <div class="md:col-span-1">
-          <h4 class="text-lg font-semibold mb-3">Social Media</h4>
-          <div class="flex space-x-4">
-            {#each socialLinks as link}
-              <a
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="hover:text-blue-300 transition-colors duration-300"
-                title={link.label}
-              >
-                <i class={link.icon}></i>
-                <span class="sr-only">{link.label}</span>
-              </a>
-            {/each}
-          </div>
-        </div>
+
         <div
           class="mt-8 border-t border-blue-700 pt-4 text-center col-span-full"
         >
@@ -487,7 +444,6 @@ transition:fade={{ duration: 300 }}
     cursor: pointer; /* Add cursor pointer */
   }
 
-  /* sr-only class (screen reader only) */
   .sr-only {
     position: absolute;
     width: 1px;
@@ -503,17 +459,6 @@ transition:fade={{ duration: 300 }}
     border-radius: 8px;
     margin-bottom: 10px;
   }
-  /* Swiper */
-  /* @media screen and (min-width: 1350px) {
-		.swiper-button-next {
-			position: absolute;
-			right: -80px;
-		}
-		.swiper-button-prev {
-			position: absolute;
-			left: -80px;
-		}
-	} */
 
   @media screen and (max-width: 767px) {
     .swiper-button-next,
@@ -527,8 +472,12 @@ transition:fade={{ duration: 300 }}
   }
 
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
   }
 
   /*  Font Awesome  */
