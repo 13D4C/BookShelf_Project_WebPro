@@ -77,11 +77,32 @@
     price: number;
   }
 
-  // Mockup data (Keep this)
-  let sellerRequests: SellerRequest[] = [];
+  interface infoPublisher {
+    user_name: string;
+    user_email: string;
+    user_phone: string;
+    first_name: string;
+    last_name: string;
+    user_pass: string;
+    publisher_name: string;
+    qr_code: string;
+  }
 
+  let sellerRequests: SellerRequest[] = [];
   let reports: Report[] = [];
   let reportsSeller: ReportSeller[] = [];
+
+  const defaultPublisher = (): infoPublisher => ({
+    user_name: "",
+    user_email: "",
+    user_phone: "",
+    first_name: "",
+    last_name: "",
+    user_pass: "",
+    publisher_name: "",
+    qr_code: ""
+  });
+  let publisherCreate: infoPublisher = defaultPublisher();
 
   
   // Temp Variables
@@ -255,6 +276,10 @@
     );
   }
 
+  //validate
+  function isValidPublisher(publisher: infoPublisher): boolean {
+    return Object.values(publisher).every(value => value.trim() !== "" && value !== null && value !== undefined);
+  }
   // --- Approve/Deny Seller Request ---
   async function approveSellerRegister(user_id:any) {
     try {
@@ -413,6 +438,51 @@ async function deleteUser() {
   }
 }
 
+function handleFileUpload(event:any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      publisherCreate.qr_code = reader.result as string;
+    };
+}
+
+async function createPublisher() {
+    if (isValidPublisher(publisherCreate)) {
+      const response = await fetch(`http://localhost:3000/publisher/create`, {
+          method: 'POST',
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(
+          { 
+              user_name: publisherCreate.user_name,
+              user_email: publisherCreate.user_email,
+              user_phone: publisherCreate.user_phone,
+              first_name: publisherCreate.first_name,
+              last_name: publisherCreate.last_name,
+              publisher_name: publisherCreate.publisher_name,
+              qr_code: publisherCreate.qr_code, 
+              user_pass: publisherCreate.user_pass
+          }),
+      });
+      if (response.ok) {
+        alert("สร้างบัญชีสำนักพิมพ์เสร็จสิ้น")
+        publisherCreate = defaultPublisher();
+      }
+      else {
+        const data = await response.json();
+        if(data.error = "Account already exists"){
+          alert("มีชื่อผู้ใช้หรืออีเมล์นี้อยู่ในระบบเเล้ว")
+        }
+      }
+    } else {
+      alert("กรุณากรอกข้อมูลให้ครบถ้วน")
+    }
+}
+
   // --- Modal Functions ---
 
   function openModal(request: SellerRequest) {
@@ -542,18 +612,15 @@ async function deleteUser() {
               >
                 <i class="fa-solid fa-flag mr-2"></i>ตรวจสอบรายงาน
               </li>
-              <li
-                class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
-                'orderManagement'
-                  ? 'bg-blue-900 text-white'
-                  : 'text-white'}"
-                on:click={() => {
-                  activeMenu = "orderManagement";
-                  closeMenu();
-                }}
+            <li
+              class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
+              'reportManagement'
+                ? 'bg-blue-900 text-white'
+                : 'text-white'}"
+              on:click={() => (activeMenu = "createPublisher")}
               >
-                <i class="fa-solid fa-clipboard-check mr-2"></i>ตรวจสอบคำสั่งซื้อ
-              </li>
+              <i class="fa-solid fa-user-plus mr-2"></i>สร้างบัญชีสำนักพิมพ์
+          </li>
             {/if}
           </ul>
         </div>
@@ -564,7 +631,7 @@ async function deleteUser() {
     <div
       class="hidden sm:block bg-blue-700 w-64 min-w-[256px] p-4 rounded-lg mr-4"
     >
-      <h2 class="text-lg font-semibold text-white">บัญชีของฉัน</h2>
+      <h2 class="text-lg font-semibold text-white">ระบบจัดการ</h2>
       <ul class="mt-4">
         <!-- Menu -->
         <!--admin-->
@@ -598,6 +665,15 @@ async function deleteUser() {
             on:click={() => (activeMenu = "reportManagement")}
           >
             <i class="fa-solid fa-flag mr-2"></i>ตรวจสอบรายงาน
+          </li>
+          <li
+            class="p-2 rounded cursor-pointer hover:bg-blue-800 {activeMenu ===
+            'reportManagement'
+              ? 'bg-blue-900 text-white'
+              : 'text-white'}"
+            on:click={() => (activeMenu = "createPublisher")}
+          >
+            <i class="fa-solid fa-user-plus mr-2"></i>สร้างบัญชีสำนักพิมพ์
           </li>
         {/if}
       </ul>
@@ -811,6 +887,142 @@ async function deleteUser() {
             </table>
           </div>
         {/if}
+      {:else if activeMenu === "createPublisher"}
+        <h1 class="text-2xl font-semibold mb-4">สร้างบัญชีสำนักพิมพ์</h1>
+        <div class="bg-white rounded-lg shadow-md overflow-x-auto p-5">
+          <form class="space-y-4">
+            <div>
+                <label
+                    for="username"
+                    class="block text-sm font-medium text-gray-700"
+                >
+                    ชื่อผู้ใช้
+                </label>
+                <input
+                    type="text"
+                    id="username"
+                    bind:value={publisherCreate.user_name}
+                    class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="โปรดใส่ชื่อผู้ใช้"
+                />
+            </div>
+            <div>
+                <label
+                    for="email"
+                    class="block text-sm font-medium text-gray-700"
+                >
+                    อีเมล
+                </label>
+                <input
+                    type="text"
+                    id="email"
+                    bind:value={publisherCreate.user_email}
+                    class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="โปรดใส่อีเมล"
+                />
+            </div>
+            <div>
+                <label
+                    for="phone"
+                    class="block text-sm font-medium text-gray-700"
+                >
+                    โทรศัพท์
+                </label>
+                <input
+                    type="phone"
+                    id="phone"
+                    bind:value={publisherCreate.user_phone}
+                    class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="โปรดใส่เบอร์โทรศัพท์"
+                />
+            </div>
+            <div>
+                <label
+                    for="firstname"
+                    class="block text-sm font-medium text-gray-700"
+                >
+                    ชื่อจริง
+                </label>
+                <input
+                    type="text"
+                    id="firstname"
+                    bind:value={publisherCreate.first_name}
+                    class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="โปรดใส่ชื่อจริง"
+                />
+            </div>
+            <div>
+                <label
+                    for="lastname"
+                    class="block text-sm font-medium text-gray-700"
+                >
+                    นามสกุล
+                </label>
+                <input
+                    type="text"
+                    id="lastname"
+                    bind:value={publisherCreate.last_name}
+                    class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="โปรดใส่นามสกุล"
+                />
+            </div>
+            <div>
+                <label
+                    for="password"
+                    class="block text-sm font-medium text-gray-700"
+                >
+                    รหัสผ่าน
+                </label>
+                <input
+                    type="password"
+                    id="password"
+                    bind:value={publisherCreate.user_pass}
+                    class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="โปรดใส่รหัสผ่าน"
+                />
+            </div>
+            <div>
+              <label
+                  for="publisher-name"
+                  class="block text-sm font-medium text-gray-700"
+              >
+                  ชื่อสำนักพิมพ์
+              </label>
+              <input
+                  type="text"
+                  id="publisher-name"
+                  bind:value={publisherCreate.publisher_name}
+                  class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="โปรดใส่ชื่อสำนักพิมพ์"
+              />
+            </div>
+            <div>
+              <label
+                  for="qrcode"
+                  class="block text-sm font-medium text-gray-700"
+              >
+                  QR Code ธนาคาร
+              </label>
+              <input
+                  type="file"
+                  accept="image/*"
+                  on:change={handleFileUpload}
+                  id="qrcode"
+                  class="block w-full px-3 py-2 mt-1 text-gray-700 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  placeholder="โปรดใส่รูปQRCODEธนาคาร"
+              />
+            </div>
+            <div>
+                <button
+                    type="button"
+                    on:click={createPublisher}
+                    class="w-full px-4 py-2 text-sm font-medium text-white rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 bg-blue-600"
+                >
+                    สร้างบัญชี
+                </button>
+            </div>
+        </form>
+      </div>
       {/if}
     </div>
   </div>

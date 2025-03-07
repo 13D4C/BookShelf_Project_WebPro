@@ -1,98 +1,99 @@
-// const express = require('express');
-// const cors = require('cors');
-// const bodyParser = require('body-parser');
-// const mysql = require('mysql2/promise');
-// const bcrypt = require('bcryptjs');
-// const jwt = require('jsonwebtoken');
-
-// const app = express();
-// app.use(cors({
-//     origin: ['http://localhost:5173'],
-//     credentials: true,
-//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-//     allowedHeaders: ['Content-Type', 'Authorization']
-// }));
-// const port = process.env.PORT || 3000;
-
-// app.use(bodyParser.json({limit: '50mb', extended: true}));
-// app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
-
-// const pool = mysql.createPool({
-// });
-
-// async function queryDatabase(sql, params = []) {
-//     let connection;
-//     try {
-//         connection = await pool.getConnection();
-//         const [rows] = await connection.execute(sql, params);
-//         return rows;
-//     } catch (error) {
-//         console.error('Database error:', error);
-//         throw new Error('Internal Server Error');
-//     } finally {
-//         if (connection) connection.release();
-//     }
-// }
-
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const sqlite3 = require('sqlite3').verbose();
-const { open } = require('sqlite');
+const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const path = require('path');
 
 const app = express();
 app.use(cors({
-    origin: true,
+    origin: ['http://localhost:5173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-app.use(bodyParser.json({ limit: '50mb', extended: true }));
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+app.use(bodyParser.json({limit: '50mb', extended: true}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
-// --- SQLite Database Setup ---
-const dbPath = path.join(__dirname, 'book_v2.db'); // Database file in the same directory
-let db;
-
-async function initializeDatabase() {
-    try {
-        db = await open({
-            filename: dbPath,
-            driver: sqlite3.Database
-        });
-        console.log('Connected to the SQLite database.');
-    } catch (error) {
-        console.error('Database initialization error:', error);
-        throw new Error('Database Initialization Failed');
-    }
-}
-
-// Initialize the database before handling requests
-initializeDatabase();
-
+const pool = mysql.createPool({
+});
 
 async function queryDatabase(sql, params = []) {
+    let connection;
     try {
-        //Use db.all or db.get
-        if (sql.trim().toUpperCase().startsWith('SELECT')) {
-            //for select statements
-            const rows = await db.all(sql, params);
-             return rows;
-        }else{
-            //for INSERT, UPDATE, DELETE
-            const result = await db.run(sql, params);
-            return result;
-        }
+        connection = await pool.getConnection();
+        const [rows] = await connection.execute(sql, params);
+        return rows;
     } catch (error) {
         console.error('Database error:', error);
-         throw new Error('Internal Server Error', { cause: error });
+        throw new Error('Internal Server Error');
+    } finally {
+        if (connection) connection.release();
     }
 }
+
+// const express = require('express');
+// const cors = require('cors');
+// const bodyParser = require('body-parser');
+// const sqlite3 = require('sqlite3').verbose();
+// const { open } = require('sqlite');
+// const bcrypt = require('bcryptjs');
+// const jwt = require('jsonwebtoken');
+// const path = require('path');
+
+// const app = express();
+// app.use(cors({
+//     origin: true,
+//     credentials: true,
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+//     allowedHeaders: ['Content-Type', 'Authorization']
+// }));
+// const port = 3000;
+
+// app.use(bodyParser.json({ limit: '50mb', extended: true }));
+// app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+// --- SQLite Database Setup ---
+
+// const dbPath = path.join(__dirname, 'book_v2.db'); // Database file in the same directory
+// let db;
+
+// async function initializeDatabase() {
+//     try {
+//         db = await open({
+//             filename: dbPath,
+//             driver: sqlite3.Database
+//         });
+//         console.log('Connected to the SQLite database.');
+//     } catch (error) {
+//         console.error('Database initialization error:', error);
+//         throw new Error('Database Initialization Failed');
+//     }
+// }
+
+// // Initialize the database before handling requests
+// initializeDatabase();
+
+
+// async function queryDatabase(sql, params = []) {
+//     try {
+//         //Use db.all or db.get
+//         if (sql.trim().toUpperCase().startsWith('SELECT')) {
+//             //for select statements
+//             const rows = await db.all(sql, params);
+//              return rows;
+//         }else{
+//             //for INSERT, UPDATE, DELETE
+//             const result = await db.run(sql, params);
+//             return result;
+//         }
+//     } catch (error) {
+//         console.error('Database error:', error);
+//          throw new Error('Internal Server Error', { cause: error });
+//     }
+// }
 
 app.get('/books', async (req, res) => {
     try {
@@ -1174,6 +1175,70 @@ app.get('/user/request-seller/get/:userId', async (req, res) => {
     catch {
         console.log(error);
         res.status(500).json({ error: 'Failed to get information' });
+    }
+});
+
+
+app.post('/publisher/create', async (req, res) => {
+    try {
+        const { user_name, user_email, user_phone, first_name, last_name, 
+                publisher_name, qr_code,  user_pass } = req.body;
+        if (!user_name || !user_email || !user_phone || !first_name || !last_name || !publisher_name || !qr_code || !user_pass) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
+                
+        const existingUserSql = 'SELECT user_name, user_email FROM user WHERE user_name = ? OR user_email = ?';
+        const existingUsers = await queryDatabase(existingUserSql, [user_name, user_email]);
+
+        if (existingUsers.length > 0) {
+            const existingUser = existingUsers[0];
+            const conflictDetails = {
+                username: existingUser.user_name === user_name ? 'Username already taken' : null,
+                email: existingUser.user_email === user_email ? 'Email already registered' : null
+            };
+            return res.status(409).json({
+                error: 'Account already exists',
+                details: conflictDetails
+            });
+        }
+
+        const addPublisher = await queryDatabase(
+            `INSERT INTO publisher(publisher_name)
+             VALUES (?)`, [publisher_name]
+        )
+
+        if (!addPublisher.insertId) {
+            return res.status(500).json({ error: 'Failed to create publisher' });
+        }
+
+        const passwordHash = await bcrypt.hash(user_pass, 8);
+        const insertUserSql = 'INSERT INTO user (user_email, user_name, user_pass, user_phone, user_permission, user_image, user_firstname, user_lastname, publisher_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        const insertUser = await queryDatabase(insertUserSql, [
+            user_email,
+            user_name,
+            passwordHash,
+            user_phone,
+            'Publisher',
+            'https://i.imgur.com/tdrsXyg.jpeg',
+            first_name,
+            last_name,
+            addPublisher.insertId
+        ]);
+
+        if (!insertUser.insertId) {
+            return res.status(500).json({ error: 'Failed to create users' });
+        }
+
+        const insertShop = await queryDatabase(`
+            INSERT INTO shop_list(owner_id, shop_name, qr_code)
+            VALUES (?, ?, ?)
+            `, [insertUser.insertId, publisher_name, qr_code]);
+
+        return res.status(200).json({ message: "Create successfully" });
+    }
+    catch {
+        console.log(error);
+        res.status(500).json({ error: 'Failed to create Publisher'});
     }
 });
 
