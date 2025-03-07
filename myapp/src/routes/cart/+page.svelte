@@ -1,10 +1,12 @@
 <script>
-
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
-    import { quintOut } from "svelte/easing";
+  import { quintOut } from "svelte/easing";
   import { writable } from "svelte/store";
-    import { fade, scale } from "svelte/transition";
+  import { fade, scale } from "svelte/transition";
+  import { Button, Modal } from "flowbite-svelte";
+  import { Li, List, Heading } from "flowbite-svelte";
+  let defaultModal = false;
 
   let userToken = null;
   const isLoading = writable(true);
@@ -15,35 +17,34 @@
   async function updateQuantity(index, amount) {
     let url;
     const originalIndex = cart.findIndex(
-      (item) => (item.item_id && item.item_id === filteredCart[index].item_id) || (item.seller_item_id && item.seller_item_id === filteredCart[index].seller_item_id),
+      (item) =>
+        (item.item_id && item.item_id === filteredCart[index].item_id) ||
+        (item.seller_item_id &&
+          item.seller_item_id === filteredCart[index].seller_item_id)
     );
     console.log(amount);
-    if (amount == -1){
-      if (cart[originalIndex].type === "official"){
+    if (amount == -1) {
+      if (cart[originalIndex].type === "official") {
         url = `http://localhost:3000/shop/publisher/cart/adjust/${cart[originalIndex].item_id}?reduce=true`;
-      }
-      else {
+      } else {
         url = `http://localhost:3000/shop/seller/cart/adjust/${cart[originalIndex].seller_item_id}?reduce=true`;
       }
       cart[originalIndex].amount -= 1;
-    }
-    else {
-      if (cart[originalIndex].type === "official"){
+    } else {
+      if (cart[originalIndex].type === "official") {
         url = `http://localhost:3000/shop/publisher/cart/adjust/${cart[originalIndex].item_id}?increase=true`;
-      }
-      else {
+      } else {
         url = `http://localhost:3000/shop/seller/cart/adjust/${cart[originalIndex].seller_item_id}?increase=true`;
       }
       cart[originalIndex].amount += 1;
     }
     const response = await fetch(url, {
-        method: "get", 
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-    }
-
+      method: "get",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
 
   function getTotalPrice() {
     let total = filteredCart.reduce((sum, item) => {
@@ -54,10 +55,13 @@
 
   async function removeItem(index) {
     const originalIndex = cart.findIndex(
-      (item) => (item.item_id && item.item_id === filteredCart[index].item_id) || (item.seller_item_id && item.seller_item_id === filteredCart[index].seller_item_id),
+      (item) =>
+        (item.item_id && item.item_id === filteredCart[index].item_id) ||
+        (item.seller_item_id &&
+          item.seller_item_id === filteredCart[index].seller_item_id)
     );
     const itemToRemove = cart[originalIndex];
-    if (itemToRemove.type === "official"){
+    if (itemToRemove.type === "official") {
       try {
         const response = await fetch(
           "http://localhost:3000/shop/publisher/cart/delete",
@@ -67,7 +71,7 @@
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ item_id: itemToRemove.item_id }),
-          },
+          }
         );
 
         if (!response.ok) {
@@ -85,35 +89,36 @@
       } catch (error) {
         alert("Failed to remove item from cart. Please try again.");
       }
-    }
-  else {
-    try {
-      const response = await fetch(
-        "http://localhost:3000/shop/seller/cart/delete",
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ seller_item_id: itemToRemove.seller_item_id }),
-        },
-      );
+    } else {
+      try {
+        const response = await fetch(
+          "http://localhost:3000/shop/seller/cart/delete",
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              seller_item_id: itemToRemove.seller_item_id,
+            }),
+          }
+        );
 
-      if (!response.ok) {
-        if (response.status === 400) {
-          const errorData = await response.json();
-          alert(errorData.error);
-        } else {
-          throw new Error(`Network response was not ok: ${response.status}`);
+        if (!response.ok) {
+          if (response.status === 400) {
+            const errorData = await response.json();
+            alert(errorData.error);
+          } else {
+            throw new Error(`Network response was not ok: ${response.status}`);
+          }
         }
-      }
 
-      const data = await response.json();
-      cart = cart.filter((_, i) => i !== originalIndex);
-    } catch (error) {
-      alert("Failed to remove item from cart. Please try again.");
+        const data = await response.json();
+        cart = cart.filter((_, i) => i !== originalIndex);
+      } catch (error) {
+        alert("Failed to remove item from cart. Please try again.");
+      }
     }
-  }
   }
 
   async function fetchCart() {
@@ -126,7 +131,7 @@
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ token: userToken }),
-        },
+        }
       );
 
       if (!response.ok) {
@@ -142,7 +147,7 @@
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ token: userToken }),
-        },
+        }
       );
 
       if (!response2.ok) {
@@ -159,10 +164,10 @@
 
       cart = [...officialCart, ...sellerCart];
       if (officialCart.length < sellerCart.length) {
-          filterType = "seller";
-        } else {
-          filterType = "official";
-        }
+        filterType = "seller";
+      } else {
+        filterType = "official";
+      }
       isLoading.set(false);
     } catch (error) {
       console.error("Skibidi Error", error);
@@ -183,7 +188,7 @@
   onMount(async () => {
     userToken = localStorage.getItem("userToken");
     await fetchCart();
-    });
+  });
 </script>
 
 {#if $isLoading}
@@ -210,7 +215,7 @@
             : 'bg-gray-200'}"
           on:click={() => (filterType = "official")}
         >
-        Official : {cart.filter(item => item.type === "official").length}
+          Official : {cart.filter((item) => item.type === "official").length}
         </button>
         <button
           class="px-4 py-2 rounded {filterType === 'seller'
@@ -218,7 +223,7 @@
             : 'bg-gray-200'}"
           on:click={() => (filterType = "seller")}
         >
-        Official : {cart.filter(item => item.type === "seller").length}
+          Official : {cart.filter((item) => item.type === "seller").length}
         </button>
       </div>
       {#if filterType === "official"}
@@ -258,7 +263,80 @@
             </button>
           </div>
           {#if item.marker}
-            <p>{item.marker} {item.cover_color}</p>{/if}
+            <div class="grid grid-cols-2 gap-4">
+              <p>{item.marker} {item.cover_color}</p>
+              <Button on:click={() => (defaultModal = true)}
+                >Custom detail</Button
+              >
+            </div>
+            <Modal title="Custom detail" bind:open={defaultModal} autoclose>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+    <div class="col-span-1 mb-4 md:mb-0">
+      <div 
+        class="h-[330px] md:h-[462px] color-display border rounded-lg flex items-center justify-center"
+      >
+        <div
+          class="h-full border rounded shadow-lg flex flex-col px-4 pt-12 pb-4 overflow-hidden"
+          style="background-color: {item.cover_color};"
+        >
+          <h1
+            class="text-center text-xl font-bold text-white mb-4 break-words w-full overflow-hidden"
+            style="font-size: {item.font_size}px; color:{item.color_text}; font-family: '{item.font_family}', sans-serif;"
+          >
+            {item.marker}
+          </h1>
+          <p
+            class="whitespace-pre-wrap text-center overflow-hidden break-words"
+            style="font-family: '{item.font_family}'"
+          >
+            {item.text}
+          </p>
+          <div
+            class="mt-auto text-center"
+            style="color:{item.color_text}"
+          >
+            <h6 
+              class="text-sm md:text-base"
+              style="font-family: '{item.font_family}'"
+            >
+              {item.book_name_th}
+            </h6>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-span-1">
+      <Heading 
+        tag="h2" 
+        customSize="text-lg font-semibold" 
+        class="mb-2 text-lg font-semibold text-gray-900 dark:text-white"
+      >
+        List Custom
+      </Heading>
+      <List 
+        tag="ul" 
+        class="space-y-1 text-gray-500 dark:text-gray-400 text-sm md:text-base"
+      >
+        <Li>Book Name: {item.marker}</Li>
+        <Li>Font Family: {item.font_family}</Li>
+        <Li>Font Size: {item.font_size}</Li>
+        <Li>Color Text: {item.color_text}</Li>
+        <Li>Color Background: {item.cover_color}</Li>
+        <Li>Paper Type: {item.paper_type}</Li>
+        <Li>Cover Type: {item.cover_type}</Li>
+        <Li>Text: {item.text}</Li>
+      </List>
+    </div>
+  </div>
+  
+  <svelte:fragment slot="footer">
+    <div class="w-full flex justify-end space-x-2">
+      <Button color="alternative" class="text-sm md:text-base">Close</Button>
+    </div>
+  </svelte:fragment>
+</Modal>
+          {/if}
         {:else}
           <p>ไม่มีสินค้าในตะกร้า</p>
         {/each}
@@ -320,15 +398,15 @@
         <span>{getTotalPrice()} บาท</span>
       </div>
       {#if filteredCart.length != 0}
-      <button
-        class="w-full bg-green-500 text-white py-2 rounded mt-4"
-        on:click={() => goto(`/checkout?type=${filterType}`)}
-      >
-        ดำเนินการต่อ
-      </button>
+        <button
+          class="w-full bg-green-500 text-white py-2 rounded mt-4"
+          on:click={() => goto(`/checkout?type=${filterType}`)}
+        >
+          ดำเนินการต่อ
+        </button>
       {/if}
       <button
-        class="w-full border mt-2 py-2 rounded text-white  bg-blue-500"
+        class="w-full border mt-2 py-2 rounded text-white bg-blue-500"
         on:click={() => goto("/all")}
       >
         เลือกสินค้าต่อ

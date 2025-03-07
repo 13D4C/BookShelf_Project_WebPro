@@ -675,7 +675,7 @@ transition:fade={{ duration: 300 }}
             <div class="rounded border border-gray-200 dark:border-gray-700 flex items-center justify-center">
               <Radio
                 name="bordered"
-                value="1"
+                value="กระดาษปกติ"
                 bind:group={paperUse}
                 class="w-full p-3 text-center"
               >
@@ -685,7 +685,7 @@ transition:fade={{ duration: 300 }}
             <div class="rounded border border-gray-200 dark:border-gray-700 flex items-center justify-center">
               <Radio
                 name="bordered"
-                value="2"
+                value="กระดาษถนอมสายตา"
                 bind:group={paperUse}
                 class="w-full p-3 text-center"
               >
@@ -760,17 +760,17 @@ transition:fade={{ duration: 300 }}
           <h5 class="font-medium text-sm mb-2"><b>ชนิดปก</b></h5>
           <div class="space-y-2">
             <div class="rounded border border-gray-200 p-2 hover:bg-gray-50">
-              <Radio bind:group={paperCover} value="paperback">
+              <Radio bind:group={paperCover} value="ปกอ่อน (Paperback)">
                 ปกอ่อน (Paperback)
               </Radio>
             </div>
             <div class="rounded border border-gray-200 p-2 hover:bg-gray-50">
-              <Radio bind:group={paperCover} value="hardcover">
+              <Radio bind:group={paperCover} value="ปกแข็ง (Hardcover)">
                 ปกแข็ง (Hardcover)
               </Radio>
             </div>
             <div class="rounded border border-gray-200 p-2 hover:bg-gray-50">
-              <Radio bind:group={paperCover} value="semi-hardcover">
+              <Radio bind:group={paperCover} value="ปกกึ่งอ่อนกึ่งแข็ง (Semi-Hardcover)">
                 ปกกึ่งอ่อนกึ่งแข็ง (Semi-Hardcover)
               </Radio>
             </div>

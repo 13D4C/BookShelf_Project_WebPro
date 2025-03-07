@@ -115,13 +115,15 @@ transition:fade={{ duration: 300 }}
       >
         {#each sortedProducts as product (product.seller_book_id)}
           <div
-            class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition duration-200 h-full flex flex-col"
+            class="bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition duration-200 h-auto flex flex-col"
           >
+          <div class="h-auto w-full">
             <img
               src={product.book_image}
               alt={product.book_name}
-              class="w-full h-48 object-cover rounded-t-lg"
+              class="w-full h-full object-cover rounded-t-lg"
             />
+            </div>
             <div class="p-4">
               <h2 class="text-xl font-semibold mb-2">{product.book_name}</h2>
               <p class="text-gray-600 mb-2 line-clamp-12">{product.description}</p>
@@ -131,7 +133,7 @@ transition:fade={{ duration: 300 }}
                 <img
                   src={product.user_image}
                   alt={product.user_name}
-                  class="w-8 h-8 rounded-full mr-2"
+                  class="w-8 h-8 rounded-full mr-2 object-cover"
                 />
                 <p>{product.user_name}</p>
               </div>
