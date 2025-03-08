@@ -79,7 +79,7 @@
                     class="w-24 h-24 mx-auto mb-4"
                 />
                 <h1 class="text-2xl font-semibold text-gray-800">
-                    สมัคร ดิ๊
+                    สมัคร
                 </h1>
             </div>
             <form class="space-y-4" on:submit={register}>

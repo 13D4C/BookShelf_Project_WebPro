@@ -41,7 +41,7 @@
                     alt="Logo"
                     class="w-24 h-24 mx-auto mb-4"
                 />
-                <h1 class="text-2xl font-semibold text-gray-800">ลงชื่อเข้าใช้ ดิ๊</h1>
+                <h1 class="text-2xl font-semibold text-gray-800">ลงชื่อเข้าใช้</h1>
             </div>
             <form class="space-y-4" on:submit={login}>
                 <div>

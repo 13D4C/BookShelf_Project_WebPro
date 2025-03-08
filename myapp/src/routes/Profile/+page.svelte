@@ -751,7 +751,7 @@
             </button>
             {#if isOpen}
               <div
-                class="absolute bg-blue-600 w-64 rounded-lg shadow-lg p-4 z-10 top-16 left-4"
+                class="absolute bg-blue-600 w-64 rounded-lg shadow-lg p-4 z-10 top-40 left-4"
                 in:slide
               >
                 <button

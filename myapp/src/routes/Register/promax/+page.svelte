@@ -79,7 +79,7 @@
                     class="w-24 h-24 mx-auto mb-4"
                 />
                 <h1 class="text-2xl font-semibold text-gray-800">
-                    ถ้าลืมก็แค่สมัครใหม่
+                    ถ้าลืม ก็แค่สมัครใหม่ :)
                 </h1>
             </div>
             <form class="space-y-4" on:submit={register}>
