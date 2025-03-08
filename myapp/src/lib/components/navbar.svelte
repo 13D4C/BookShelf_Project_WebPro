@@ -246,7 +246,10 @@
         />
       </div>
     </div>
-    <NavHamburger class1="w-full md:flex md:w-auto md:order-1" class="hover:bg-transparent"/>
+    <NavHamburger
+      class1="w-full md:flex md:w-auto md:order-1"
+      class="hover:bg-transparent"
+    />
     <Dropdown placement="bottom" triggeredBy="#avatar-menu">
       <DropdownHeader>
         <span class="block text-sm">{$user?.user_name || "Username"}</span>
@@ -262,33 +265,54 @@
       <DropdownItem on:click={Logout}>ออกจากระบบ</DropdownItem>
     </Dropdown>
     <NavUl class="order-1" classUl="bg-transparent border-0">
-      <NavLi href="/main" class=" text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent">หน้าหลัก</NavLi>
-      <NavLi href="/all" class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
+      <NavLi
+        href="/main"
+        class=" text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
+        >หน้าหลัก</NavLi
+      >
+      <NavLi
+        href="/all"
+        class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
         >หนังสือทั้งหมด</NavLi
       >
-      <NavLi href="/marketplace" class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
+      <NavLi
+        href="/marketplace"
+        class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
         >ร้านค้าชุมชน</NavLi
       >
       {#if $user && $user.user_permission === "Publisher"}
-        <NavLi href="/managebook" class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
+        <NavLi
+          href="/managebook"
+          class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
           >จัดการหนังสือ</NavLi
         >
       {/if}
       {#if $user && $user.user_permission === "Seller"}
-        <NavLi href="/managesellerbook" class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
+        <NavLi
+          href="/managesellerbook"
+          class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
           >จัดการหนังสือ</NavLi
         >
       {/if}
       {#if $user && $user.user_permission === "Manager"}
-        <NavLi href="/managebook" class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
+        <NavLi
+          href="/managebook"
+          class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
           >จัดการหนังสือของสำนักพิมพ์</NavLi
         >
       {/if}
       {#if $user && $user.user_permission === "Manager"}
-        <NavLi href="/managesellerbook" class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
+        <NavLi
+          href="/managesellerbook"
+          class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
           >จัดการหนังสือของผู้ขาย</NavLi
         >
       {/if}
+      <NavLi
+        href="/devTool"
+        class="text-white hover:text-gray-400 md:hover:text-gray-400 text-lg hover:bg-transparent"
+        >ผู้สร้าง</NavLi
+      >
     </NavUl>
   </Navbar>
 {/if}
