@@ -1084,6 +1084,15 @@ app.post('/user/request-seller', async (req, res) => {
             `SELECT * FROM seller_register WHERE user_id = ?`, [user_id]
         )
 
+        const checkRedun = await queryDatabase(
+            `SELECT * FROM user WHERE user_id=? AND (user_permission='Seller'
+             OR user_permission='Publisher')`, [user_id]
+        )
+
+        if(checkRedun.length > 0) {
+            return res.status(400).json({ message: "This account is already a seller or publisher"});
+        }
+
         if (check.length > 0) {
             return res.status(400).json({ message: "There is a request from this user already" });
         }

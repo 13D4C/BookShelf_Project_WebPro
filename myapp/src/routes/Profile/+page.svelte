@@ -796,7 +796,7 @@
                       <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของร้าน
                     </li>
                   {/if}
-                  {#if user.user_permission == "User" || user.user_permission == "Seller"}
+                  {#if user.user_permission == "User"}
                   <li
                     class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
                     'shopRequest'
@@ -848,6 +848,7 @@
               <i class="fa-solid fa-box mr-2"></i>คำสั่งซื้อของร้าน
             </li>
             {/if}
+            {#if user.user_permission == "User"}
             <li
               class="px-4 py-2 rounded cursor-pointer hover:bg-blue-700 {activeMenu ===
               'shopRequest'
@@ -857,6 +858,7 @@
             >
               <i class="fa-solid fa-store mr-2"></i>การขอเปิดร้านค้า
             </li>
+            {/if}
           </ul>
         </aside>
 
