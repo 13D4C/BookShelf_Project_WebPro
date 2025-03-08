@@ -2,11 +2,7 @@
 
 REM --- Run 'npm run dev' in the myapp directory ---
 echo Running 'npm run dev' in ./myapp/...
-
-REM Construct the path to the myapp directory
 set "myapp_dir=%~dp0myapp"
-
-REM Change to the myapp directory (with error handling)
 pushd "%myapp_dir%"
 if errorlevel 1 (
     echo Error: Could not change directory to "%myapp_dir%".
@@ -14,20 +10,12 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-
-REM Start the npm command in a *new* window, keeping it open
 start "npm run dev" cmd /k "npm run dev"
-
-REM Return to the original directory
 popd
 
 REM --- Run 'node ./express.js' in the blackend directory ---
 echo Running 'node ./express.js' in ./myapp/blackend/...
-
-REM Construct the path to the blackend directory
 set "blackend_dir=%~dp0myapp\blackend"
-
-REM Change to the blackend directory (with error handling)
 pushd "%blackend_dir%"
 if errorlevel 1 (
     echo Error: Could not change directory to "%blackend_dir%".
@@ -35,12 +23,16 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-
-REM Start the node command in a *new* window, keeping it open
 start "Node Express" cmd /k "node express.js"
-
-REM Return to the original directory
 popd
+
+REM --- Wait for servers to start (adjust the delay as needed) ---
+echo Waiting for servers to start...
+timeout /t 10 /nobreak > nul
+
+REM --- Open the website in the default browser ---
+echo Opening website...
+start "" http://localhost:5173  REM Change the URL if needed
 
 echo Done.
 exit /b 0
