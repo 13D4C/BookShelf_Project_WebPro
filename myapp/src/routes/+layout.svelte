@@ -66,6 +66,11 @@ transition:fade={{ duration: 300 }}
 {/if}
 
 <style>
+	@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;700&display=swap');
+	:global(body) {
+    font-family: "Noto Sans Thai", sans-serif;
+  }
+  
 	@keyframes fade-in {
 		from {
 			opacity: 0;

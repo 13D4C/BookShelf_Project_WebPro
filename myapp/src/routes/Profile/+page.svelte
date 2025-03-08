@@ -814,6 +814,7 @@
               </div>
             {/if}
           </div>
+          <!-- desktop -->
           <h2 class="text-lg font-semibold mb-4 hidden md:block">
             บัญชีของฉัน
           </h2>

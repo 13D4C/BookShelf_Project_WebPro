@@ -20,7 +20,7 @@
       (item) =>
         (item.item_id && item.item_id === filteredCart[index].item_id) ||
         (item.seller_item_id &&
-          item.seller_item_id === filteredCart[index].seller_item_id)
+          item.seller_item_id === filteredCart[index].seller_item_id),
     );
     console.log(amount);
     if (amount == -1) {
@@ -58,7 +58,7 @@
       (item) =>
         (item.item_id && item.item_id === filteredCart[index].item_id) ||
         (item.seller_item_id &&
-          item.seller_item_id === filteredCart[index].seller_item_id)
+          item.seller_item_id === filteredCart[index].seller_item_id),
     );
     const itemToRemove = cart[originalIndex];
     if (itemToRemove.type === "official") {
@@ -71,7 +71,7 @@
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ item_id: itemToRemove.item_id }),
-          }
+          },
         );
 
         if (!response.ok) {
@@ -101,7 +101,7 @@
             body: JSON.stringify({
               seller_item_id: itemToRemove.seller_item_id,
             }),
-          }
+          },
         );
 
         if (!response.ok) {
@@ -131,7 +131,7 @@
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ token: userToken }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -147,7 +147,7 @@
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ token: userToken }),
-        }
+        },
       );
 
       if (!response2.ok) {
@@ -241,6 +241,84 @@
               </p>
             </div>
             <div class="flex items-center">
+              <div class="px-4">
+              {#if item.marker}
+                <div class="grid grid-cols-1 gap-4">
+                  <Button on:click={() => (defaultModal = true)}
+                    >Custom detail</Button
+                  >
+                </div>
+                <Modal title="Custom detail" bind:open={defaultModal} autoclose>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="col-span-1 mb-4 md:mb-0">
+                      <div
+                        class="h-[330px] md:h-[462px] color-display border rounded-lg flex items-center justify-center"
+                      >
+                        <div
+                          class="h-full border rounded shadow-lg flex flex-col px-4 pt-12 pb-4 overflow-hidden"
+                          style="background-color: {item.cover_color};"
+                        >
+                          <h1
+                            class="text-center text-xl font-bold text-white mb-4 break-words w-full overflow-hidden"
+                            style="font-size: {item.font_size}px; color:{item.color_text}; font-family: '{item.font_family}', sans-serif;"
+                          >
+                            {item.marker}
+                          </h1>
+                          <p
+                            class="whitespace-pre-wrap text-center overflow-hidden break-words"
+                            style="font-family: '{item.font_family}'"
+                          >
+                            {item.text}
+                          </p>
+                          <div
+                            class="mt-auto text-center"
+                            style="color:{item.color_text}"
+                          >
+                            <h6
+                              class="text-sm md:text-base"
+                              style="font-family: '{item.font_family}'"
+                            >
+                              {item.book_name_th}
+                            </h6>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="col-span-1">
+                      <Heading
+                        tag="h2"
+                        customSize="text-lg font-semibold"
+                        class="mb-2 text-lg font-semibold text-gray-900 dark:text-white"
+                      >
+                        List Custom
+                      </Heading>
+                      <List
+                        tag="ul"
+                        class="space-y-1 text-gray-500 dark:text-gray-400 text-sm md:text-base"
+                      >
+                        <Li>Book Name: {item.marker}</Li>
+                        <Li>Font Family: {item.font_family}</Li>
+                        <Li>Font Size: {item.font_size}</Li>
+                        <Li>Color Text: {item.color_text}</Li>
+                        <Li>Color Background: {item.cover_color}</Li>
+                        <Li>Paper Type: {item.paper_type}</Li>
+                        <Li>Cover Type: {item.cover_type}</Li>
+                        <Li>Text: {item.text}</Li>
+                      </List>
+                    </div>
+                  </div>
+
+                  <svelte:fragment slot="footer">
+                    <div class="w-full flex justify-end space-x-2">
+                      <Button color="alternative" class="text-sm md:text-base"
+                        >Close</Button
+                      >
+                    </div>
+                  </svelte:fragment>
+                </Modal>
+              {/if}
+            </div>
               <button
                 class="px-2 py-1 border rounded"
                 on:click={() => updateQuantity(index, -1)}
@@ -262,81 +340,6 @@
               🗑️
             </button>
           </div>
-          {#if item.marker}
-            <div class="grid grid-cols-2 gap-4">
-              <p>{item.marker} {item.cover_color}</p>
-              <Button on:click={() => (defaultModal = true)}
-                >Custom detail</Button
-              >
-            </div>
-            <Modal title="Custom detail" bind:open={defaultModal} autoclose>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-    <div class="col-span-1 mb-4 md:mb-0">
-      <div 
-        class="h-[330px] md:h-[462px] color-display border rounded-lg flex items-center justify-center"
-      >
-        <div
-          class="h-full border rounded shadow-lg flex flex-col px-4 pt-12 pb-4 overflow-hidden"
-          style="background-color: {item.cover_color};"
-        >
-          <h1
-            class="text-center text-xl font-bold text-white mb-4 break-words w-full overflow-hidden"
-            style="font-size: {item.font_size}px; color:{item.color_text}; font-family: '{item.font_family}', sans-serif;"
-          >
-            {item.marker}
-          </h1>
-          <p
-            class="whitespace-pre-wrap text-center overflow-hidden break-words"
-            style="font-family: '{item.font_family}'"
-          >
-            {item.text}
-          </p>
-          <div
-            class="mt-auto text-center"
-            style="color:{item.color_text}"
-          >
-            <h6 
-              class="text-sm md:text-base"
-              style="font-family: '{item.font_family}'"
-            >
-              {item.book_name_th}
-            </h6>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="col-span-1">
-      <Heading 
-        tag="h2" 
-        customSize="text-lg font-semibold" 
-        class="mb-2 text-lg font-semibold text-gray-900 dark:text-white"
-      >
-        List Custom
-      </Heading>
-      <List 
-        tag="ul" 
-        class="space-y-1 text-gray-500 dark:text-gray-400 text-sm md:text-base"
-      >
-        <Li>Book Name: {item.marker}</Li>
-        <Li>Font Family: {item.font_family}</Li>
-        <Li>Font Size: {item.font_size}</Li>
-        <Li>Color Text: {item.color_text}</Li>
-        <Li>Color Background: {item.cover_color}</Li>
-        <Li>Paper Type: {item.paper_type}</Li>
-        <Li>Cover Type: {item.cover_type}</Li>
-        <Li>Text: {item.text}</Li>
-      </List>
-    </div>
-  </div>
-  
-  <svelte:fragment slot="footer">
-    <div class="w-full flex justify-end space-x-2">
-      <Button color="alternative" class="text-sm md:text-base">Close</Button>
-    </div>
-  </svelte:fragment>
-</Modal>
-          {/if}
         {:else}
           <p>ไม่มีสินค้าในตะกร้า</p>
         {/each}

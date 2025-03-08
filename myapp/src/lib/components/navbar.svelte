@@ -206,7 +206,7 @@ let showSearch = false;
         </span>
       {/if}
     </Button>
-	  <Avatar id="avatar-menu" src="{$user?.user_image || "/placeholder-profile.png"}" />
+	  <Avatar id="avatar-menu" src="{$user?.user_image || "/src/lib/components/placeholder-profile.jpg"}" />
 	  </div>
     </div>
 	<NavHamburger class1="w-full md:flex md:w-auto md:order-1" />
