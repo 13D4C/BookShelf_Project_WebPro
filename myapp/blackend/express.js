@@ -1506,7 +1506,7 @@ app.get('/shop/publisher/cart/adjust/:itemId', async (req, res) => {
             const check = await queryDatabase(
                 `SELECT amount FROM custom_order WHERE item_id=?`, [item_id]);
 
-            if (check[0] <= 1) {
+            if (check[0].amount <= 1) {
                 return res.status(400).json({ error: 'The number of items in the cart cannot be 0' });
             }
             await queryDatabase(
@@ -1671,7 +1671,7 @@ app.get('/shop/seller/cart/adjust/:sellerItemId', async (req, res) => {
         else if (reduce) {
             const check = await queryDatabase(
                 `SELECT amount FROM seller_order WHERE seller_item_id=?`, [seller_item_id]);
-            if (check[0] <= 1) {
+            if (check[0].amount <= 1) {
                 return res.status(400).json({ error: 'The number of items in the cart cannot be 0' });
             }
             await queryDatabase(

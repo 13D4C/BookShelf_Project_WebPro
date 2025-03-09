@@ -24,6 +24,9 @@
     );
     console.log(amount);
     if (amount == -1) {
+      if (cart[originalIndex].amount == 1){
+        return;
+      }
       if (cart[originalIndex].type === "official") {
         url = `http://localhost:3000/shop/publisher/cart/adjust/${cart[originalIndex].item_id}?reduce=true`;
       } else {
