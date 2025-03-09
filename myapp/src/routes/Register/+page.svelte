@@ -1,5 +1,8 @@
 <script lang='ts'>
     import { goto } from '$app/navigation';
+    import img1 from '../img/regis1.jpg'
+    import img2 from '../img/regis2.webp'
+    
     let email = "";
     let error = "";
 
@@ -67,14 +70,14 @@
 
     <div
         class="hidden md:flex flex-1 bg-cover bg-center"
-        style="background-image: url('https://y.yarn.co/3ba26216-6da9-4e33-a71a-17968dbaa03d_screenshot.jpg');"
+        style="background-image: url({img1});"
     ></div>
 
     <div class="flex items-center justify-center w-full md:w-1/3 bg-white shadow-lg">
         <div class="w-full max-w-md p-8 space-y-6">
             <div class="text-center">
                 <img
-                    src="https://i.imgflip.com/6362lr.png"
+                    src={img2}
                     alt="Logo"
                     class="w-24 h-24 mx-auto mb-4"
                 />

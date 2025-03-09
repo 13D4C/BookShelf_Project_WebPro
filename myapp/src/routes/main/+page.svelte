@@ -9,6 +9,12 @@
   import { Rating, AdvancedRating, ScoreRating } from "flowbite-svelte";
   import { fade, scale } from "svelte/transition";
   import { quintOut } from "svelte/easing";
+  import main1 from "../img/main1.jpg"
+  import main2 from "../img/main2.jpg"
+  import main3 from "../img/main3.jpg"
+  import main4 from "../img/main4.jpg"
+  import main5 from "../img/main5.jpg"
+  import main6 from "../img/main6.jpg"
 
   let products: any[] = [];
   let eachbook: any[] = [];
@@ -222,9 +228,9 @@
   });
 
   let bannerImages = [
-    "https://fiverr-res.cloudinary.com/images/q_auto,f_auto/gigs/323203587/original/8f16754c80f8ea7a8a2b87b24c40f123ed219937/do-a-colorful-and-dynamic-anime-or-manga-banner-for-you.png",
-    "https://web-asset2.mebmarket.com/adbanner/banner_mebad_1741078154.jpeg",
-    "https://cdn.vectorstock.com/i/500p/26/35/merry-christmas-podium-display-snowman-banner-vector-54372635.jpg",
+    main1,
+    main2,
+    main3,
   ];
 
   let currentBannerIndex = 0;
@@ -239,9 +245,9 @@
   startAutoSlide();
 
   let smallBannerImages = [
-    "https://i.ytimg.com/vi/XPli2pcGzUs/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLA_wAiMUeClll552IL0oEuoo0Gxng",
-    "https://i.ytimg.com/vi/IOy9SuAFkgY/maxresdefault.jpg",
-    "https://i.ytimg.com/vi/c56TpxfO9q0/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLA6bXFPRdIEFo9opTufoek37HH9cA",
+    main4,
+    main5,
+    main6,
   ];
 </script>
 

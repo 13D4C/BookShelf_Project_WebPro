@@ -1,5 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
+    import img1 from '../routes/img/login1.avif'
+    import img2 from '../routes/img/regis2.webp'
     let errors = "";
   async function login(event: SubmitEvent) {
         event.preventDefault();
@@ -30,14 +32,14 @@
 <main class="flex h-screen">
     <div
         class="hidden md:flex flex-1 bg-cover bg-center"
-        style="background-image: url('https://static1.srcdn.com/wordpress/wp-content/uploads/2017/04/Family-Guy-the-Griffin-House.jpg');"
+        style="background-image: url({img1});"
     ></div>
 
     <div class="flex items-center justify-center w-full md:w-1/3 bg-white shadow-lg">
         <div class="w-full max-w-md p-8 space-y-6">
             <div class="text-center">
                 <img
-                    src="https://i.imgflip.com/6362lr.png"
+                    src={img2}
                     alt="Logo"
                     class="w-24 h-24 mx-auto mb-4"
                 />
