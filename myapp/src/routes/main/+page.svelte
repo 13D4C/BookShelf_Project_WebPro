@@ -381,7 +381,7 @@
                             />
                           </div>
                           <p class="text-center truncate">
-                            {product.book_name_originl}
+                            {product.book_name_th}
                           </p>
                           <Rating
                             id="example-3"

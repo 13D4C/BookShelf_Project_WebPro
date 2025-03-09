@@ -34,67 +34,6 @@ async function queryDatabase(sql, params = []) {
     }
 }
 
-// const express = require('express');
-// const cors = require('cors');
-// const bodyParser = require('body-parser');
-// const sqlite3 = require('sqlite3').verbose();
-// const { open } = require('sqlite');
-// const bcrypt = require('bcryptjs');
-// const jwt = require('jsonwebtoken');
-// const path = require('path');
-
-// const app = express();
-// app.use(cors({
-//     origin: true,
-//     credentials: true,
-//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-//     allowedHeaders: ['Content-Type', 'Authorization']
-// }));
-// const port = 3000;
-
-// app.use(bodyParser.json({ limit: '50mb', extended: true }));
-// app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-
-// --- SQLite Database Setup ---
-
-// const dbPath = path.join(__dirname, 'book_v2.db'); // Database file in the same directory
-// let db;
-
-// async function initializeDatabase() {
-//     try {
-//         db = await open({
-//             filename: dbPath,
-//             driver: sqlite3.Database
-//         });
-//         console.log('Connected to the SQLite database.');
-//     } catch (error) {
-//         console.error('Database initialization error:', error);
-//         throw new Error('Database Initialization Failed');
-//     }
-// }
-
-// // Initialize the database before handling requests
-// initializeDatabase();
-
-
-// async function queryDatabase(sql, params = []) {
-//     try {
-//         //Use db.all or db.get
-//         if (sql.trim().toUpperCase().startsWith('SELECT')) {
-//             //for select statements
-//             const rows = await db.all(sql, params);
-//              return rows;
-//         }else{
-//             //for INSERT, UPDATE, DELETE
-//             const result = await db.run(sql, params);
-//             return result;
-//         }
-//     } catch (error) {
-//         console.error('Database error:', error);
-//          throw new Error('Internal Server Error', { cause: error });
-//     }
-// }
-
 app.get('/books', async (req, res) => {
     try {
         const bookId = req.query.id;
@@ -1100,7 +1039,7 @@ app.post('/user/request-seller', async (req, res) => {
         const request = await queryDatabase(
             `INSERT INTO seller_register(user_id, status, proof_image, qr_code)
             VALUES (?, 'รอการตรวจสอบ', ?, ?)`, [user_id, proof_image, qr_code]);
-        return res.status(200).json({ message: "Seller request successfuldly" });
+        return res.status(200).json({ message: "ส่งคำขอการเป็นร้านค้าสำเร็จ" });
     }
     catch {
         console.log(error);
@@ -1130,7 +1069,7 @@ app.get('/user/request-seller/approve/:userId', async (req, res) => {
              VALUES (?, ?, ?)`, [name[0].user_name, user_id, request_info[0].qr_code]
         );
 
-        return res.status(200).json({ message: "Seller request successfuldly" });
+        return res.status(200).json({ message: "ยอมรับการสมัครเป็นร้านค้าสำเร็จ" });
     }
     catch {
         console.log(error);

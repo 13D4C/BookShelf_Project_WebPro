@@ -350,13 +350,13 @@
       date = null;
       reason = null;
       closeBanModal();
-      alert("User banned successfully!");
+      alert("แบนผู้ใช้สำเร็จ!");
     } catch (error) {
       manageUserId = null;
       reason = null;
       date = null;
       console.error("Error banning user:", error);
-      alert("Failed to ban user.");
+      alert("เกิดข้อผิดพลาดในการแบนผู้ใช้");
     }
   }
 
@@ -389,10 +389,10 @@
           u.user_id === user_id! ? { ...u, user_status: "Normal" } : u
         );
 
-        alert("User unbanned successfully!");
+        alert("ปลดแบนผู้ใช้สำเร็จ!");
       } catch(error) {
         console.error("Error unbanning user:", error);
-        alert("Failed to unban user.");
+        alert("เกิดข้อผิดพลาดในการปลดแบนผู้ใช้");
       }
   }
 
@@ -429,12 +429,12 @@ async function deleteUser() {
     manageUserId = null;
     reason = null;
     closeDeleteModal();
-    alert("User Delete successfully!");
+    alert("ลบผู้ใช้สำเร็จ");
   } catch (error) {
     manageUserId = null;
     reason = null;
     console.error("Error delete user:", error);
-    alert("Failed to delete user.");
+    alert("เกิดข้อผิดพลาดในการลบผู้ใช้");
   }
 }
 

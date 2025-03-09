@@ -288,7 +288,7 @@ transition:fade={{ duration: 300 }}
                 <!-- Text and button container -->
                 <div class="px-4 pb-4 flex-grow">
                   <p class="font-semibold text-blue-700 truncate">
-                    {book.book_name_originl}
+                    {book.book_name_th}
                   </p>
                   <Rating id="example-3" total={5} rating={book.book_score}
                   ></Rating>

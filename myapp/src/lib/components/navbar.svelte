@@ -193,7 +193,7 @@
           bind:value={searchInput}
           id="search-navbar"
           class="ps-10"
-          placeholder="Search..."
+          placeholder="ค้นหา"
           on:keydown={(e) => {
             if (e.key === "Enter") {
               handleSearch();
@@ -328,7 +328,7 @@
         bind:value={searchInput}
         id="search-navbar"
         class="w-full border border-gray-300 rounded-md p-2 focus:border-blue-300 ps-10"
-        placeholder="Search..."
+        placeholder="ค้นหา"
         on:keydown={(e) => {
           if (e.key === "Enter") {
             handleSearch();

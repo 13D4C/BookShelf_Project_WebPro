@@ -510,7 +510,7 @@ transition:fade={{ duration: 300 }}
                         style="color:{colorHexText}"
                       >
                         <h6 style="font-family: '{selectedFont}'">
-                          {book.book_name_originl}
+                          {book.book_name_th}
                         </h6>
                       </div>
                     </div>
@@ -523,7 +523,7 @@ transition:fade={{ duration: 300 }}
           <!-- Book Details -->
           <div class="space-y-4">
             <h1 class="text-3xl font-bold">
-              {book.book_name_originl}
+              {book.book_name_th}
             </h1>
             <div class="flex items-center">
               <Rating id="example-3" total={5} rating={book.book_score}
@@ -817,7 +817,7 @@ transition:fade={{ duration: 300 }}
         <div
           class="mt-8 p-4 border-solid border-gray-50 rounded-lg bg-slate-200"
         >
-          <h3 class="text-2xl font-bold mb-4 text-stone-800">Comments</h3>
+          <h3 class="text-2xl font-bold mb-4 text-stone-800">ความคิดเห็น</h3>
 
           <div class="post-comment">
             <form
@@ -827,7 +827,7 @@ transition:fade={{ duration: 300 }}
               <textarea
                 bind:value={newComment}
                 rows="4"
-                placeholder="Write your comment here..."
+                placeholder="ความคิดเห็นของคุณ"
                 class="comment-textarea w-full p-2 mb-2 border-solid border-slate-300 rounded"
                 required
               ></textarea>
@@ -835,7 +835,7 @@ transition:fade={{ duration: 300 }}
               <div class="comment-form-controls flex items-center space-x-4">
                 <div class="flex flex-col">
                   <label for="score" class="text-sm font-medium text-gray-700"
-                    >Score</label
+                    >คะแนน</label
                   >
                   <select
                     bind:value={newScore}
@@ -852,7 +852,7 @@ transition:fade={{ duration: 300 }}
                   type="submit"
                   class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                 >
-                  Submit Comment
+                  ส่งความคิดเห็น
                 </button>
               </div>
             </form>
@@ -892,7 +892,7 @@ transition:fade={{ duration: 300 }}
                             deleteComment(comment.comment_id)}
                           class="delete-button"
                         >
-                          Delete
+                          ลบ
                         </button>
                       {/if}
                       <button
@@ -900,7 +900,7 @@ transition:fade={{ duration: 300 }}
                           toggleReply(comment.comment_id)}
                         class="reply-button"
                       >
-                        Reply
+                        ตอบกลับ
                       </button>
                     </div>
                     <br />
@@ -918,7 +918,7 @@ transition:fade={{ duration: 300 }}
                             submitReply(comment.comment_id)}
                           class="mt-1 px-3 py-1 bg-gray-500 text-white rounded text-sm"
                         >
-                          Submit Reply
+                          ยืนยันการตอบกลับ
                         </button>
                       </div>
                     {/if}
@@ -951,7 +951,7 @@ transition:fade={{ duration: 300 }}
                                   deleteComment(reply.comment_id)}
                                 class="delete-button"
                               >
-                                Delete
+                                ลบ
                               </button>
                             {/if}
                           </div>
@@ -963,7 +963,7 @@ transition:fade={{ duration: 300 }}
               {/each}
             </div>
           {:else}
-            <p class="no-comments">No comments yet.</p>
+            <p class="no-comments">ยังไม่มีความคิดเห็น</p>
           {/if}
         </div>
       {/if}
@@ -988,13 +988,13 @@ transition:fade={{ duration: 300 }}
                 <img
                   class="h-48 w-96 object-scale-down place-content-center"
                   src={related.book_image}
-                  alt={related.book_name_originl || "Related Book"}
+                  alt={related.book_name_th || "Related Book"}
                   loading="lazy"
                 />
               {/if}
             </div>
           {:else}
-            <p>No related books found.</p>
+            <p>ไม่มีหนังสือที่เกี่ยวข้อง</p>
           {/each}
         </div>
       {/if}

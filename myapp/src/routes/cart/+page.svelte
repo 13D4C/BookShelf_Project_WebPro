@@ -215,7 +215,7 @@
             : 'bg-gray-200'}"
           on:click={() => (filterType = "official")}
         >
-          Official : {cart.filter((item) => item.type === "official").length}
+          สำนักพิมพ์ : {cart.filter((item) => item.type === "official").length}
         </button>
         <button
           class="px-4 py-2 rounded {filterType === 'seller'
@@ -223,7 +223,7 @@
             : 'bg-gray-200'}"
           on:click={() => (filterType = "seller")}
         >
-          Official : {cart.filter((item) => item.type === "seller").length}
+          ผู้ขาย : {cart.filter((item) => item.type === "seller").length}
         </button>
       </div>
       {#if filterType === "official"}
@@ -245,7 +245,7 @@
               {#if item.marker}
                 <div class="grid grid-cols-1 gap-4">
                   <Button on:click={() => (defaultModal = true)}
-                    >Custom detail</Button
+                    >รายละเอียด</Button
                   >
                 </div>
                 <Modal title="Custom detail" bind:open={defaultModal} autoclose>
@@ -291,20 +291,20 @@
                         customSize="text-lg font-semibold"
                         class="mb-2 text-lg font-semibold text-gray-900 dark:text-white"
                       >
-                        List Custom
+                        รายละเอียดการปรับแต่ง
                       </Heading>
                       <List
                         tag="ul"
                         class="space-y-1 text-gray-500 dark:text-gray-400 text-sm md:text-base"
                       >
-                        <Li>Book Name: {item.marker}</Li>
-                        <Li>Font Family: {item.font_family}</Li>
-                        <Li>Font Size: {item.font_size}</Li>
-                        <Li>Color Text: {item.color_text}</Li>
-                        <Li>Color Background: {item.cover_color}</Li>
-                        <Li>Paper Type: {item.paper_type}</Li>
-                        <Li>Cover Type: {item.cover_type}</Li>
-                        <Li>Text: {item.text}</Li>
+                        <Li>ชื่อปก: {item.marker}</Li>
+                        <Li>ฟอนต์: {item.font_family}</Li>
+                        <Li>ขนาดตัวอักษร: {item.font_size}</Li>
+                        <Li>สีตัวอักษร: {item.color_text}</Li>
+                        <Li>สีพื้นหลัง: {item.cover_color}</Li>
+                        <Li>ประเภทกระดาษ: {item.paper_type}</Li>
+                        <Li>ประเภทปก: {item.cover_type}</Li>
+                        <Li>ข้อความ: {item.text}</Li>
                       </List>
                     </div>
                   </div>
@@ -312,7 +312,7 @@
                   <svelte:fragment slot="footer">
                     <div class="w-full flex justify-end space-x-2">
                       <Button color="alternative" class="text-sm md:text-base"
-                        >Close</Button
+                        >ปิด</Button
                       >
                     </div>
                   </svelte:fragment>

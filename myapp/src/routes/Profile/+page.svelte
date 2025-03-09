@@ -239,7 +239,7 @@
     }
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file.");
+      alert("โปรดเลือกภาพสลิปการชำระเงิน");
       base64Images = { ...base64Images, [orderId]: "" }; // Clear if no file
       if (fileInputs[orderId]) {
         fileInputs[orderId].value = ""; // Clear input
@@ -249,7 +249,7 @@
 
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      alert("File size exceeds the limit (5MB).");
+      alert("ขนาดไฟล์จำกัดที่ (5MB).");
       base64Images = { ...base64Images, [orderId]: "" }; // Clear if no file
       if (fileInputs[orderId]) {
         fileInputs[orderId].value = ""; // Clear input
@@ -264,7 +264,7 @@
     };
     reader.onerror = () => {
       base64Images = { ...base64Images, [orderId]: "" };
-      alert("Error reading file.");
+      alert("เกิดข้อผิดพลาด โปรดลองใหม่");
       if (fileInputs[orderId]) {
         fileInputs[orderId].value = ""; // Clear input
       }
@@ -274,7 +274,7 @@
 
   async function uploadSlip(orderId: string | number) {
     if (!base64Images[orderId]) {
-      alert("Please select a payment slip image.");
+      alert("โปรดเลือกภาพสลิปการชำระเงิน");
       return;
     }
 
@@ -303,7 +303,7 @@
       }
 
       // Success!  Update UI (e.g., refetch orders, show a message)
-      alert("Payment proof submitted successfully!");
+      alert("อัปโหลดหลักฐานการชำระเงินเสร็จสิ้น");
 
       // Find the order in the 'orders' array and update its status *and* payment_slip
       orders = orders.map((order) => {
@@ -336,7 +336,7 @@
     }
 
     if (!file.type.startsWith("image/")) {
-      alert("Please select an image file.");
+      alert("โปรดเลือกรูปภาพหลักฐานการชำระเงิน");
       base64ImagesSeller = { ...base64ImagesSeller, [orderId]: "" };
       if (fileInputsSeller[orderId]) {
         fileInputsSeller[orderId].value = "";
@@ -346,7 +346,7 @@
 
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      alert("File size exceeds the limit (5MB).");
+      alert("ขนาดไฟล์รูปภาพใหญ่เกินไป ลิมิต(5MB).");
       base64ImagesSeller = { ...base64ImagesSeller, [orderId]: "" };
       if (fileInputsSeller[orderId]) {
         fileInputsSeller[orderId].value = "";
@@ -363,7 +363,7 @@
     };
     reader.onerror = () => {
       base64ImagesSeller = { ...base64ImagesSeller, [orderId]: "" };
-      alert("Error reading file.");
+      alert("เกิดข้อผิดพลาด โปรดลองใหม่อีกครั้ง");
       if (fileInputsSeller[orderId]) {
         fileInputsSeller[orderId].value = "";
       }
@@ -373,7 +373,7 @@
 
   async function uploadSlipSeller(orderId: string | number) {
     if (!base64ImagesSeller[orderId]) {
-      alert("Please select a payment slip image.");
+      alert("โปรดเลือกรูปภาพหลักฐานการชำระเงิน");
       return;
     }
 
@@ -401,7 +401,7 @@
         return;
       }
 
-      alert("Payment proof submitted successfully!");
+      alert("อัปโหลดหลัดฐานการชำระเงินเสร็จสิ้น");
 
       // Update seller_orders, similar to how we update 'orders'
       seller_orders = seller_orders.map((order) => {
@@ -962,7 +962,7 @@
               {:else}
                 {#if orders.length > 0}
                   <h2 class="text-xl font-semibold mb-4 text-blue-600">
-                    Publisher Orders
+                    คำสั่งซื้อสำนักพิมพ์
                   </h2>
                   <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -972,7 +972,7 @@
                             scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
-                            Order ID
+                            เลขคำสั่งซื้อ
                           </th>
                           <th
                             scope="col"
@@ -1065,7 +1065,7 @@
                                       uploadSlip(order.order_id)}
                                     class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
                                   >
-                                    Upload Slip
+                                    อัปโหลดสลิป
                                   </button>
                                 </div>
                               {/if}
@@ -1089,8 +1089,8 @@
                                 class="text-blue-600 hover:text-blue-800 transition-colors"
                               >
                                 {expandedOrderId === order.order_id
-                                  ? "Hide Details"
-                                  : "Show Details"}
+                                  ? "ซ่อนรายละเอียด"
+                                  : "แสดงรายละเอียด"}
                               </button>
                             </td>
                           </tr>
@@ -1202,7 +1202,7 @@
 
                 {#if seller_orders.length > 0}
                   <h2 class="text-xl font-semibold mb-4 text-blue-600 mt-8">
-                    Seller Orders
+                    คำสั่งซื้อทั่วไป
                   </h2>
                   <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
@@ -1212,7 +1212,7 @@
                             scope="col"
                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                           >
-                            Order ID
+                            เลขคำสั่งซื้อ
                           </th>
                           <th
                             scope="col"
@@ -1305,7 +1305,7 @@
                                       uploadSlipSeller(order.order_id)}
                                     class="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 transition-colors"
                                   >
-                                    Upload Slip
+                                    อัปโหลดสลิป
                                   </button>
                                 </div>
                               {/if}
@@ -1331,8 +1331,8 @@
                                 class="text-blue-600 hover:text-blue-800 transition-colors"
                               >
                                 {expandedOrderId === order.order_id
-                                  ? "Hide Details"
-                                  : "Show Details"}
+                                  ? "ซ่อนรายละเอียด"
+                                  : "แสดงรายละเอียด"}
                               </button>
                             </td>
                           </tr>
@@ -1627,8 +1627,8 @@
                                           class="text-blue-600 hover:text-blue-800 transition-colors"
                                         >
                                           {expandedOrderId === order.order_id
-                                            ? "Hide Details"
-                                            : "Show Details"}
+                                            ? "ซ่อนรายละเอียด"
+                                            : "แสดงรายละเอียด"}
                                         </button>
                                       </td>
                                     </tr>
@@ -1856,8 +1856,8 @@
                                       class="text-blue-600 hover:text-blue-800 transition-colors"
                                     >
                                       {expandedOrderId === order.order_id
-                                        ? "Hide Details"
-                                        : "Show Details"}
+                                        ? "ซ่อนรายละเอียด"
+                                        : "แสดงรายละเอียด"}
                                     </button>
                                   </td>
                                 </tr>

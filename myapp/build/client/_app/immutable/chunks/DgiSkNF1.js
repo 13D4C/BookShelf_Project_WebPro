@@ -1,0 +1,1 @@
+import{U as T,V as c,z as q,W as x,S as z}from"./BkNIMPUX.js";function k(i,r){return i===r||(i==null?void 0:i[z])===r}function B(i={},r,S,h){return T(()=>{var s,f;return c(()=>{s=f,f=(h==null?void 0:h())||[],q(()=>{i!==S(...f)&&(r(i,...f),s&&k(S(...s),i)&&r(null,...s))})}),()=>{x(()=>{f&&k(S(...f),i)&&r(null,...f)})}}),i}export{B as b};

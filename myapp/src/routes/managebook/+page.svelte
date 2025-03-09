@@ -498,7 +498,7 @@ transition:fade={{ duration: 300 }}
                                 </div>
                             </div>
                         {:else}
-                            <p>No books in this category.</p>
+                            <p>ไม่มีหนังสือในหมวดหมู่นี้</p>
                         {/each}
                     </div>
                 </div>
