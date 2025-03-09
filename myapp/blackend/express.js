@@ -774,14 +774,13 @@ app.post('/user/register', async (req, res) => {
         }
 
         const passwordHash = await bcrypt.hash(user_pass, 8);
-        const insertUserSql = 'INSERT INTO user (user_email, user_name, user_pass, user_phone, user_permission, user_image, user_firstname, user_lastname) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        const insertUserSql = 'INSERT INTO user (user_email, user_name, user_pass, user_phone, user_permission, user_firstname, user_lastname) VALUES (?, ?, ?, ?, ?, ?, ?)';
         await queryDatabase(insertUserSql, [
             user_email,
             user_name,
             passwordHash,
             user_phone,
             '3',
-            'https://i.imgur.com/tdrsXyg.jpeg',
             user_firstname,
             user_lastname
         ]);
