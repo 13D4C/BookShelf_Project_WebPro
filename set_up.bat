@@ -1,103 +1,86 @@
 @echo off
+echo Checking project prerequisites...
+echo STARTING CHECKS
+pause
 
-REM --- Check for npm and install if needed ---
-echo Checking for npm...
-where npm > nul 2>&1
+REM --- Check Node.js ---
+echo.
+echo --- Checking Node.js ---
+echo BEFORE NODE CHECK
+node -v
+echo AFTER NODE CHECK, Errorlevel: %errorlevel%
+pause
 if errorlevel 1 (
-    echo npm is not installed. Installing using winget...
+    echo Error: Node.js is not installed. Please install it from https://nodejs.org/.
+    goto :end_with_error
+)
+for /f "tokens=2 delims=v" %%a in ('node -v') do (
+  set "node_version=%%a"
+)
+echo Node.js version: %node_version%
+pause
 
-    REM Check if winget is available
-    where winget > nul 2>&1
-    if errorlevel 1 (
-        echo Error: winget (Windows Package Manager) is not available.
-        echo Please install Node.js manually from https://nodejs.org/
-        pause
-        exit /b 1
-    )
+REM ... (rest of the Node.js check) ...
 
-    REM Install Node.js LTS using winget
-    winget install -e --id OpenJS.NodeJS.LTS
-    if errorlevel 1 (
-        echo Error: Failed to install Node.js using winget.
-        echo Please install Node.js manually from https://nodejs.org/
-        pause
-        exit /b 1
-    )
+REM --- Check npm ---
+echo.
+echo --- Checking npm ---
+echo BEFORE NPM CHECK
+npm -v
+echo AFTER NPM CHECK, Errorlevel: %errorlevel%
+pause
+if errorlevel 1 (
+    echo Error: npm is not installed. It usually comes with Node.js. Reinstall Node.js.
+    goto :end_with_error
+)
+for /f "tokens=*" %%a in ('npm -v') do (
+    set "npm_version=%%a"
+)
+echo npm version: %npm_version%
+pause
+REM ... (rest of the script) ...
 
-    echo Node.js (and npm) installed successfully.
-    echo.
-    echo IMPORTANT:  The PATH environment variable may not be updated in this window.
-    echo Please close this window and open a NEW command prompt.
-    echo Then, re-run this script, or run 'npm -v' and 'node -v' to verify.
-    echo.
-    pause
-    exit /b 1  REM Exit so they can restart
+REM --- Check Express (check in package.json) ---
+:check_express
+echo.
+echo --- Checking Express (in package.json) ---
+echo BEFORE PUSHD EXPRESS
+pushd "%~dp0myapp\blackend"
+echo AFTER PUSHD EXPRESS, Errorlevel: %errorlevel%
+pause
+
+if errorlevel 1 (
+    echo Error: Could not change directory to "%~dp0myapp\blackend". Cannot check Express version.
+    popd
+    goto :end
+)
+setlocal EnableDelayedExpansion
+for /f "tokens=3 delims=:" %%a in ('findstr /i "\"express\"" package.json') do (
+    set "express_version=%%a"
+    set "express_version=!express_version:~1,-2!"
 )
 
-echo npm is installed.
-
-REM --- Refresh PATH (Attempt, but not guaranteed in this session) ---
-set "PATH=%PATH%;C:\Program Files\nodejs\"
-REM This next line is LESS likely to be needed, but might help in some cases
-set "PATH=%PATH%;%USERPROFILE%\AppData\Roaming\npm"
-echo Attempting to refresh PATH in this session (may not work).
-
-REM --- Navigate to myapp ---
-pushd "%~dp0myapp" 2>nul
-if errorlevel 1 (
-  echo Error: myapp folder is not present at "%~dp0myapp".
-  pause
-  exit /b 1
+if "!express_version!"=="" (
+  echo "Warning: express dependency not found in package.json within ./myapp/blackend"
 )
-
-REM --- Check for Vite and install if needed (Local First) ---
-echo Checking for Vite in myapp...
-
-REM Check for vite in project's node_modules (local install)
-where /q vite
-if errorlevel 1 (
-	echo Vite is not present installing in the project...
-	npm install vite
-    if errorlevel 1 (
-        echo Error: Failed to install Vite.
-        pause
-        exit /b 1
-    )
-)
-
-REM --- Run 'npm run dev' in the myapp directory ---
-echo Running 'npm run dev' in ./myapp/...
-start "npm run dev" cmd /k "npm run dev"
+endlocal
 
 popd
+echo Express version (from package.json): %express_version%
+pause
 
-REM --- Navigate to blackend ---
-pushd "%~dp0myapp\blackend" 2>nul
-if errorlevel 1 (
-    echo Error: Could not change directory to "%~dp0myapp\blackend".
-    echo Please check the path and try again.
-    pause
-    exit /b 1
-)
+REM ... (rest of the script. Add similar echo/pause blocks to other sections) ...
 
-REM --- Check for express in project's node_modules (local install) ---
-echo Checking for express in blackend directory...
-where /q express
-if errorlevel 1 (
-    echo express is not present, installing in the blackend project...
-    npm install express
-    if errorlevel 1 (
-        echo Error: Failed to install express.
-        pause
-        exit /b 1
-    )
-)
+:end
+echo.
+echo All checks completed successfully.
 
-REM Now, it's safe to run the Express server.
-echo Running 'node ./express.js' in ./myapp/blackend/...
-start "Node Express" cmd /k "node express.js"
+REM --- Run startwebsite.bat and open the website ---
+echo Starting the application...
+echo BEFORE CALLING STARTWEBSITE
+call startwebsite.bat
+echo AFTER CALLING STARTWEBSITE, Errorlevel: %errorlevel%
+pause  <-- Add a pause here to see if startwebsite.bat is the issue
+goto :end_no_pause
 
-popd
-
-echo Done.
-exit /b 0
+REM ... (rest of the script) ...
